@@ -25,6 +25,17 @@ class Activity(BaseModel):
     class Config:
         from_attributes = True
 
+class GPSData(BaseModel):
+    id: int
+    activity_id: int
+    latitude: float
+    longitude: float
+    timestamp: str  
+
+    class Config:
+        from_attributes = True
+
+
 # Création de l'application FastAPI
 app = FastAPI(
     title="Garmin Data API",
@@ -65,7 +76,7 @@ def get_activities_by_type(activity_type: str, skip: int = 0, limit: int = 10):
         results = conn.execute(select_stmt).fetchall()
     return [dict(row._mapping) for row in results]
 
-@app.get("/gps_data/{activity_id}/gps", response_model=List[dict])
+@app.get("/gps_data/{activity_id}/gps", response_model=List[GPSData])
 def get_activity_gps(activity_id: int):
     """Récupérer les données GPS d'une activité spécifique"""
     with engine.connect() as conn:
