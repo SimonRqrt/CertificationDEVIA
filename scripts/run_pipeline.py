@@ -5,7 +5,7 @@ import os
 # Ajouter le répertoire parent au chemin de recherche des modules
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from src.data_manager import fetch_and_process_garmin_data
+from src.data_manager import fetch_and_process_garmin_data, get_garmin_activities
 from src.db_manager import create_db_engine, create_tables, store_activities_in_db
 from src.api_service import start_api
 
@@ -15,7 +15,7 @@ def run_garmin_data_pipeline():
         print("Démarrage du pipeline de données Garmin...")
         
         # 1. Récupération et traitement des données
-        df, processed_data = fetch_and_process_garmin_data(limit=50, save_raw=True)
+        df, processed_data = fetch_and_process_garmin_data(save_raw=True)
         
         if df is None or processed_data is None:
             print("Erreur lors de la récupération des données. Arrêt du pipeline.")

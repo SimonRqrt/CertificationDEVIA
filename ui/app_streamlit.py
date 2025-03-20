@@ -17,7 +17,7 @@ if page == "Liste des Activités":
     st.title("📋 Liste des Activités")
     
     # Récupérer les activités
-    response = requests.get(f"{API_URL}/activities?skip=0&limit=100")
+    response = requests.get(f"{API_URL}/activities?skip=0&limit=500")
     if response.status_code == 200:
         data = response.json()
         df = pd.DataFrame(data)

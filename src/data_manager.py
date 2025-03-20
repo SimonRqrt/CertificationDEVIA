@@ -7,14 +7,24 @@ from .config import GARMIN_EMAIL, GARMIN_PASSWORD, DATA_DIR
 
 def connect_garmin(email=GARMIN_EMAIL, password=GARMIN_PASSWORD):
     """Établit une connexion avec l'API Garmin Connect"""
-    garmin = Garmin(email, password)
-    garmin.login()
-    return garmin
+    try:
+        garmin = Garmin(email, password)
+        garmin.login()
+        print("Connexion à Garmin réussie")
+        return garmin
+    except Exception as e:
+        print(f"Erreur de connexion à Garmin: {e}")
+        return None
 
 def get_garmin_activities(garmin, limit=10):
     """Récupère les activités récentes de Garmin Connect"""
-    activities = garmin.get_activities(0, limit)
-    return activities
+    try:
+        activities = garmin.get_activities(0, limit)
+        print(f"Activités récupérées: {activities}")
+        return activities
+    except Exception as e:
+        print(f"Erreur lors de la récupération des activités: {e}")
+        return []
 
 def process_garmin_activities(activities):
     """Traite et structure les données d'activités Garmin"""
@@ -60,28 +70,24 @@ def create_activities_dataframe(processed_data):
     df = pd.DataFrame(processed_data)
     return df
 
-def fetch_and_process_garmin_data(limit=50, save_raw=True):
+def fetch_and_process_garmin_data(save_raw=True):
     """Fonction principale pour récupérer et traiter les données Garmin"""
     try:
-        # Connexion à Garmin
         garmin_client = connect_garmin()
+        if not garmin_client:
+            print("Impossible de se connecter à Garmin")
+            return None, None
         
-        # Récupération des activités
-        activities = get_garmin_activities(garmin_client, limit=limit)
+        activities = get_garmin_activities(garmin_client, limit=500)
         print(f"Récupération de {len(activities)} activités réussie")
         
-        # Sauvegarde des données brutes si demandé
         if save_raw:
             save_raw_data(activities)
         
-        # Traitement des données
         processed_data = process_garmin_activities(activities)
-        
-        # Création du DataFrame
         df = create_activities_dataframe(processed_data)
         
         return df, processed_data
-    
     except Exception as e:
         print(f"Erreur lors de la récupération des données Garmin: {e}")
         return None, None
