@@ -1,5 +1,5 @@
 import sqlalchemy as sa
-from .config import DATABASE_URL
+from src.config import DATABASE_URL  # Mise à jour du chemin pour config
 
 def create_db_engine(db_url=DATABASE_URL):
     """Crée une connexion à la base de données"""

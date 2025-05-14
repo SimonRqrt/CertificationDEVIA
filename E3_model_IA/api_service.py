@@ -3,8 +3,8 @@ from pydantic import BaseModel
 from typing import List, Optional
 import uvicorn
 import sqlalchemy as sa
-from .db_manager import create_db_engine, create_tables, get_activities_from_db, get_activity_by_id
-from .config import API_HOST, API_PORT, API_DEBUG
+from E1_gestion_donnees.db_manager import create_db_engine, create_tables, get_activities_from_db, get_activity_by_id
+from src.config import API_HOST, API_PORT, API_DEBUG
 
 # Modèle Pydantic pour les activités
 class Activity(BaseModel):

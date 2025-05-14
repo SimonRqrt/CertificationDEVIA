@@ -5,8 +5,9 @@ from pathlib import Path
 # Ajouter le répertoire parent au chemin de recherche des modules
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from src.db_manager import create_db_engine, create_tables
-from src.utils import logger
+# Mise à jour des chemins d'importation en fonction de la nouvelle structure
+from E1_gestion_donnees.db_manager import create_db_engine, create_tables  # Import mis à jour
+from src.utils import logger  # Mise à jour du chemin pour le logger
 
 def initialize_database():
     """Initialise la base de données et crée les tables nécessaires"""

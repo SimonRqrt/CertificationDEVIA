@@ -5,8 +5,15 @@ from sqlalchemy import select
 from datetime import datetime, timedelta
 import pandas as pd
 from garminconnect import Garmin
-from .config import GARMIN_EMAIL, GARMIN_PASSWORD, DATA_DIR
-from .db_manager import create_db_engine, create_tables, store_activities_in_db
+
+# Ajouter le chemin racine du projet au PYTHONPATH
+import sys
+from pathlib import Path
+project_root = Path(__file__).resolve().parent.parent.parent
+sys.path.append(str(project_root))
+
+from src.config import GARMIN_EMAIL, GARMIN_PASSWORD, DATA_DIR
+from E1_gestion_donnees.db_manager import create_db_engine, create_tables, store_activities_in_db
 
 def connect_garmin(email=GARMIN_EMAIL, password=GARMIN_PASSWORD):
     """Établit une connexion avec l'API Garmin Connect"""
@@ -80,8 +87,6 @@ def process_garmin_activities(activities, user_id):
 
     return processed_data
 
-
-
 def save_raw_data(activities, filename=None):
     """Sauvegarde les données brutes au format JSON"""
     if filename is None:
@@ -128,7 +133,6 @@ def fetch_and_process_garmin_data(user_id, save_raw=True):
     except Exception as e:
         print(f"Erreur lors de la récupération des données Garmin: {e}")
         return None, None
-
 
 def compute_metrics(user_id):
     """Calcule des métriques enrichies à partir des activités Garmin"""

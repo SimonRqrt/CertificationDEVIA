@@ -19,7 +19,7 @@ from langchain_community.chat_models import ChatOllama
 from langchain_core.tools import tool
 from rich import print as rprint
 
-from src.db_manager import create_db_engine, create_tables
+from E1_gestion_donnees.db_manager import create_db_engine, create_tables
 
 
 @tool

@@ -17,7 +17,7 @@ GARMIN_EMAIL = os.environ.get("GARMIN_EMAIL")
 GARMIN_PASSWORD = os.environ.get("GARMIN_PASSWORD")
 
 # Configuration de la base de données
-DB_TYPE = os.environ.get("DB_TYPE", "sqlite")  # sqlite, postgresql, mysql
+DB_TYPE = os.environ.get("DB_TYPE", "postgresql")  # sqlite, postgresql, mysql
 DB_HOST = os.environ.get("DB_HOST", "localhost")
 DB_PORT = os.environ.get("DB_PORT", "5432")
 DB_NAME = os.environ.get("DB_NAME", "garmin_data")

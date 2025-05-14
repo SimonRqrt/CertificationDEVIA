@@ -2,10 +2,10 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from src.db_manager import create_db_engine, create_tables
+from E1_gestion_donnees.db_manager import create_db_engine, create_tables
 
 if __name__ == "__main__":
-    user_id = 1  # L'utilisateur que tu as inséré
+    user_id = 1
 
     engine = create_db_engine()
     tables = create_tables(engine)
