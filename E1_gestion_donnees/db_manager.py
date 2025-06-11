@@ -1,12 +1,24 @@
+import logging
+from typing import List,Dict, Any
+
 import sqlalchemy as sa
-from src.config import DATABASE_URL  # Mise à jour du chemin pour config
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+from src.config import DATABASE_URL
+
+log = logging.getLogger(__name__)
 
 def create_db_engine(db_url=DATABASE_URL):
     """Crée une connexion à la base de données"""
-    engine = sa.create_engine(db_url)
-    return engine
+    try:
+        engine = sa.create_engine(db_url)
+        log.info("Connexion à la base de données établie avec succès.")
+        return engine
+    except Exception as e:
+        log.error("Erreur lors de la création du moteur de base de données.", exc_info=True)
+        raise
 
-def create_tables(engine):
+def create_tables(engine) -> Dict[str, sa.Table]:
     """Crée les tables nécessaires si elles n'existent pas"""
     metadata = sa.MetaData()
 
@@ -33,11 +45,11 @@ def create_tables(engine):
     activities_table = sa.Table(
         "activities", metadata,
         sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("user_id", sa.Integer, sa.ForeignKey("users.user_id")),
-        sa.Column("activity_id", sa.BigInteger, unique=True),
+        sa.Column("user_id", sa.Integer, sa.ForeignKey("users.user_id"), nullable=False),
+        sa.Column("activity_id", sa.BigInteger, unique=True, nullable=False),
         sa.Column("activity_name", sa.String(255)),
         sa.Column("activity_type", sa.String(50)),
-        sa.Column("start_time", sa.String(50)),
+        sa.Column("start_time", sa.DateTime(timezone=True)),
         sa.Column("distance_meters", sa.Float),
         sa.Column("duration_seconds", sa.Float),
         sa.Column("average_speed", sa.Float),
@@ -85,8 +97,8 @@ def create_tables(engine):
     metrics = sa.Table(
         "metrics", metadata,
         sa.Column("metrics_id", sa.Integer, primary_key=True, autoincrement=True),
-        sa.Column("user_id", sa.Integer, sa.ForeignKey("users.user_id")),
-        sa.Column("date_calcul", sa.String(50)),
+        sa.Column("user_id", sa.Integer, sa.ForeignKey("users.user_id"), nullable=False),
+        sa.Column("date_calcul", sa.DateTime(timezone=True)),
         sa.Column("vma_kmh", sa.Float),
         sa.Column("vo2max_estime", sa.Float),
         sa.Column("zone_fc", sa.Text),
@@ -100,14 +112,14 @@ def create_tables(engine):
         sa.Column("recommandation_jour", sa.Text)
     )
 
-    metadata.create_all(engine)
+    try:
+        metadata.create_all(engine)
+        log.info("Vérification des tables terminée. Les tables sont prêtes.")
+    except Exception as e:
+        log.error("Erreur lors de la création des tables.", exc_info=True)
+        raise
 
-    return {
-        "users": users,
-        "activities": activities_table,
-        "gps_data": gps_data,
-        "metrics": metrics
-    }
+    return metadata.tables
 
 def insert_user(engine, tables, user_data):
     """Insère un nouvel utilisateur dans la table users"""
@@ -121,35 +133,85 @@ def insert_user(engine, tables, user_data):
             print(f"Erreur lors de l'insertion de l'utilisateur : {e}")
 
 
-def store_activities_in_db(engine, tables, processed_data):
-    """Stocke les activités dans la base de données"""
-    print(f"Début du stockage de {len(processed_data)} activités")
-    inserted_count = 0
-    skipped_count = 0
+def store_activities_in_db(engine, tables: Dict, processed_data: List[Dict[str, Any]]):
+    """
+    Stocke une liste d'activités en base de données de manière performante.
+    Vérifie les doublons et n'insère que les nouvelles activités.
+    """
+    if not processed_data:
+        log.info("Aucune activité à stocker.")
+        return
+
+    activities_table = tables["activities"]
     
+    # 1. Récupérer tous les IDs existants en une seule requête
     with engine.connect() as conn:
-        for activity in processed_data:
-            # Vérifier si l'activité existe déjà
-            select_stmt = sa.select(tables["activities"]).where(
-                tables["activities"].c.activity_id == activity["activity_id"]
-            )
-            result = conn.execute(select_stmt).fetchone()
-            
-            if result is None:
-                # Insérer une nouvelle activité
-                try:
-                    insert_stmt = tables["activities"].insert().values(**activity)
-                    conn.execute(insert_stmt)
-                    conn.commit()
-                    inserted_count += 1
-                    print(f"Activité {activity['activity_id']} ({activity['start_time']}) ajoutée")
-                except Exception as e:
-                    print(f"Erreur lors de l'insertion de l'activité {activity['activity_id']}: {e}")
-            else:
-                skipped_count += 1
-                print(f"Activité {activity['activity_id']} déjà présente (date: {activity['start_time']})")
+        existing_ids_query = sa.select(activities_table.c.activity_id)
+        result = conn.execute(existing_ids_query)
+        existing_ids = {row[0] for row in result}
+        log.info(f"{len(existing_ids)} activités déjà présentes dans la base de données.")
+
+    # 2. Filtrer pour ne garder que les nouvelles activités
+    new_activities = [
+        activity for activity in processed_data 
+        if activity["activity_id"] not in existing_ids
+    ]
     
-    print(f"Stockage terminé: {inserted_count} activités ajoutées, {skipped_count} ignorées")
+    skipped_count = len(processed_data) - len(new_activities)
+    if skipped_count > 0:
+        log.info(f"{skipped_count} activités déjà existantes ont été ignorées.")
+
+    if not new_activities:
+        log.info("Aucune nouvelle activité à insérer.")
+        return
+
+    # 3. Insérer toutes les nouvelles activités en une seule transaction
+    log.info(f"Début de l'insertion de {len(new_activities)} nouvelles activités...")
+    try:
+        with engine.begin() as conn:
+            conn.execute(sa.insert(activities_table), new_activities)
+        log.info(f"Stockage terminé: {len(new_activities)} nouvelles activités ajoutées.")
+    except Exception as e:
+        log.error("Erreur lors de l'insertion en masse des activités. Transaction annulée.", exc_info=True)
+        raise
+
+def store_metrics_in_db(engine, tables: Dict, metrics_data: Dict[str, Any]):
+    """
+    Insère ou met à jour les métriques pour un utilisateur à une date donnée.
+    Utilise une stratégie "UPSERT" pour éviter les doublons.
+    """
+    if not metrics_data:
+        log.warning("Aucune donnée de métrique à stocker.")
+        return
+
+    metrics_table = tables["metrics"]
+    
+    # La commande 'ON CONFLICT' est spécifique à PostgreSQL et est très efficace.
+    # Pour SQLite, la logique DELETE + INSERT que j'avais proposée avant est une bonne alternative.
+    insert_stmt = pg_insert(metrics_table).values(metrics_data)
+    
+    # Si un enregistrement existe déjà pour ce user_id et cette date_calcul, on met à jour les champs.
+    # On doit identifier une contrainte unique pour que ON CONFLICT fonctionne.
+    # Supposons une contrainte unique sur (user_id, date_calcul).
+    # NOTE: Il faudrait créer cette contrainte unique dans la BDD.
+    # ALTER TABLE metrics ADD CONSTRAINT unique_user_date UNIQUE (user_id, date_calcul);
+    
+    update_dict = {c.name: c for c in insert_stmt.excluded if c.name not in ['user_id', 'date_calcul']}
+    
+    upsert_stmt = insert_stmt.on_conflict_do_update(
+        index_elements=['user_id', 'date_calcul'], # La contrainte unique
+        set_=update_dict
+    )
+    
+    try:
+        with engine.begin() as conn:
+            conn.execute(upsert_stmt)
+        log.info(f"Mètriques pour l'utilisateur {metrics_data.get('user_id')} insérées/mises à jour avec succès.")
+    except Exception as e:
+        log.error(f"Erreur lors de l'UPSERT des métriques.", exc_info=True)
+        # Pour un projet où la compatibilité multi-BDD est clé, on utiliserait la méthode DELETE+INSERT.
+        # Mais pour un projet qui a choisi PostgreSQL, c'est la meilleure approche.
+        raise
 
 def get_activities_from_db(engine, tables, limit=10, offset=0):
     """Récupère les activités depuis la base de données"""

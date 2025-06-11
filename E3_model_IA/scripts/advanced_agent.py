@@ -1,12 +1,13 @@
 import sys
 import os
+import json
 from pathlib import Path
+from rich import print as rprint
+from typing import Annotated, List, Any
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import operator
-import sqlite3
-from typing import Annotated
 from typing_extensions import TypedDict
 
 from langgraph.graph import END, StateGraph
@@ -16,10 +17,70 @@ from langchain_core.messages import HumanMessage, ToolMessage, SystemMessage, An
 from langchain_core.messages.ai import AIMessage
 
 from langchain_community.chat_models import ChatOllama
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain_community.document_loaders import DirectoryLoader
 from langchain_core.tools import tool
-from rich import print as rprint
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+import sqlalchemy as sa
 
 from E1_gestion_donnees.db_manager import create_db_engine, create_tables
+
+
+# DÉFINIT LA PERSONNALITÉ ET LES RÈGLES DE L'AGENT
+SYSTEM_PROMPT = """
+Tu es un coach sportif expert, prudent et encourageant, basé sur les données. Ton nom est "Coach AI".
+
+Ta mission est de créer des plans d'entraînement hebdomadaires personnalisés.
+
+**Ton processus DOIT suivre ces étapes :**
+1.  **Analyse des données :** Commence TOUJOURS par utiliser l'outil `get_user_metrics_from_db` pour comprendre le profil de l'utilisateur.
+2.  **Recherche de connaissances :** Une fois que tu as les métriques (VMA, charge, etc.), utilise l'outil `get_training_knowledge` pour rechercher les principes d'entraînement pertinents dans la base de connaissances. Pose des questions comme "principes d'entraînement pour une VMA de 14 km/h" ou "comment structurer une semaine pour un objectif 10k en 50 minutes".
+3.  **Météo (Optionnel) :** Si l'utilisateur le demande, tu peux utiliser l'outil `get_weather_forecast` pour adapter une séance (ex: remplacer une sortie longue sous la pluie par du tapis).
+4.  **Synthèse et Plan :** Fais la synthèse de toutes ces informations (données utilisateur, connaissances expertes, météo) pour construire une réponse.
+
+**Format de sortie :**
+Quand tu présentes un plan d'entraînement, utilise TOUJOURS le format Markdown suivant :
+
+### Plan d'entraînement pour la semaine du [Date]
+
+| Jour      | Séance                                   | Intensité | Durée Estimée | Objectifs de la séance                       |
+|-----------|------------------------------------------|-----------|---------------|----------------------------------------------|
+| Lundi     | Repos                                    | -         | -             | Assimilation, prévention des blessures      |
+| Mardi     | Footing léger                            | Faible    | 45 min        | Endurance fondamentale                       |
+| Mercredi  | VMA : 2x (8x 30/30) à 100% VMA             | Élevée    | 50 min        | Amélioration de la VO2max et de la vitesse |
+| Jeudi     | Repos                                    | -         | -             |                                              |
+| Vendredi  | Séance de seuil : 3x8 min à 85-90% FCM   | Modérée   | 1h            | Amélioration de l'endurance spécifique      |
+| Samedi    | Repos                                    | -         | -             |                                              |
+| Dimanche  | Sortie Longue en endurance fondamentale | Faible    | 1h30          | Amélioration de la capacité aérobie         |
+
+**Important :** Sois toujours positif et prudent. Ajoute toujours une note pour rappeler à l'utilisateur d'écouter son corps et de consulter un médecin.
+"""
+
+
+# --- Initialisation des Outils et Services ---
+
+try:
+    loader = DirectoryLoader("knowledge_base/", glob="**/*.md", show_progress=True)
+    documents = loader.load()
+    if not documents:
+        rprint("[bold red]AVERTISSEMENT : Le dossier 'knowledge_base' est vide ou introuvable. L'outil de RAG ne fonctionnera pas.[/bold red]")
+        knowledge_retriever = None
+    else:
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+        splits = text_splitter.split_documents(documents)
+        vectorstore = FAISS.from_documents(documents=splits, embedding=OllamaEmbeddings(model="llama3"))
+        knowledge_retriever = vectorstore.as_retriever()
+        rprint("[bold green]✅ Base de connaissances RAG initialisée avec succès.[/bold green]")
+except Exception as e:
+    rprint(f"[bold red]Erreur lors de l'initialisation du RAG : {e}[/bold red]")
+    knowledge_retriever = None
+
+db_engine = create_db_engine()
+db_metadata = sa.MetaData()
+metrics_table = sa.Table("metrics", db_metadata, autoload_with=db_engine)
+
 
 
 @tool
@@ -32,72 +93,76 @@ def dummy_weather_tool(location: str) -> str:
     }
     return weather_data.get(location, f"Météo inconnue pour {location}")
 
+# --- Initialisation de la base de connaissances (RAG) ---
+# Ceci ne devrait être fait qu'une seule fois au démarrage de l'application
+@tool
+def get_training_knowledge(query: str) -> str:
+    """
+    Recherche dans la base de connaissances sportives des informations pertinentes
+    pour répondre à une question sur les principes d'entraînement.
+    Utilise-le pour trouver comment construire un plan basé sur les métriques d'un utilisateur.
+    """
+    if knowledge_retriever is None:
+        return "Erreur : La base de connaissances n'est pas disponible."
+    
+    docs = knowledge_retriever.invoke(query)
+    return "\n\n".join([doc.page_content for doc in docs])
 
 @tool
-def get_user_metrics_from_db(user_id: int = 1) -> str:
-    """Récupère les métriques de l'utilisateur depuis la base SQLite."""
-    engine = create_db_engine()
-    tables = create_tables(engine)
+def get_user_metrics_from_db(user_id: int) -> str:
+    """
+    Récupère les métriques de performance les plus récentes pour un utilisateur donné.
+    Retourne les données au format JSON.
+    """
+    # Idéalement, l'engine serait passé en argument.
+    with db_engine.connect() as conn:
+        stmt = sa.select(metrics_table).where(metrics_table.c.user_id == user_id).order_by(sa.desc(metrics_table.c.date_calcul))
+        result = conn.execute(stmt).mappings().first()
 
-    with engine.connect() as conn:
-        stmt = tables["metrics"].select().where(tables["metrics"].c.user_id == user_id)
-        result = conn.execute(stmt).fetchone()
+    if not result:
+        return json.dumps({"error": f"Aucune métrique trouvée pour l'utilisateur {user_id}."})
+    
+    return json.dumps(dict(result), default=str)
 
-        if not result:
-            return "Aucune métrique trouvée pour cet utilisateur."
-
-        metrics = dict(result)
-        readable = "\n".join([
-            f"- VMA : {metrics.get('vma_kmh')} km/h",
-            f"- VO2max estimé : {metrics.get('vo2max_estime')}",
-            f"- Charge (7j) : {metrics.get('charge_7j')}",
-            f"- Charge (28j) : {metrics.get('charge_28j')}",
-            f"- Fatigue : {metrics.get('fatigue')}",
-            f"- Forme : {metrics.get('forme')}",
-            f"- Ratio endurance : {metrics.get('ratio_endurance')}",
-            f"- Prédiction 10k : {metrics.get('prediction_10k_min')} minutes"
-        ])
-
-        return f"Métriques de l'utilisateur {user_id} :\n{readable}"
 
 # === Enregistrement des outils ===
-tools = [dummy_weather_tool, get_user_metrics_from_db]
+tools = [get_user_metrics_from_db, get_training_knowledge]
+
+llm = ChatOllama(model="llama3")
+
+llm_with_tools = llm.bind_tools(tools)
+
 
 # === Structure d’état du graphe ===
 class AgentState(TypedDict):
     messages: Annotated[list[AnyMessage], operator.add]
 
-# === LangChain Model ===
-llm = ChatOllama(model="llama3")
-conn = sqlite3.connect(":memory:", check_same_thread=False)  # ou "data/agent_memory.sqlite" si tu veux persister
-memory = SqliteSaver(conn)
 
 # === Fonctions du graphe ===
 def call_llm(state: AgentState) -> AgentState:
-    system_msg = SystemMessage(content="Tu es un assistant sportif intelligent. Utilise les outils si besoin (données utilisateur, météo, etc).")
+    # CORRECTION : On utilise le vrai SYSTEM_PROMPT que nous avons défini
+    system_msg = SystemMessage(content=SYSTEM_PROMPT)
+    
     full_history = [system_msg] + state["messages"]
-    message = llm.invoke(full_history)
-    return {"messages": [message]}
+    
+    response = llm_with_tools.invoke(full_history)
 
-def needs_tool(state: AgentState) -> bool:
-    return len(state["messages"][-1].tool_calls) > 0
+    return {"messages": [response]}
+
+
+def needs_tool(state: AgentState) -> str:
+    if state["messages"][-1].tool_calls:
+        return "action"
+    return END
 
 def use_tool(state: AgentState) -> AgentState:
     tool_calls = state["messages"][-1].tool_calls
     results = []
-
     for call in tool_calls:
-        tool = next((t for t in tools if t.name == call["name"]), None)
-        if tool:
-            rprint(f"[bold cyan]🔧 Utilisation de l'outil : {tool.name}[/bold cyan]")
-            tool_result = tool.invoke(call["args"])
-            results.append(
-                ToolMessage(
-                    tool_call_id=call["id"],
-                    name=call["name"],
-                    content=str(tool_result)
-                )
-            )
+        tool_to_use = {t.name: t for t in tools}[call["name"]]
+        rprint(f"[bold cyan]🔧 Utilisation de l'outil : {tool_to_use.name}({call['args']})[/bold cyan]")
+        output = tool_to_use.invoke(call["args"])
+        results.append(ToolMessage(tool_call_id=call["id"], name=call["name"], content=str(output)))
     return {"messages": results}
 
 # === Construction du graphe LangGraph ===
@@ -107,22 +172,30 @@ graph_builder.add_node("action", use_tool)
 graph_builder.add_conditional_edges("llm", needs_tool, {True: "action", False: END})
 graph_builder.add_edge("action", "llm")
 graph_builder.set_entry_point("llm")
+
+memory=SqliteSaver.from_conn_string(":memory:")
 graph = graph_builder.compile(checkpointer=memory)
 
-# === Boucle interactive CLI ===
+# === Boucle de test CLI améliorée ===
 if __name__ == "__main__":
     rprint("[bold yellow]🎽 Assistant sportif intelligent prêt ! (Tape 'quit' pour sortir)[/bold yellow]")
+    
+    CURRENT_USER_ID = 1
+    rprint(f"[yellow]Utilisateur actuel : ID {CURRENT_USER_ID}[/yellow]")
+  
     while True:
-        user_input = input("🧠 Question : ")
+        user_input = input("🧠 Votre question : ")
         if user_input.lower() in ("quit", "exit", "q"):
             rprint("[bold green]À bientôt ![/bold green]")
             break
 
+        full_input = f"Je suis l'utilisateur {CURRENT_USER_ID}. {user_input}"
+
         for event in graph.stream(
             {"messages": [HumanMessage(content=user_input)]},
-            {"configurable": {"thread_id": "user-thread-001"}}
+            config={"configurable": {"thread_id": "user-thread-001"}}
         ):
             for step in event.values():
                 message = step["messages"][-1]
-                if isinstance(message, AIMessage):
+                if isinstance(message, AIMessage) and message.content:
                     rprint(f"\n🤖 [green]{message.content}[/green]")
