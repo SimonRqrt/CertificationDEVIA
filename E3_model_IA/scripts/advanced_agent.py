@@ -165,16 +165,22 @@ def use_tool(state: AgentState) -> AgentState:
         results.append(ToolMessage(tool_call_id=call["id"], name=call["name"], content=str(output)))
     return {"messages": results}
 
-# === Construction du graphe LangGraph ===
-graph_builder = StateGraph(AgentState)
-graph_builder.add_node("llm", call_llm)
-graph_builder.add_node("action", use_tool)
-graph_builder.add_conditional_edges("llm", needs_tool, {True: "action", False: END})
-graph_builder.add_edge("action", "llm")
-graph_builder.set_entry_point("llm")
+def get_coaching_graph():
+    """
+    Construit et compile le graphe LangGraph de l'agent coach.
+    Retourne l'objet graphe prêt à l'emploi.
+    """
+    graph_builder = StateGraph(AgentState)
+    graph_builder.add_node("llm", call_llm)
+    graph_builder.add_node("action", use_tool)
+    graph_builder.add_conditional_edges("llm", needs_tool, {"action": "action", END: END})
+    graph_builder.add_edge("action", "llm")
+    graph_builder.set_entry_point("llm")
 
-memory=SqliteSaver.from_conn_string(":memory:")
-graph = graph_builder.compile(checkpointer=memory)
+    memory = SqliteSaver.from_conn_string("data/agent_memory.sqlite") # On utilise un fichier pour la persistance
+    graph = graph_builder.compile(checkpointer=memory)
+    rprint("[bold green]✅ Graphe de coaching IA compilé et prêt.[/bold green]")
+    return graph
 
 # === Boucle de test CLI améliorée ===
 if __name__ == "__main__":
