@@ -215,24 +215,44 @@ def compute_performance_metrics(activities_df: pd.DataFrame, user_id: int) -> Di
         return {}
 
     # --- Pré-requis : Nettoyage et conversion de types ---
-    # S'assure que la colonne de date est bien au format datetime pour les comparaisons
-    df = activities_df.copy() # Travailler sur une copie pour éviter les SettingWithCopyWarning
+    df = activities_df.copy()
     df['start_time'] = pd.to_datetime(df['start_time'])
 
-    # Filtrer uniquement les activités de course à pied pour les métriques spécifiques
     running_df = df[df['activity_type'] == 'running'].copy()
     if running_df.empty:
         log.warning("Aucune activité de 'running' trouvée. Certaines métriques ne seront pas calculées.")
     
     now = pd.Timestamp.now()
 
-    # --- 1. Indicateurs de performance (VMA & VO2max) ---
-    # Logique : Basée sur les valeurs maximales enregistrées lors des courses.
-    vo2max_estimee = df['vo2max_estime'].max() if 'vo2max_estime' in df.columns and not df['vo2max_estime'].isnull().all() else None
-    
-    # La vitesse est en m/s, on la convertit en km/h (* 3.6)
-    vma_kmh = (running_df['max_speed'].max() * 3.6) * 1.1 if not running_df.empty and 'max_speed' in running_df else None
-    
+    # --- 1. VMA (priorité au meilleur 1000m, sinon allure sur 6min, sinon vitesse max sur >5min) ---
+    vma_kmh = None
+    vma_source = None
+    if not running_df.empty:
+        # 1. Utilise fastestSplit_1000 si dispo
+        if 'fastest_split_1000' in running_df and running_df['fastest_split_1000'].notna().any():
+            best_1000 = running_df['fastest_split_1000'].min()  # en secondes
+            if best_1000 > 0:
+                vma_kmh = 3600 / best_1000  # 1 km en best_1000 secondes → km/h
+                vma_source = f"VMA estimée sur le meilleur 1000m : {round(vma_kmh,2)} km/h"
+        # 2. Sinon, meilleure allure sur 6 minutes
+        if vma_kmh is None:
+            long_efforts = running_df[running_df['duration_seconds'] >= 6*60]
+            if not long_efforts.empty:
+                best = long_efforts.loc[long_efforts['distance_meters'].idxmax()]
+                vma_kmh = (best['distance_meters'] / best['duration_seconds']) * 3.6
+                vma_source = f"Allure moyenne sur {round(best['duration_seconds']/60,1)} min, distance {round(best['distance_meters']/1000,2)} km"
+        # 3. Sinon, vitesse max sur activité > 5 min
+        if vma_kmh is None:
+            valid = running_df[running_df['duration_seconds'] >= 5*60]
+            if not valid.empty and 'max_speed' in valid:
+                vma_kmh = valid['max_speed'].max() * 3.6
+                vma_source = "Vitesse max sur activité > 5 min"
+    if vma_kmh:
+        vma_kmh = round(vma_kmh, 2)
+        log.info(f"VMA estimée : {vma_kmh} km/h ({vma_source})")
+    else:
+        log.warning("Impossible d'estimer la VMA (pas d'effort suffisant trouvé)")
+
     # --- 2. Charge d'entraînement (modèle TSB simplifié) ---
     # Logique : Somme des charges d'entraînement sur des périodes glissantes.
     # Charge chronique (Forme) sur 28 jours
@@ -253,24 +273,27 @@ def compute_performance_metrics(activities_df: pd.DataFrame, user_id: int) -> Di
     total_runs_count = len(running_df)
     ratio_endurance = long_runs_count / total_runs_count if total_runs_count > 0 else None
 
-    # --- 4. Prédiction de performance (10k) ---
-    # Logique : Utilise le meilleur temps enregistré sur 10km. Si non disponible,
-    # tente une extrapolation à partir de la meilleure performance sur une autre distance.
+    # --- 4. Prédiction 10k (meilleur temps sur 10k, sinon Riegel sur >5km) ---
     prediction_10k = None
+    pred_source = None
     if not running_df.empty and 'fastest_split_10000' in running_df and running_df['fastest_split_10000'].notna().any():
-        # Le temps est en secondes, on le veut en minutes
         prediction_10k = running_df['fastest_split_10000'].min() / 60
+        pred_source = "Meilleur split 10k"
     else:
-        # Fallback : Modèle de Riegel simplifié si pas de 10k enregistré
-        # On prend la meilleure performance (plus courte distance en moins de temps possible)
-        if not running_df.empty and running_df['distance_meters'].notna().all() and running_df['duration_seconds'].notna().all():
-            running_df['allure_s_par_m'] = running_df['duration_seconds'] / running_df['distance_meters']
-            best_perf = running_df.loc[running_df['allure_s_par_m'].idxmin()]
-            t_ref_min = best_perf['duration_seconds'] / 60
-            d_ref_km = best_perf['distance_meters'] / 1000
+        # Cherche la meilleure course > 5km
+        valid = running_df[running_df['distance_meters'] >= 5000]
+        if not valid.empty:
+            best = valid.loc[valid['duration_seconds'].idxmin()]
+            t_ref_min = best['duration_seconds'] / 60
+            d_ref_km = best['distance_meters'] / 1000
             if d_ref_km > 0:
-                 # Formule de Riegel : T2 = T1 * (D2/D1)^1.06
                 prediction_10k = t_ref_min * ((10 / d_ref_km) ** 1.06)
+                pred_source = f"Extrapolation Riegel depuis {round(d_ref_km,2)} km en {round(t_ref_min,1)} min"
+    if prediction_10k:
+        prediction_10k = round(prediction_10k, 1)
+        log.info(f"Prédiction 10k : {prediction_10k} min ({pred_source})")
+    else:
+        log.warning("Impossible d'estimer la prédiction 10k (pas de course suffisante)")
 
     # --- 5. Recommandation du jour ---
     # Logique : Règle métier simple basée sur le ratio fatigue/forme.
@@ -287,16 +310,55 @@ def compute_performance_metrics(activities_df: pd.DataFrame, user_id: int) -> Di
     metrics = {
         "user_id": user_id,
         "date_calcul": now.isoformat(),
-        "vma_kmh": round(vma_kmh, 2) if vma_kmh else None,
-        "vo2max_estime": round(float(vo2max_estimee), 1) if vo2max_estimee and pd.notna(vo2max_estimee) else None,
+        "vma_kmh": vma_kmh,
+        "vo2max_estime": round(float(df['vo2max_estime'].max()), 1) if 'vo2max_estime' in df.columns and not df['vo2max_estime'].isnull().all() else None,
         "charge_7j": round(float(charge_7j), 1),
         "charge_28j": round(float(charge_28j), 1),
         "forme": round(float(forme), 1),
         "fatigue": round(float(fatigue), 1),
         "ratio_endurance": round(ratio_endurance, 2) if ratio_endurance is not None else None,
-        "prediction_10k_min": round(prediction_10k, 1) if prediction_10k else None,
+        "prediction_10k_min": prediction_10k,
         "recommandation_jour": reco
     }
     
     log.info(f"Métriques finales calculées pour l'utilisateur {user_id}: {metrics}")
     return metrics
+
+def extract_splits_from_activities(activities):
+    """
+    Extrait les splits du champ splitSummaries de chaque activité Garmin.
+    """
+    all_splits = []
+    for activity in activities:
+        activity_id = activity.get("activityId")
+        split_summaries = activity.get("splitSummaries", [])
+        if not activity_id or not split_summaries:
+            continue
+        for idx, split in enumerate(split_summaries):
+            if not isinstance(split, dict):
+                continue
+            all_splits.append({
+                "activity_id": activity_id,
+                "split_index": idx,
+                "split_type": split.get("splitType"),
+                "duration_seconds": split.get("duration"),
+                "distance_meters": split.get("distance"),
+                "average_speed": split.get("averageSpeed"),
+                "max_speed": split.get("maxSpeed"),
+                "elevation_gain": split.get("totalAscent"),
+                "elevation_loss": split.get("elevationLoss"),
+            })
+    return all_splits
+
+def fetch_and_store_splits(garmin, engine, tables, activities):
+    """
+    Extrait les splits depuis splitSummaries des activités et les insère dans la table splits.
+    """
+    splits_table = tables["splits"]
+    all_splits = extract_splits_from_activities(activities)
+    if all_splits:
+        with engine.begin() as conn:
+            conn.execute(splits_table.insert(), all_splits)
+        log.info(f"{len(all_splits)} splits insérés dans la table splits.")
+    else:
+        log.info("Aucun split à insérer (aucun splitSummaries trouvé dans les activités).")

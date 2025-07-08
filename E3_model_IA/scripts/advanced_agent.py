@@ -5,27 +5,27 @@ from pathlib import Path
 from rich import print as rprint
 from typing import Annotated, List, Any
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+# sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import operator
 from typing_extensions import TypedDict
 
 from langgraph.graph import END, StateGraph
 from langgraph.checkpoint.sqlite import SqliteSaver
-
 from langchain_core.messages import HumanMessage, ToolMessage, SystemMessage, AnyMessage
 from langchain_core.messages.ai import AIMessage
 
-from langchain_community.chat_models import ChatOllama
+from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_core.tools import tool
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 import sqlalchemy as sa
+import sqlite3
 
-from E1_gestion_donnees.db_manager import create_db_engine, create_tables
+from E1_gestion_donnees.db_manager import create_db_engine
+from src.config import DATABASE_URL, OLLAMA_BASE_URL
 
 
 # DÉFINIT LA PERSONNALITÉ ET LES RÈGLES DE L'AGENT
@@ -70,16 +70,12 @@ try:
     else:
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         splits = text_splitter.split_documents(documents)
-        vectorstore = FAISS.from_documents(documents=splits, embedding=OllamaEmbeddings(model="llama3"))
+        vectorstore = FAISS.from_documents(documents=splits, embedding=OllamaEmbeddings(model="llama3", base_url=OLLAMA_BASE_URL))
         knowledge_retriever = vectorstore.as_retriever()
         rprint("[bold green]✅ Base de connaissances RAG initialisée avec succès.[/bold green]")
 except Exception as e:
     rprint(f"[bold red]Erreur lors de l'initialisation du RAG : {e}[/bold red]")
     knowledge_retriever = None
-
-db_engine = create_db_engine()
-db_metadata = sa.MetaData()
-metrics_table = sa.Table("metrics", db_metadata, autoload_with=db_engine)
 
 
 
@@ -95,7 +91,6 @@ def dummy_weather_tool(location: str) -> str:
 
 # --- Initialisation de la base de connaissances (RAG) ---
 # Ceci ne devrait être fait qu'une seule fois au démarrage de l'application
-@tool
 def get_training_knowledge(query: str) -> str:
     """
     Recherche dans la base de connaissances sportives des informations pertinentes
@@ -108,32 +103,37 @@ def get_training_knowledge(query: str) -> str:
     docs = knowledge_retriever.invoke(query)
     return "\n\n".join([doc.page_content for doc in docs])
 
-@tool
 def get_user_metrics_from_db(user_id: int) -> str:
     """
     Récupère les métriques de performance les plus récentes pour un utilisateur donné.
     Retourne les données au format JSON.
     """
-    # Idéalement, l'engine serait passé en argument.
-    with db_engine.connect() as conn:
-        stmt = sa.select(metrics_table).where(metrics_table.c.user_id == user_id).order_by(sa.desc(metrics_table.c.date_calcul))
-        result = conn.execute(stmt).mappings().first()
+    try:
+        engine = create_db_engine()
+        metadata = sa.MetaData()
+        metrics_table = sa.Table("metrics", metadata, autoload_with=engine)
+        with engine.connect() as conn:
+            stmt = sa.select(metrics_table).where(metrics_table.c.user_id == user_id).order_by(sa.desc(metrics_table.c.date_calcul))
+            result = conn.execute(stmt).mappings().first()
 
-    if not result:
-        return json.dumps({"error": f"Aucune métrique trouvée pour l'utilisateur {user_id}."})
-    
+        if not result:
+            return json.dumps({"error": f"Aucune métrique trouvée pour l'utilisateur {user_id}."})
+    except Exception as e:
+        rprint(f"[bold red]Erreur dans l'outil get_user_metrics_from_db : {e}[/bold red]")
+        return json.dumps({"error": f"Erreur de base de données lors de la récupération des métriques pour l'utilisateur {user_id}."})
+
     return json.dumps(dict(result), default=str)
 
 
 # === Enregistrement des outils ===
 tools = [get_user_metrics_from_db, get_training_knowledge]
 
-llm = ChatOllama(model="llama3")
+llm = ChatOllama(model="llama3", base_url=OLLAMA_BASE_URL)
 
-llm_with_tools = llm.bind_tools(tools)
+# llm_with_tools = llm.bind_tools(tools)
 
 
-# === Structure d’état du graphe ===
+# === Structure d'état du graphe ===
 class AgentState(TypedDict):
     messages: Annotated[list[AnyMessage], operator.add]
 
@@ -145,7 +145,7 @@ def call_llm(state: AgentState) -> AgentState:
     
     full_history = [system_msg] + state["messages"]
     
-    response = llm_with_tools.invoke(full_history)
+    response = llm.invoke(full_history, tools=tools)
 
     return {"messages": [response]}
 
@@ -170,6 +170,7 @@ def get_coaching_graph():
     Construit et compile le graphe LangGraph de l'agent coach.
     Retourne l'objet graphe prêt à l'emploi.
     """
+
     graph_builder = StateGraph(AgentState)
     graph_builder.add_node("llm", call_llm)
     graph_builder.add_node("action", use_tool)
@@ -177,15 +178,23 @@ def get_coaching_graph():
     graph_builder.add_edge("action", "llm")
     graph_builder.set_entry_point("llm")
 
-    memory = SqliteSaver.from_conn_string("data/agent_memory.sqlite") # On utilise un fichier pour la persistance
+    try:
+        conn = sqlite3.connect("data/agent_memory.sqlite", check_same_thread=False)
+        memory = SqliteSaver(conn=conn)
+    except Exception as e:
+        rprint(f"[bold red]ERREUR CRITIQUE : Impossible de se connecter à la BDD pour la mémoire de l'agent : {e}[/bold red]")
+        raise
+
     graph = graph_builder.compile(checkpointer=memory)
-    rprint("[bold green]✅ Graphe de coaching IA compilé et prêt.[/bold green]")
+    rprint("[bold green]✅ Graphe de coaching IA compilé.[/bold green]")
     return graph
+
 
 # === Boucle de test CLI améliorée ===
 if __name__ == "__main__":
     rprint("[bold yellow]🎽 Assistant sportif intelligent prêt ! (Tape 'quit' pour sortir)[/bold yellow]")
     
+    graph = get_coaching_graph()
     CURRENT_USER_ID = 1
     rprint(f"[yellow]Utilisateur actuel : ID {CURRENT_USER_ID}[/yellow]")
   
@@ -198,8 +207,8 @@ if __name__ == "__main__":
         full_input = f"Je suis l'utilisateur {CURRENT_USER_ID}. {user_input}"
 
         for event in graph.stream(
-            {"messages": [HumanMessage(content=user_input)]},
-            config={"configurable": {"thread_id": "user-thread-001"}}
+            {"messages": [HumanMessage(content=full_input)]},
+            config={"configurable": {"thread_id": f"cli-thread-user-{CURRENT_USER_ID}"}}
         ):
             for step in event.values():
                 message = step["messages"][-1]

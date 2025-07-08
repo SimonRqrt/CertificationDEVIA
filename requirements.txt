@@ -2,33 +2,53 @@
 garminconnect
 
 # Gestion des environnements
-python-dotenv==1.0.0
+python-dotenv
 
 # Traitement des données
-pandas==2.0.3
-numpy==1.24.4
+pandas
+numpy
 
 # Base de données
-SQLAlchemy==2.0.23
-psycopg2-binary==2.9.7  # Pour PostgreSQL (optionnel)
-alembic==1.12.0         # Pour les migrations de base de données
+SQLAlchemy
+pyodbc
+alembic      # Pour les migrations de base de données
+aiosqlite
 
 # API REST
-fastapi==0.103.1
-uvicorn==0.23.2
-pydantic==2.3.0
+fastapi
+uvicorn
+pydantic
 
 # Utilitaires
-python-dateutil==2.8.2
-requests==2.31.0
+python-dateutil
+requests
 
 # Tests
-pytest==7.4.2
-httpx==0.25.0           # Pour tester l'API FastAPI
+pytest
+httpx      # Pour tester l'API FastAPI
 
 # Planification
-schedule==1.2.0         # Pour la planification simple
+schedule         # Pour la planification simple
 # ou APScheduler==3.10.4  # Pour une planification plus avancée
 
 # Logging
-loguru==0.7.2
+loguru
+
+langchain
+langchain-ollama
+langchain-community
+langchain-core
+langgraph
+langgraph-checkpoint-sqlite
+ollama
+faiss-cpu
+
+streamlit
+folium
+streamlit-folium
+
+rich
+tqdm
+unstructured
+python-magic
+markdown

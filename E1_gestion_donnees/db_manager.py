@@ -112,6 +112,21 @@ def create_tables(engine) -> Dict[str, sa.Table]:
         sa.Column("recommandation_jour", sa.Text)
     )
 
+    # Table des splits Garmin
+    splits = sa.Table(
+        "splits", metadata,
+        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("activity_id", sa.BigInteger, sa.ForeignKey("activities.activity_id"), nullable=False),
+        sa.Column("split_index", sa.Integer),
+        sa.Column("split_type", sa.String(50)),
+        sa.Column("duration_seconds", sa.Float),
+        sa.Column("distance_meters", sa.Float),
+        sa.Column("average_speed", sa.Float),
+        sa.Column("max_speed", sa.Float),
+        sa.Column("elevation_gain", sa.Float),
+        sa.Column("elevation_loss", sa.Float)
+    )
+
     try:
         metadata.create_all(engine)
         log.info("Vérification des tables terminée. Les tables sont prêtes.")
@@ -132,6 +147,36 @@ def insert_user(engine, tables, user_data):
         except Exception as e:
             print(f"Erreur lors de l'insertion de l'utilisateur : {e}")
 
+def ensure_user_exists(engine, tables, user_id, user_defaults=None):
+    """Vérifie que l'utilisateur existe, sinon l'insère avec des valeurs par défaut."""
+    with engine.connect() as conn:
+        result = conn.execute(
+            tables["users"].select().where(tables["users"].c.user_id == user_id)
+        ).fetchone()
+        if not result:
+            user_data = {"user_id": user_id}
+            if user_defaults:
+                user_data.update(user_defaults)
+            else:
+                # Valeurs par défaut minimalistes, à adapter selon ton modèle
+                user_data.update({
+                    "nom": "Test",
+                    "prenom": "User",
+                    "age": 30,
+                    "sexe": "Homme",
+                    "taille_cm": 180,
+                    "poids_kg": 75.0,
+                    "niveau": "Débutant",
+                    "objectif_type": "10km",
+                    "objectif_temps": "00:50:00",
+                    "disponibilite": "[]",
+                    "blessures": "aucune",
+                    "terrain_prefere": "Route",
+                    "frequence_semaine": 3
+                })
+            conn.execute(tables["users"].insert().values(**user_data))
+            conn.commit()
+            log.info(f"Utilisateur user_id={user_id} inséré automatiquement.")
 
 def store_activities_in_db(engine, tables: Dict, processed_data: List[Dict[str, Any]]):
     """
@@ -143,6 +188,11 @@ def store_activities_in_db(engine, tables: Dict, processed_data: List[Dict[str, 
         return
 
     activities_table = tables["activities"]
+    # --- AJOUT : Vérifier que l'utilisateur existe avant insertion ---
+    if processed_data:
+        user_id = processed_data[0].get("user_id")
+        if user_id is not None:
+            ensure_user_exists(engine, tables, user_id)
     
     # 1. Récupérer tous les IDs existants en une seule requête
     with engine.connect() as conn:
@@ -178,40 +228,38 @@ def store_activities_in_db(engine, tables: Dict, processed_data: List[Dict[str, 
 def store_metrics_in_db(engine, tables: Dict, metrics_data: Dict[str, Any]):
     """
     Insère ou met à jour les métriques pour un utilisateur à une date donnée.
-    Utilise une stratégie "UPSERT" pour éviter les doublons.
+    Compatible avec SQL Server (pas d'ON CONFLICT).
     """
     if not metrics_data:
         log.warning("Aucune donnée de métrique à stocker.")
         return
 
     metrics_table = tables["metrics"]
-    
-    # La commande 'ON CONFLICT' est spécifique à PostgreSQL et est très efficace.
-    # Pour SQLite, la logique DELETE + INSERT que j'avais proposée avant est une bonne alternative.
-    insert_stmt = pg_insert(metrics_table).values(metrics_data)
-    
-    # Si un enregistrement existe déjà pour ce user_id et cette date_calcul, on met à jour les champs.
-    # On doit identifier une contrainte unique pour que ON CONFLICT fonctionne.
-    # Supposons une contrainte unique sur (user_id, date_calcul).
-    # NOTE: Il faudrait créer cette contrainte unique dans la BDD.
-    # ALTER TABLE metrics ADD CONSTRAINT unique_user_date UNIQUE (user_id, date_calcul);
-    
-    update_dict = {c.name: c for c in insert_stmt.excluded if c.name not in ['user_id', 'date_calcul']}
-    
-    upsert_stmt = insert_stmt.on_conflict_do_update(
-        index_elements=['user_id', 'date_calcul'], # La contrainte unique
-        set_=update_dict
-    )
-    
-    try:
-        with engine.begin() as conn:
-            conn.execute(upsert_stmt)
-        log.info(f"Mètriques pour l'utilisateur {metrics_data.get('user_id')} insérées/mises à jour avec succès.")
-    except Exception as e:
-        log.error(f"Erreur lors de l'UPSERT des métriques.", exc_info=True)
-        # Pour un projet où la compatibilité multi-BDD est clé, on utiliserait la méthode DELETE+INSERT.
-        # Mais pour un projet qui a choisi PostgreSQL, c'est la meilleure approche.
-        raise
+    user_id = metrics_data["user_id"]
+    date_calcul = metrics_data["date_calcul"]
+
+    with engine.connect() as conn:
+        # Vérifier si la métrique existe déjà
+        select_stmt = metrics_table.select().where(
+            (metrics_table.c.user_id == user_id) &
+            (metrics_table.c.date_calcul == date_calcul)
+        )
+        result = conn.execute(select_stmt).fetchone()
+
+        if result:
+            # Faire un update
+            update_stmt = metrics_table.update().where(
+                (metrics_table.c.user_id == user_id) &
+                (metrics_table.c.date_calcul == date_calcul)
+            ).values(**metrics_data)
+            conn.execute(update_stmt)
+            log.info(f"Métriques mises à jour pour user_id={user_id}, date={date_calcul}")
+        else:
+            # Faire un insert
+            insert_stmt = metrics_table.insert().values(**metrics_data)
+            conn.execute(insert_stmt)
+            log.info(f"Nouvelles métriques insérées pour user_id={user_id}, date={date_calcul}")
+        conn.commit()
 
 def get_activities_from_db(engine, tables, limit=10, offset=0):
     """Récupère les activités depuis la base de données"""

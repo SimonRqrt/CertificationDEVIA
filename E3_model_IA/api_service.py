@@ -1,31 +1,52 @@
 
 import os
-from fastapi import FastAPI, HTTPException, Depends, Security
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException, Depends, Request, Security
 from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel
 from typing import List, Optional
 import uvicorn
+from rich import print as rprint
 from starlette.responses import StreamingResponse
 
+from E1_gestion_donnees.db_manager import create_db_engine, create_tables, get_activities_from_db, get_activity_by_id
 from E3_model_IA.scripts.advanced_agent import get_coaching_graph
 from langchain_core.messages import HumanMessage
 import json
 
-import sqlalchemy as sa
-from E1_gestion_donnees.db_manager import create_db_engine, create_tables, get_activities_from_db, get_activity_by_id
-from src.config import API_HOST, API_PORT, API_DEBUG
+from src.config import API_HOST, API_PORT, API_DEBUG, API_KEY, API_KEY_NAME, DATABASE_URL
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    rprint("[yellow]Démarrage de l'application et des services...[/yellow]")
+
+    app.state.db_engine = create_db_engine()
+    app.state.db_tables = create_tables(app.state.db_engine)
+    rprint("[green]✅ Moteur de base de données Azure SQLpour les données d'activité initialisé.[/green]")
+
+    coaching_agent = get_coaching_graph()
+    app.state.coaching_agent = coaching_agent
+
+    rprint("[bold green]✅ Application démarrée. L'agent est prêt.[/bold green]")
+
+    yield
+
+    rprint("[yellow]Arrêt de l'application...[/yellow]")
+
 
 
 # On récupère la clé API attendue depuis les variables d'environnement
-API_KEY = os.environ.get("API_KEY", "une-cle-secrete-par-defaut") 
-API_KEY_NAME = "X-API-Key"
+app = FastAPI(
+    title="Coach running AI API",
+    description="API pour accéder aux données Garmin et interagir avec l'assistant de coaching IA.",
+    version="1.1.0",
+    lifespan=lifespan
+)
+
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 
-engine = create_db_engine()
-tables = create_tables(engine)
 
-# Initialisation de la base de données
-coaching_agent = get_coaching_graph()
 
 async def get_api_key(key: str = Security(api_key_header)):
     """Vérifie la clé API fournie dans les en-têtes."""
@@ -33,6 +54,7 @@ async def get_api_key(key: str = Security(api_key_header)):
         return key
     else:
         raise HTTPException(status_code=403, detail="Clé API invalide ou manquante.")
+    
 
 class ChatRequest(BaseModel):
     user_id: int
@@ -69,90 +91,49 @@ class GPSData(BaseModel):
         from_attributes = True
 
 
-# Création de l'application FastAPI
-app = FastAPI(
-    title="Coach running AI API",
-    description="API pour accéder aux données Garmin et interagir avec l'assistant de coaching IA.",
-    version="1.0.0"
-)
-
-
 @app.get("/")
 def root():
     return {"message": "Bienvenue sur l'API Coach AI Garmin Data"}
 
 
 @app.get("/activities/", response_model=List[Activity], tags=["Données"])
-def get_activities(skip: int = 0, limit: int = 10):
-    """Récupérer la liste des activités"""
+def list_activities(request: Request, skip: int = 0, limit: int = 10):
+    engine = request.app.state.db_engine
+    tables = request.app.state.db_tables
     results = get_activities_from_db(engine, tables, limit, skip)
     return [dict(row._mapping) for row in results]
 
 @app.get("/activities/{activity_id}", response_model=dict, tags=["Données"])
-def get_activity(activity_id: int):
-    """Récupérer une activité spécifique par son ID"""
+def get_activity(activity_id: int, request: Request):
+    engine = request.app.state.db_engine
+    tables = request.app.state.db_tables
     result = get_activity_by_id(engine, tables, activity_id)
     if result is None:
         raise HTTPException(status_code=404, detail="Activité non trouvée")
-    return dict(result)
+    return dict(result._mapping)
 
-@app.get("/activities/type/{activity_type}", response_model=List[dict])
-def get_activities_by_type(activity_type: str, skip: int = 0, limit: int = 10):
-    """Récupérer les activités par type"""
-    with engine.connect() as conn:
-        select_stmt = sa.select(tables["activities"]).where(
-            tables["activities"].c.activity_type == activity_type
-        ).limit(limit).offset(skip)
-        results = conn.execute(select_stmt).fetchall()
-    return [dict(row._mapping) for row in results]
-
-@app.get("/gps_data/{activity_id}/gps", response_model=List[GPSData])
-def get_activity_gps(activity_id: int):
-    """Récupérer les données GPS d'une activité spécifique"""
-    with engine.connect() as conn:
-        select_stmt = sa.select(tables["gps_data"]).where(
-            tables["gps_data"].c.activity_id == activity_id
-        )
-        results = conn.execute(select_stmt).fetchall()
-    
-    if not results:
-        raise HTTPException(status_code=404, detail="Données GPS non trouvées pour cette activité")
-
-    return [dict(row._mapping) for row in results]
+# \== Endpoint d'IA (Bloc E3) ==
 
 @app.post("/v1/coaching/chat", tags=["Coaching IA"])
 async def chat_with_coach(
-    request: ChatRequest, 
-    api_key: str = Depends(get_api_key) # Sécurisation de l'endpoint
+    chat_request: ChatRequest,
+    fastapi_request: Request,
+    api_key: str = Depends(get_api_key)
 ):
-    """
-    Communique avec l'agent de coaching IA.
-    Cet endpoint utilise le streaming pour renvoyer la réponse mot par mot.
-    """
-    # On construit le prompt pour l'agent
-    full_input = f"Je suis l'utilisateur {request.user_id}. {request.message}"
-    
-    # On définit un ID de conversation unique par utilisateur pour garder l'historique
-    thread_id = request.thread_id or f"user-thread-{request.user_id}"
+    coaching_agent = fastapi_request.app.state.coaching_agent
+    full_input = f"Je suis l'utilisateur {chat_request.user_id}. {chat_request.message}"
+    thread_id = chat_request.thread_id or f"user-thread-{chat_request.user_id}"
     config = {"configurable": {"thread_id": thread_id}}
-    
+
     async def stream_response():
-        """Générateur qui produit les morceaux de la réponse de l'IA."""
-        # `astream` est la version asynchrone de `stream`
-        async for event in coaching_agent.astream(
-            {"messages": [HumanMessage(content=full_input)]},
-            config=config
-        ):
+        async for event in coaching_agent.astream({"messages": [HumanMessage(content=full_input)]}, config=config):
             for step in event.values():
                 message = step["messages"][-1]
                 if hasattr(message, 'content') and message.content:
-                    # On envoie chaque morceau de contenu dès qu'il est disponible
-                    yield json.dumps({"type": "content", "data": message.content})
-        # On peut envoyer un message de fin si on veut
-        yield json.dumps({"type": "end", "data": "Stream finished."})
+                    yield json.dumps({"type": "content", "data": message.content}) + "\n"
+        yield json.dumps({"type": "end", "data": "Stream finished."}) + "\n"
 
     return StreamingResponse(stream_response(), media_type="application/x-ndjson")
-
 
 
 def start_api():
