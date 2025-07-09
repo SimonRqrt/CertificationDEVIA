@@ -31,7 +31,7 @@ if DB_TYPE == "sqlite":
 elif DB_TYPE == "sqlserver":
     encoded_password = quote_plus(DB_PASSWORD)
     DATABASE_URL = ( 
-        f"mssql+pyodbc://{DB_USER}:{encoded_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}?driver=ODBC+Driver+17+for+SQL+Server"
+        f"mssql+pyodbc://{DB_USER}:{encoded_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}?driver=ODBC+Driver+18+for+SQL+Server"
     )
 else:
     raise ValueError(f"Type de base de données non pris en charge: {DB_TYPE}")
@@ -40,8 +40,15 @@ else:
 API_HOST = os.environ.get("API_HOST", "0.0.0.0")
 API_PORT = int(os.environ.get("API_PORT", "8000"))
 API_DEBUG = os.environ.get("API_DEBUG", "False").lower() == "true"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL")
+# --- AJOUTEZ CE BLOC DE DEBUG TEMPORAIRE ---
+if OPENAI_API_KEY:
+    # On affiche uniquement les 4 derniers caractères pour la sécurité
+    print(f"🔑 Clé API trouvée et chargée, se terminant par : ...{OPENAI_API_KEY[-4:]}")
+else:
+    print("❌ Aucune clé API (OPENAI_API_KEY) n'a été trouvée dans l'environnement.")
+# --- FIN DE L'AJOUT DE DEBUG ---
 
 # Planification
 FETCH_INTERVAL_HOURS = int(os.environ.get("FETCH_INTERVAL_HOURS", "12"))

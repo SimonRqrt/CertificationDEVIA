@@ -2,16 +2,6 @@
 # La section 'services' définit tous les conteneurs de notre application
 services:
 
-  ollama:
-    image: ollama/ollama
-    container_name: coach_ai_ollama
-    volumes:
-      - ollama_data:/root/.ollama
-    ports:
-      - "11434:11434"
-    restart: unless-stopped
-
-
   # Service 1: Le backend FastAPI (API & IA)
   backend:
     container_name: coach_ai_backend
@@ -40,6 +30,4 @@ services:
       - backend
     restart: unless-stopped
 
-# Définition du volume nommé utilisé par le service 'db'
-volumes:
-  ollama_data:
+

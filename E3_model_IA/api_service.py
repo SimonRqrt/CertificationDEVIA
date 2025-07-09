@@ -14,7 +14,7 @@ from E3_model_IA.scripts.advanced_agent import get_coaching_graph
 from langchain_core.messages import HumanMessage
 import json
 
-from src.config import API_HOST, API_PORT, API_DEBUG, API_KEY, API_KEY_NAME, DATABASE_URL
+from src.config import API_HOST, API_PORT, API_DEBUG, DATABASE_URL
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
     app.state.db_tables = create_tables(app.state.db_engine)
     rprint("[green]✅ Moteur de base de données Azure SQLpour les données d'activité initialisé.[/green]")
 
-    coaching_agent = get_coaching_graph()
+    coaching_agent = await get_coaching_graph()
     app.state.coaching_agent = coaching_agent
 
     rprint("[bold green]✅ Application démarrée. L'agent est prêt.[/bold green]")
@@ -44,13 +44,15 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+EXPECTED_API_KEY = os.getenv("API_KEY", "default_key")
+API_KEY_NAME = "X-API-Key"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 
 
 
 async def get_api_key(key: str = Security(api_key_header)):
     """Vérifie la clé API fournie dans les en-têtes."""
-    if key == API_KEY:
+    if key == EXPECTED_API_KEY:
         return key
     else:
         raise HTTPException(status_code=403, detail="Clé API invalide ou manquante.")

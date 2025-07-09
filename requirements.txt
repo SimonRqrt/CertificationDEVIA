@@ -35,12 +35,13 @@ schedule         # Pour la planification simple
 loguru
 
 langchain
-langchain-ollama
+# langchain-ollama
 langchain-community
 langchain-core
 langgraph
 langgraph-checkpoint-sqlite
-ollama
+openai
+langchain-openai
 faiss-cpu
 
 streamlit

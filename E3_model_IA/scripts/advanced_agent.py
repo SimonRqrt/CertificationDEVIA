@@ -4,18 +4,17 @@ import json
 from pathlib import Path
 from rich import print as rprint
 from typing import Annotated, List, Any
-
-# sys.path.append(str(Path(__file__).resolve().parent.parent))
+from dotenv import load_dotenv
 
 import operator
 from typing_extensions import TypedDict
 
 from langgraph.graph import END, StateGraph
-from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langchain_core.messages import HumanMessage, ToolMessage, SystemMessage, AnyMessage
 from langchain_core.messages.ai import AIMessage
 
-from langchain_ollama import ChatOllama, OllamaEmbeddings
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_core.tools import tool
@@ -23,14 +22,22 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 import sqlalchemy as sa
 import sqlite3
+import asyncio
+import aiosqlite
 
 from E1_gestion_donnees.db_manager import create_db_engine
-from src.config import DATABASE_URL, OLLAMA_BASE_URL
+from src.config import DATABASE_URL, OPENAI_API_KEY
 
+# Chargement des variables d'environnement
+load_dotenv()
+api_key = OPENAI_API_KEY
+
+if not api_key:
+    raise ValueError("❌ Clé API OpenAI manquante. Assurez-vous que OPENAI_API_KEY est bien définie dans le fichier .env.")
 
 # DÉFINIT LA PERSONNALITÉ ET LES RÈGLES DE L'AGENT
 SYSTEM_PROMPT = """
-Tu es un coach sportif expert, prudent et encourageant, basé sur les données. Ton nom est "Coach AI".
+Tu es un coach sportif expert, prudent et encourageant, basé sur les données. Ton nom est "Coach Michael", mais tu précises quand tu te présentes que tu es un coach IA. Tu dois demander à l'utilisateur s'il préfère que tu sois un coach plutôt aggressif, doux, motivant, pour que tu adoptes ta personnalité en fonction de ses réponses.
 
 Ta mission est de créer des plans d'entraînement hebdomadaires personnalisés.
 
@@ -58,29 +65,30 @@ Quand tu présentes un plan d'entraînement, utilise TOUJOURS le format Markdown
 **Important :** Sois toujours positif et prudent. Ajoute toujours une note pour rappeler à l'utilisateur d'écouter son corps et de consulter un médecin.
 """
 
+# Initialisation du LLM et des embeddings
+llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, api_key=api_key)
+embedding = OpenAIEmbeddings(api_key=api_key)
 
-# --- Initialisation des Outils et Services ---
-
+# Chargement des documents et initialisation de la base de connaissances
 try:
     loader = DirectoryLoader("knowledge_base/", glob="**/*.md", show_progress=True)
     documents = loader.load()
     if not documents:
-        rprint("[bold red]AVERTISSEMENT : Le dossier 'knowledge_base' est vide ou introuvable. L'outil de RAG ne fonctionnera pas.[/bold red]")
+        rprint("[bold red]⚠️ Dossier 'knowledge_base' vide ou manquant. L'outil RAG ne fonctionnera pas.[/bold red]")
         knowledge_retriever = None
     else:
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         splits = text_splitter.split_documents(documents)
-        vectorstore = FAISS.from_documents(documents=splits, embedding=OllamaEmbeddings(model="llama3", base_url=OLLAMA_BASE_URL))
+        vectorstore = FAISS.from_documents(documents=splits, embedding=embedding)
         knowledge_retriever = vectorstore.as_retriever()
-        rprint("[bold green]✅ Base de connaissances RAG initialisée avec succès.[/bold green]")
+        rprint("[bold green]✅ Base de connaissances initialisée avec succès.[/bold green]")
 except Exception as e:
     rprint(f"[bold red]Erreur lors de l'initialisation du RAG : {e}[/bold red]")
     knowledge_retriever = None
 
 
-
 @tool
-def dummy_weather_tool(location: str) -> str:
+def get_weather_forecast(location: str) -> str:
     """Renvoie la météo simulée pour un lieu donné."""
     weather_data = {
         "Paris": "☁️ 12°C, nuageux, vent modéré",
@@ -89,8 +97,8 @@ def dummy_weather_tool(location: str) -> str:
     }
     return weather_data.get(location, f"Météo inconnue pour {location}")
 
-# --- Initialisation de la base de connaissances (RAG) ---
-# Ceci ne devrait être fait qu'une seule fois au démarrage de l'application
+
+@tool
 def get_training_knowledge(query: str) -> str:
     """
     Recherche dans la base de connaissances sportives des informations pertinentes
@@ -100,9 +108,15 @@ def get_training_knowledge(query: str) -> str:
     if knowledge_retriever is None:
         return "Erreur : La base de connaissances n'est pas disponible."
     
-    docs = knowledge_retriever.invoke(query)
-    return "\n\n".join([doc.page_content for doc in docs])
+    try:
+        docs = knowledge_retriever.invoke(query)
+        return "\n\n".join([doc.page_content for doc in docs])
+    except Exception as e:
+        rprint(f"[bold red]Erreur lors de la recherche dans la base de connaissances : {e}[/bold red]")
+        return f"Erreur lors de la recherche : {str(e)}"
 
+
+@tool
 def get_user_metrics_from_db(user_id: int) -> str:
     """
     Récupère les métriques de performance les plus récentes pour un utilisateur donné.
@@ -113,24 +127,26 @@ def get_user_metrics_from_db(user_id: int) -> str:
         metadata = sa.MetaData()
         metrics_table = sa.Table("metrics", metadata, autoload_with=engine)
         with engine.connect() as conn:
-            stmt = sa.select(metrics_table).where(metrics_table.c.user_id == user_id).order_by(sa.desc(metrics_table.c.date_calcul))
+            stmt = sa.select(metrics_table).where(
+                metrics_table.c.user_id == user_id
+            ).order_by(sa.desc(metrics_table.c.date_calcul))
             result = conn.execute(stmt).mappings().first()
 
         if not result:
             return json.dumps({"error": f"Aucune métrique trouvée pour l'utilisateur {user_id}."})
+        
+        return json.dumps(dict(result), default=str)
+    
     except Exception as e:
         rprint(f"[bold red]Erreur dans l'outil get_user_metrics_from_db : {e}[/bold red]")
         return json.dumps({"error": f"Erreur de base de données lors de la récupération des métriques pour l'utilisateur {user_id}."})
 
-    return json.dumps(dict(result), default=str)
-
 
 # === Enregistrement des outils ===
-tools = [get_user_metrics_from_db, get_training_knowledge]
+tools = [get_user_metrics_from_db, get_training_knowledge, get_weather_forecast]
 
-llm = ChatOllama(model="llama3", base_url=OLLAMA_BASE_URL)
-
-# llm_with_tools = llm.bind_tools(tools)
+# Réinitialisation du LLM avec les outils
+llm_with_tools = llm.bind_tools(tools)
 
 
 # === Structure d'état du graphe ===
@@ -140,37 +156,88 @@ class AgentState(TypedDict):
 
 # === Fonctions du graphe ===
 def call_llm(state: AgentState) -> AgentState:
-    # CORRECTION : On utilise le vrai SYSTEM_PROMPT que nous avons défini
     system_msg = SystemMessage(content=SYSTEM_PROMPT)
-    
     full_history = [system_msg] + state["messages"]
     
-    response = llm.invoke(full_history, tools=tools)
-
-    return {"messages": [response]}
+    try:
+        response = llm_with_tools.invoke(full_history)
+        return {"messages": [response]}
+    except Exception as e:
+        rprint(f"[bold red]Erreur lors de l'appel au LLM : {e}[/bold red]")
+        error_msg = AIMessage(content=f"Désolé, une erreur s'est produite : {str(e)}")
+        return {"messages": [error_msg]}
 
 
 def needs_tool(state: AgentState) -> str:
-    if state["messages"][-1].tool_calls:
+    last_message = state["messages"][-1]
+    if hasattr(last_message, 'tool_calls') and last_message.tool_calls:
         return "action"
     return END
+
 
 def use_tool(state: AgentState) -> AgentState:
     tool_calls = state["messages"][-1].tool_calls
     results = []
+    
+    # Création du dictionnaire des outils disponibles
+    available_tools = {t.name: t for t in tools}
+    
     for call in tool_calls:
-        tool_to_use = {t.name: t for t in tools}[call["name"]]
-        rprint(f"[bold cyan]🔧 Utilisation de l'outil : {tool_to_use.name}({call['args']})[/bold cyan]")
-        output = tool_to_use.invoke(call["args"])
-        results.append(ToolMessage(tool_call_id=call["id"], name=call["name"], content=str(output)))
+        tool_name = call["name"]
+        if tool_name in available_tools:
+            tool_to_use = available_tools[tool_name]
+            rprint(f"[bold cyan]🔧 Utilisation de l'outil : {tool_to_use.name}({call['args']})[/bold cyan]")
+            
+            try:
+                output = tool_to_use.invoke(call["args"])
+                results.append(ToolMessage(
+                    tool_call_id=call["id"], 
+                    name=call["name"], 
+                    content=str(output)
+                ))
+            except Exception as e:
+                rprint(f"[bold red]Erreur lors de l'exécution de l'outil {tool_name} : {e}[/bold red]")
+                results.append(ToolMessage(
+                    tool_call_id=call["id"], 
+                    name=call["name"], 
+                    content=f"Erreur lors de l'exécution de l'outil : {str(e)}"
+                ))
+        else:
+            rprint(f"[bold red]Outil inconnu : {tool_name}[/bold red]")
+            results.append(ToolMessage(
+                tool_call_id=call["id"], 
+                name=call["name"], 
+                content=f"Outil inconnu : {tool_name}"
+            ))
+    
     return {"messages": results}
 
-def get_coaching_graph():
+
+async def create_async_checkpointer():
     """
-    Construit et compile le graphe LangGraph de l'agent coach.
+    Crée un checkpointer AsyncSqliteSaver de manière asynchrone.
+    """
+    try:
+        # Créer le répertoire data s'il n'existe pas
+        os.makedirs("data", exist_ok=True)
+        
+        # Créer le checkpointer avec AsyncSqliteSaver
+        checkpointer = AsyncSqliteSaver.from_conn_string("data/agent_memory.sqlite")
+        
+        # Initialiser les tables de façon asynchrone
+        await checkpointer.setup()
+        
+        return checkpointer
+    except Exception as e:
+        rprint(f"[bold red]Erreur lors de la création du checkpointer : {e}[/bold red]")
+        return None
+
+
+async def get_coaching_graph():
+    """
+    Construit et compile le graphe LangGraph de l'agent coach de façon asynchrone.
     Retourne l'objet graphe prêt à l'emploi.
     """
-
     graph_builder = StateGraph(AgentState)
     graph_builder.add_node("llm", call_llm)
     graph_builder.add_node("action", use_tool)
@@ -178,39 +245,64 @@ def get_coaching_graph():
     graph_builder.add_edge("action", "llm")
     graph_builder.set_entry_point("llm")
 
-    try:
-        conn = sqlite3.connect("data/agent_memory.sqlite", check_same_thread=False)
-        memory = SqliteSaver(conn=conn)
-    except Exception as e:
-        rprint(f"[bold red]ERREUR CRITIQUE : Impossible de se connecter à la BDD pour la mémoire de l'agent : {e}[/bold red]")
-        raise
+    # Créer le checkpointer de façon asynchrone
+    checkpointer = await create_async_checkpointer()
+    
+    if checkpointer is None:
+        rprint("[bold yellow]Attention : L'agent fonctionnera sans mémoire persistante.[/bold yellow]")
 
-    graph = graph_builder.compile(checkpointer=memory)
+    graph = graph_builder.compile(checkpointer=checkpointer)
     rprint("[bold green]✅ Graphe de coaching IA compilé.[/bold green]")
     return graph
 
 
+# Version synchrone pour la compatibilité
+def get_coaching_graph_sync():
+    """
+    Version synchrone de get_coaching_graph pour la compatibilité.
+    """
+    return asyncio.run(get_coaching_graph())
+
+
 # === Boucle de test CLI améliorée ===
-if __name__ == "__main__":
+async def main():
+    """Fonction principale asynchrone pour les tests CLI."""
     rprint("[bold yellow]🎽 Assistant sportif intelligent prêt ! (Tape 'quit' pour sortir)[/bold yellow]")
     
-    graph = get_coaching_graph()
-    CURRENT_USER_ID = 1
-    rprint(f"[yellow]Utilisateur actuel : ID {CURRENT_USER_ID}[/yellow]")
+    try:
+        graph = await get_coaching_graph()
+        CURRENT_USER_ID = 1
+        rprint(f"[yellow]Utilisateur actuel : ID {CURRENT_USER_ID}[/yellow]")
+    except Exception as e:
+        rprint(f"[bold red]Erreur lors de l'initialisation du graphe : {e}[/bold red]")
+        return
   
     while True:
-        user_input = input("🧠 Votre question : ")
-        if user_input.lower() in ("quit", "exit", "q"):
-            rprint("[bold green]À bientôt ![/bold green]")
+        try:
+            user_input = input("🧠 Votre question : ")
+            if user_input.lower() in ("quit", "exit", "q"):
+                rprint("[bold green]À bientôt ![/bold green]")
+                break
+
+            full_input = f"Je suis l'utilisateur {CURRENT_USER_ID}. {user_input}"
+
+            async for event in graph.astream(
+                {"messages": [HumanMessage(content=full_input)]},
+                config={"configurable": {"thread_id": f"cli-thread-user-{CURRENT_USER_ID}"}}
+            ):
+                for step in event.values():
+                    if "messages" in step and step["messages"]:
+                        message = step["messages"][-1]
+                        if isinstance(message, AIMessage) and message.content:
+                            rprint(f"\n🤖 [green]{message.content}[/green]")
+                            
+        except KeyboardInterrupt:
+            rprint("\n[bold yellow]Interruption par l'utilisateur.[/bold yellow]")
             break
+        except Exception as e:
+            rprint(f"[bold red]Erreur inattendue : {e}[/bold red]")
+            continue
 
-        full_input = f"Je suis l'utilisateur {CURRENT_USER_ID}. {user_input}"
 
-        for event in graph.stream(
-            {"messages": [HumanMessage(content=full_input)]},
-            config={"configurable": {"thread_id": f"cli-thread-user-{CURRENT_USER_ID}"}}
-        ):
-            for step in event.values():
-                message = step["messages"][-1]
-                if isinstance(message, AIMessage) and message.content:
-                    rprint(f"\n🤖 [green]{message.content}[/green]")
+if __name__ == "__main__":
+    asyncio.run(main())

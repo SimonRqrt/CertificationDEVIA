@@ -16,6 +16,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+COPY .streamlit E4_app_IA/ui/.streamlit
+
 # Exposer le port standard de Streamlit
 
 EXPOSE 8501
