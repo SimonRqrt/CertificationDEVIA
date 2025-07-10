@@ -8,6 +8,7 @@ from typing import List, Optional
 import uvicorn
 from rich import print as rprint
 from starlette.responses import StreamingResponse
+from datetime import datetime
 
 from E1_gestion_donnees.db_manager import create_db_engine, create_tables, get_activities_from_db, get_activity_by_id
 from E3_model_IA.scripts.advanced_agent import get_coaching_graph
@@ -68,7 +69,7 @@ class Activity(BaseModel):
     activity_id: int
     activity_name: str
     activity_type: Optional[str] = None
-    start_time: str
+    start_time: datetime
     distance_meters: Optional[float] = None
     duration_seconds: Optional[float] = None
     average_speed: Optional[float] = None
