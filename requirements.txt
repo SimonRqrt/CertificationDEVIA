@@ -1,26 +1,3 @@
-# API Garmin Connect
-garminconnect
-
-# Gestion des environnements
-python-dotenv
-
-# Traitement des données
-pandas
-numpy
-
-# Base de données
-SQLAlchemy
-pyodbc
-alembic      # Pour les migrations de base de données
-aiosqlite
-
-# API REST
-fastapi
-uvicorn
-pydantic
-
-# Utilitaires
-python-dateutil
 requests
 
 # Tests
