@@ -1,0 +1,43 @@
+# FastAPI et dépendances
+fastapi
+uvicorn
+pydantic
+
+# Authentification
+python-jose[cryptography]
+python-multipart
+
+# Base de données
+SQLAlchemy
+pyodbc
+alembic
+
+# Traitement des données
+pandas
+numpy
+
+# IA et LangChain
+langchain
+langchain-community
+langchain-core
+langgraph
+langgraph-checkpoint-sqlite
+openai
+langchain-openai
+faiss-cpu
+
+# Gestion des environnements
+python-dotenv
+
+# Tests
+pytest
+pytest-asyncio
+httpx
+
+# Utilitaires
+python-dateutil
+requests
+rich
+
+# Logging
+loguru

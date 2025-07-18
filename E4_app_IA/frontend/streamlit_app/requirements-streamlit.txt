@@ -1,0 +1,14 @@
+# Streamlit et UI
+streamlit
+folium
+streamlit-folium
+
+# Traitement des données
+pandas
+numpy
+
+# Communication API
+requests
+
+# Utilitaires
+python-dateutil

@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Service Django (Web + API)
+  django:
+    container_name: coach_ai_django
+    build:
+      context: ..
+      dockerfile: deployment/django.Dockerfile
+    ports:
+      - "8002:8002"
+    env_file:
+      - ../.env
+    volumes:
+      - ../data:/app/data
+      - ../E3_model_IA/backend/django_app/logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/admin/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Service FastAPI (IA)
+  fastapi:
+    container_name: coach_ai_fastapi
+    build:
+      context: ..
+      dockerfile: deployment/fastapi.Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../.env
+    depends_on:
+      - django
+    volumes:
+      - ../data:/app/data
+      - ../E3_model_IA:/app/E3_model_IA
+      - ../E1_gestion_donnees:/app/E1_gestion_donnees
+      - ../knowledge_base:/app/knowledge_base
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Service Streamlit (Frontend)
+  streamlit:
+    container_name: coach_ai_streamlit
+    build:
+      context: ..
+      dockerfile: deployment/streamlit.Dockerfile
+    ports:
+      - "8501:8501"
+    env_file:
+      - ../.env
+    depends_on:
+      - django
+      - fastapi
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  default:
+    name: coach_ai_network

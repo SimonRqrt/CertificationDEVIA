@@ -53,3 +53,16 @@ tqdm
 unstructured
 python-magic
 markdown
+
+# Django et DRF
+Django==4.2.7
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+djangorestframework-simplejwt==5.3.0
+django-extensions==3.2.3
+django-filter==23.3
+Pillow==10.0.1
+
+# Base de données Django
+psycopg2-binary==2.9.7  # Pour PostgreSQL (optionnel)
+django-environ==0.11.2   # Pour les variables d'environnement Django

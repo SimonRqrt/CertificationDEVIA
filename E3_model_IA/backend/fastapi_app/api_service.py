@@ -4,14 +4,18 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, Request, Security
 from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import uvicorn
 from rich import print as rprint
 from starlette.responses import StreamingResponse
 from datetime import datetime
+import uuid
+import time
 
 from E1_gestion_donnees.db_manager import create_db_engine, create_tables, get_activities_from_db, get_activity_by_id
 from E3_model_IA.scripts.advanced_agent import get_coaching_graph
+from E3_model_IA.fastapi_auth_middleware import auth_middleware, get_current_user, get_user_context
+from E3_model_IA.django_auth_service import UserInfo
 from langchain_core.messages import HumanMessage
 import json
 
@@ -41,7 +45,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Coach running AI API",
     description="API pour accéder aux données Garmin et interagir avec l'assistant de coaching IA.",
-    version="1.1.0",
+    version="2.0.0",
     lifespan=lifespan
 )
 
@@ -60,7 +64,6 @@ async def get_api_key(key: str = Security(api_key_header)):
     
 
 class ChatRequest(BaseModel):
-    user_id: int
     message: str
     thread_id: Optional[str] = None # Pour suivre une conversation existante
 
@@ -121,11 +124,75 @@ def get_activity(activity_id: int, request: Request):
 async def chat_with_coach(
     chat_request: ChatRequest,
     fastapi_request: Request,
+    current_user: UserInfo = Depends(get_current_user()),
+    user_context: Dict[str, Any] = Depends(get_user_context())
+):
+    """Chat avec le coach IA (authentification Django JWT)"""
+    
+    start_time = time.time()
+    session_id = str(uuid.uuid4())
+    
+    coaching_agent = fastapi_request.app.state.coaching_agent
+    
+    # Construire le message avec contexte utilisateur
+    context_info = f"""
+    Utilisateur: {current_user.first_name} {current_user.last_name} ({current_user.email})
+    Activité préférée: {current_user.preferred_activity}
+    Objectif principal: {current_user.main_goal}
+    Statut: {'Premium' if current_user.is_premium else 'Standard'}
+    Statistiques: {user_context.get('stats', {})}
+    """
+    
+    full_input = f"Contexte utilisateur: {context_info}\n\nMessage: {chat_request.message}"
+    thread_id = chat_request.thread_id or f"user-thread-{current_user.id}"
+    config = {"configurable": {"thread_id": thread_id}}
+
+    # Stocker la session de coaching
+    session_data = {
+        'session_id': session_id,
+        'title': chat_request.message[:100],  # Titre basé sur le message
+        'user_message': chat_request.message,
+        'ai_response': '',  # Sera mis à jour
+        'context_data': user_context,
+        'response_time': None  # Sera calculé
+    }
+
+    async def stream_response():
+        ai_response_parts = []
+        
+        async for event in coaching_agent.astream({"messages": [HumanMessage(content=full_input)]}, config=config):
+            for step in event.values():
+                message = step["messages"][-1]
+                if hasattr(message, 'content') and message.content:
+                    ai_response_parts.append(message.content)
+                    yield json.dumps({"type": "content", "data": message.content}) + "\n"
+        
+        # Finaliser la session
+        end_time = time.time()
+        session_data['ai_response'] = ''.join(ai_response_parts)
+        session_data['response_time'] = end_time - start_time
+        
+        # Enregistrer dans Django
+        auth_middleware.create_coaching_session(current_user.id, session_data)
+        
+        yield json.dumps({"type": "end", "data": "Stream finished."}) + "\n"
+
+    return StreamingResponse(stream_response(), media_type="application/x-ndjson")
+
+
+@app.post("/v1/coaching/chat-legacy", tags=["Coaching IA"])
+async def chat_with_coach_legacy(
+    chat_request: ChatRequest,
+    fastapi_request: Request,
     api_key: str = Depends(get_api_key)
 ):
+    """Chat avec le coach IA (méthode legacy avec clé API)"""
+    
     coaching_agent = fastapi_request.app.state.coaching_agent
-    full_input = f"Je suis l'utilisateur {chat_request.user_id}. {chat_request.message}"
-    thread_id = chat_request.thread_id or f"user-thread-{chat_request.user_id}"
+    # Utiliser un user_id par défaut pour la compatibilité
+    user_id = 1
+    full_input = f"Je suis l'utilisateur {user_id}. {chat_request.message}"
+    thread_id = chat_request.thread_id or f"user-thread-{user_id}"
     config = {"configurable": {"thread_id": thread_id}}
 
     async def stream_response():
