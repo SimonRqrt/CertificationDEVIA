@@ -139,15 +139,72 @@ pytest
 6. **Tests isolés** par technologie
 7. **Configuration centralisée**
 
-## 🔄 Migration depuis l'ancienne architecture
+## 🚀 Évolution Architecture - Interfaces Spécialisées
 
-Les anciens scripts restent fonctionnels pour la compatibilité :
-- `start_services.py` (ancienne version)
-- `test_integration.py` (mis à jour)
+### Vision : Deux interfaces complémentaires
 
-La nouvelle architecture est dans :
-- `start_services_new.py` (nouvelle version)
-- `deployment/docker-compose-new.yml` (nouvelle version)
+#### Interface Django - Approche Structurée
+**Objectif** : Interface formulaires pour génération automatique de plans d'entraînement
+
+**Fonctionnalités prévues :**
+- Formulaires multi-étapes d'objectifs running (distance, niveau, disponibilité)
+- Intégration avec l'agent IA FastAPI pour génération automatique
+- Interface utilisateur guidée sans besoin de prompter
+- Gestion des profils utilisateur avec métriques de performance
+
+**Architecture technique :**
+```python
+# Exemple de flux prévu
+def generate_training_plan(request):
+    # 1. Récupération des paramètres formulaire
+    user_data = extract_form_data(request)
+    
+    # 2. Appel à l'agent IA FastAPI
+    plan = call_fastapi_agent(user_data)
+    
+    # 3. Sauvegarde et présentation
+    save_training_plan(plan)
+    return render_plan_template(plan)
+```
+
+#### Pipeline Garmin Temporaire (Phase 2)
+**Conformité RGPD** : Aucun stockage permanent des identifiants
+
+**Flux technique prévu :**
+```python
+# Exemple de pipeline temporaire
+def fetch_garmin_realtime(credentials):
+    # 1. Connexion temporaire (en mémoire uniquement)
+    session = create_temp_garmin_session(credentials)
+    
+    # 2. Extraction données récentes
+    activities = fetch_recent_activities(session)
+    
+    # 3. Analyse immédiate
+    analysis = analyze_with_ai_agent(activities)
+    
+    # 4. Nettoyage sécurisé
+    del session, credentials  # Suppression immédiate
+    
+    return analysis
+```
+
+### Complémentarité des interfaces
+
+| Aspect | Django Interface | Streamlit Chat |
+|--------|------------------|----------------|
+| **Usage** | Plans structurés | Coaching conversationnel |
+| **Utilisateur** | Débutant/guidé | Expérimenté/libre |
+| **Interaction** | Formulaires | Prompt naturel |
+| **Résultat** | Plan formaté | Conseils personnalisés |
+
+## 🔄 État Actuel vs Évolution
+
+### ✅ Configuration Actuelle (Janvier 2025)
+- Architecture microservices stabilisée
+- Docker Azure SQL Server fonctionnel
+- Services Django + FastAPI + Streamlit opérationnels
+- Variables d'environnement sécurisées
 
 ## 📚 Documentation
 
@@ -156,3 +213,4 @@ La nouvelle architecture est dans :
 - **API FastAPI** : http://localhost:8000/docs
 - **Grille d'évaluation** : `param/grille.md`
 - **Mission** : `param/mission.md`
+- **Rappel du contexte** : CONTEXTE_PROJET.md

@@ -91,6 +91,30 @@ L'objectif global du projet est de récupérer des données d'objets sportifs co
    - Guide de maintenance
    - Procédures de debug
 
+## 🚀 Évolutions Prévues - Interfaces Spécialisées
+
+### Interface Django - Génération Guidée de Plans
+**Objectif** : Interface formulaire pour création automatique de plans d'entraînement
+
+**Fonctionnalités cibles :**
+- Formulaires structurés d'objectifs running (10K, semi, marathon)
+- Paramètres personnalisés (niveau, disponibilité, contraintes)
+- Génération automatique via agent IA (sans prompter)
+- Interface accessible pour utilisateurs non-techniques
+
+### Pipeline Garmin Temporaire (RGPD-friendly)
+**Objectif** : Récupération de données Garmin sans stockage permanent
+
+**Approche technique :**
+- Formulaire de connexion Garmin ponctuel
+- Pipeline d'extraction temps réel (en mémoire)
+- Analyse immédiate par l'agent IA
+- **Suppression automatique** des identifiants (conformité RGPD)
+
+### Complémentarité des interfaces
+- **Django** : Approche guidée, plans structurés, utilisateurs débutants
+- **Streamlit** : Échange conversationnel, conseils libres, utilisateurs expérimentés
+
 ## Infrastructure et Déploiement
 
 ### Docker
