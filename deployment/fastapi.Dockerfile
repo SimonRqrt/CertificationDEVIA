@@ -13,7 +13,24 @@ RUN apt-get update \
         build-essential \
         curl \
         libpq-dev \
+        unixodbc-dev \
+        gnupg \
+        libmagic1 \
     && rm -rf /var/lib/apt/lists/*
+
+# Ajouter la clé et le référentiel Microsoft pour ODBC
+RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
+    && curl -fsSL https://packages.microsoft.com/config/debian/12/prod.list > /etc/apt/sources.list.d/mssql-release.list
+
+# Installer le pilote ODBC version 18
+RUN apt-get update && ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configurer odbcinst pour enregistrer le driver ODBC
+RUN echo '[ODBC Driver 18 for SQL Server]' > /etc/odbcinst.ini \
+    && echo 'Description=Microsoft ODBC Driver 18 for SQL Server' >> /etc/odbcinst.ini \
+    && echo 'Driver=/opt/microsoft/msodbcsql18/lib64/libmsodbcsql-18.5.so.1.1' >> /etc/odbcinst.ini \
+    && echo 'Threading=1' >> /etc/odbcinst.ini
 
 # Copier les requirements FastAPI
 COPY E3_model_IA/backend/fastapi_app/requirements-fastapi.txt /app/requirements.txt
