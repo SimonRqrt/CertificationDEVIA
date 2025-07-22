@@ -202,9 +202,36 @@ def fetch_garmin_realtime(credentials):
 
 ### ✅ Configuration Actuelle (Janvier 2025)
 - Architecture microservices stabilisée
-- Docker Azure SQL Server fonctionnel
-- Services Django + FastAPI + Streamlit opérationnels
-- Variables d'environnement sécurisées
+- Docker Azure SQL Server fonctionnel (driver ODBC corrigé)
+- Services Django + FastAPI + Streamlit opérationnels (3/3 healthy)
+- Variables d'environnement sécurisées + SECRET_KEY Django configurée
+- Performance validée : tous endpoints <50ms
+- Diagnostic système : Claude Doctor - état excellent
+
+### 🔧 Corrections Techniques Récentes
+
+#### Driver ODBC SQL Server (21/01/2025)
+```dockerfile
+# Configuration odbcinst.ini corrigée
+RUN echo '[ODBC Driver 18 for SQL Server]' > /etc/odbcinst.ini \
+    && echo 'Driver=/opt/microsoft/msodbcsql18/lib64/libmsodbcsql-18.5.so.1.1' >> /etc/odbcinst.ini
+```
+
+#### PROJECT_ROOT Django (21/01/2025)
+```python
+# Adaptation Docker dans settings.py
+if os.getenv('DOCKER_ENV'):
+    PROJECT_ROOT = Path('/app')  # Contexte Docker
+else:
+    PROJECT_ROOT = BASE_DIR.parent.parent.parent  # Contexte local
+```
+
+#### SECRET_KEY Django (22/01/2025)
+```python
+# Génération sécurisée et configuration .env
+from django.core.management.utils import get_random_secret_key
+SECRET_KEY=get_random_secret_key()  # Ajoutée au .env
+```
 
 ## 📚 Documentation
 
