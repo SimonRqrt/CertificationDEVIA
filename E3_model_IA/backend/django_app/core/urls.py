@@ -4,7 +4,10 @@ from . import views
 app_name = 'core'
 
 urlpatterns = [
-    # TODO: Ajouter les vues core
-    # path('', views.HomeView.as_view(), name='home'),
-    # path('health/', views.HealthCheckView.as_view(), name='health_check'),
+    # ===== DASHBOARD UTILISATEUR =====
+    path('dashboard/', views.user_dashboard, name='user_dashboard'),
+    path('dashboard/stats/', views.dashboard_stats_api, name='dashboard_stats_api'),
+    
+    # ===== VUES RAPIDES =====
+    path('quick-stats/', views.QuickStatsView.as_view(), name='quick_stats'),
 ]
