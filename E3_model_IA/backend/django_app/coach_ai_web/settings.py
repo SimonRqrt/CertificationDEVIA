@@ -17,8 +17,13 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Project root (3 levels up: django_app -> backend -> E3_model_IA -> CertificationDEVIA)
-PROJECT_ROOT = BASE_DIR.parent.parent.parent
+# Project root - adaptation pour Docker
+if os.getenv('DOCKER_ENV'):
+    # En Docker, le PROJECT_ROOT est /app
+    PROJECT_ROOT = Path('/app')
+else:
+    # En local (3 levels up: django_app -> backend -> E3_model_IA -> CertificationDEVIA)
+    PROJECT_ROOT = BASE_DIR.parent.parent.parent
 
 # Environment variables
 env = environ.Env(
@@ -38,7 +43,8 @@ SECRET_KEY = env('SECRET_KEY', default='django-insecure-1+f#_+&yq$v-r8e)427j430&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG', default=True)
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0'])
+# Force all hosts in debug mode
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -82,7 +88,7 @@ ROOT_URLCONF = 'coach_ai_web.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -101,12 +107,32 @@ WSGI_APPLICATION = 'coach_ai_web.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': PROJECT_ROOT / 'data' / 'django_garmin_data.db',
+# Configuration de base de données dynamique
+DB_TYPE = env('DB_TYPE', default='sqlite')
+
+if DB_TYPE == 'sqlserver':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'mssql',
+            'NAME': env('DB_NAME', default='garmin_data'),
+            'USER': env('DB_USER', default=''),
+            'PASSWORD': env('DB_PASSWORD', default=''),
+            'HOST': env('DB_HOST', default=''),
+            'PORT': env('DB_PORT', default='1433'),
+            'OPTIONS': {
+                'driver': 'ODBC Driver 18 for SQL Server',
+                'extra_params': 'TrustServerCertificate=yes;',
+            },
+        }
     }
-}
+else:
+    # Fallback SQLite pour développement
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': PROJECT_ROOT / 'data' / 'django_garmin_data.db',
+        }
+    }
 
 
 # Password validation
@@ -143,7 +169,15 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

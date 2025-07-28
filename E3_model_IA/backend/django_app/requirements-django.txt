@@ -12,6 +12,8 @@ drf-yasg==1.21.10
 # Base de données
 psycopg2-binary==2.9.7
 aiosqlite
+pymssql
+mssql-django
 
 # Gestion des environnements
 python-dotenv

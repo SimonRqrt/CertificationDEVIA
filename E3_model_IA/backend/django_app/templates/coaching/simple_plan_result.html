@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}🎯 Votre Plan d'Entraînement{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
+    }
+    .plan-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    .analysis-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+    }
+    .recommendation-item {
+        background: #f8f9fa;
+        border-left: 4px solid #28a745;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 0 8px 8px 0;
+    }
+    .btn-new-plan {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    .btn-new-plan:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    .goal-badge {
+        background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+    .stat-highlight {
+        color: #3498db;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Section Hero -->
+<div class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="display-4 mb-3">🎯 Votre Plan Personnalisé</h1>
+                <p class="lead">
+                    Plan généré avec succès ! Voici vos recommandations d'entraînement personnalisées.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Plan principal -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="plan-card">
+                <div class="text-center mb-4">
+                    <span class="goal-badge">{{ plan.title|default:"Plan Personnalisé" }}</span>
+                </div>
+                
+                <h3 class="text-center mb-4">📋 Votre Programme</h3>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5>Description du plan :</h5>
+                        <p class="lead">{{ plan.description }}</p>
+                        
+                        <h5 class="mt-4">Fréquence :</h5>
+                        <p><strong class="stat-highlight">{{ plan.weekly_sessions }} séances par semaine</strong></p>
+                        
+                        {% if form_data.target_date %}
+                        <h5>Objectif cible :</h5>
+                        <p>{{ form_data.target_date|date:"d F Y" }}</p>
+                        {% endif %}
+                        
+                        {% if form_data.additional_notes %}
+                        <h5>Vos notes :</h5>
+                        <p class="text-muted">{{ form_data.additional_notes }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <h5>Récapitulatif :</h5>
+                        <ul class="list-unstyled">
+                            <li><strong>Objectif :</strong> {{ form_data.goal|upper }}</li>
+                            <li><strong>Niveau :</strong> {{ form_data.level|capfirst }}</li>
+                            <li><strong>Fréquence :</strong> {{ form_data.sessions_per_week }}/semaine</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommandations -->
+    {% if plan.recommendations %}
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="plan-card">
+                <h3 class="mb-4">💡 Recommandations Importantes</h3>
+                {% for recommendation in plan.recommendations %}
+                <div class="recommendation-item">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    {{ recommendation }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Analyse des données utilisateur -->
+    {% if user_data.total_activities > 0 %}
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="plan-card">
+                <h3 class="mb-4">📊 Analyse de Vos Données</h3>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="analysis-card text-center">
+                            <div class="stat-highlight" style="font-size: 1.5rem;">{{ user_data.total_activities }}</div>
+                            <div class="text-muted">Courses analysées</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="analysis-card text-center">
+                            <div class="stat-highlight" style="font-size: 1.5rem;">{{ user_data.avg_distance_km }}km</div>
+                            <div class="text-muted">Distance moyenne</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="analysis-card text-center">
+                            <div class="stat-highlight" style="font-size: 1.5rem;">{{ user_data.avg_duration_min }}min</div>
+                            <div class="text-muted">Durée moyenne</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="analysis-card text-center">
+                            <div class="stat-highlight" style="font-size: 1.5rem;">{{ user_data.max_distance_km }}km</div>
+                            <div class="text-muted">Distance max</div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if user_data.recent_activities %}
+                <h5 class="mt-4">Activités récentes analysées :</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Activité</th>
+                                <th>Distance</th>
+                                <th>Durée</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in user_data.recent_activities|slice:":5" %}
+                            <tr>
+                                <td>{{ activity.date }}</td>
+                                <td>{{ activity.name }}</td>
+                                <td>{{ activity.distance }}km</td>
+                                <td>{{ activity.duration_min }}min</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="row justify-content-center">
+        <div class="col-lg-6 text-center">
+            <div class="plan-card">
+                <h4 class="mb-3">🚀 Et maintenant ?</h4>
+                <p class="mb-4">Votre plan est prêt ! Vous pouvez maintenant commencer votre entraînement ou générer un nouveau plan avec d'autres paramètres.</p>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <a href="{% url 'coaching:simple_plan_generator' %}" class="btn btn-new-plan">
+                        <i class="fas fa-redo me-2"></i>Nouveau Plan
+                    </a>
+                    <a href="{% url 'activities:dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-chart-line me-2"></i>Voir mes Stats
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Animation d'apparition progressive
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.plan-card, .analysis-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+});
+</script>
+{% endblock %}
