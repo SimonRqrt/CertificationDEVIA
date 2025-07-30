@@ -46,8 +46,8 @@ COPY src/ /app/src/
 COPY knowledge_base/ /app/knowledge_base/
 COPY data/ /app/data/
 
-# Définir le PYTHONPATH
-ENV PYTHONPATH="/app:/app/E3_model_IA/backend/fastapi_app"
+# Définir le PYTHONPATH (éviter le conflit avec Django)
+ENV PYTHONPATH="/app:/app/E3_model_IA/backend/fastapi_app:/app/E1_gestion_donnees"
 
 # Exposer le port
 EXPOSE 8000

@@ -10,6 +10,7 @@ from django.db import transaction
 from datetime import datetime, timedelta
 import json
 import requests
+import os
 from django.conf import settings
 
 from .models import TrainingPlan, WorkoutSession, Goal, PerformanceMetrics, CoachingSession
@@ -23,9 +24,21 @@ from activities.models import Activity
 
 # ===== INTERFACE SIMPLIFIÉE GÉNÉRATION PLAN =====
 
-@login_required
 def simple_plan_generator(request):
     """Vue simplifiée pour générer un plan d'entraînement avec l'IA"""
+    
+    # Pour le moment, créer un utilisateur fictif pour les tests
+    if not request.user.is_authenticated:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        try:
+            request.user = User.objects.get(id=1)
+        except User.DoesNotExist:
+            request.user = User.objects.create_user(
+                username='demo', 
+                email='demo@example.com', 
+                password='demo123'
+            )
     
     if request.method == 'POST':
         form = SimplePlanGenerationForm(request.POST)
@@ -37,15 +50,19 @@ def simple_plan_generator(request):
                 # Analyser automatiquement les données existantes de l'utilisateur
                 user_data = analyze_user_activities(request.user)
                 
-                # Générer le plan avec l'IA
-                plan_response = generate_simple_plan_with_ai(request.user, form_data, user_data)
+                # Générer le plan directement avec l'agent avancé (sans FastAPI pour éviter les problèmes de dépendances)
+                plan_response = generate_fallback_plan_with_agent(request.user, form_data, user_data)
                 
                 if plan_response.get('success'):
-                    messages.success(request, 'Plan d\'entraînement généré avec succès !')
+                    # Sauvegarder automatiquement le plan généré
+                    saved_plan = save_generated_plan(request.user, form_data, plan_response['plan'], user_data)
+                    
+                    messages.success(request, 'Plan d\'entraînement généré et sauvegardé avec succès !')
                     return render(request, 'coaching/simple_plan_result.html', {
                         'plan': plan_response['plan'],
                         'form_data': form_data,
-                        'user_data': user_data
+                        'user_data': user_data,
+                        'saved_plan': saved_plan  # Passer l'objet sauvegardé pour affichage
                     })
                 else:
                     messages.error(request, f'Erreur lors de la génération : {plan_response.get("error", "Erreur inconnue")}')
@@ -130,28 +147,30 @@ def analyze_user_activities(user):
 
 
 def generate_simple_plan_with_ai(user, form_data, user_data):
-    """Génère un plan d'entraînement simple avec l'IA"""
+    """Génère un plan d'entraînement simple avec l'IA utilisant advanced_agent.py"""
     
     try:
         # URL de l'API FastAPI
         fastapi_url = getattr(settings, 'FASTAPI_URL', 'http://localhost:8000')
         
-        # Préparer le payload simplifié
+        # Préparer le payload simplifié compatible avec advanced_agent.py
         payload = {
             'user_email': user.email,
+            'user_id': user.id,
             'goal': form_data['goal'],
             'level': form_data['level'],
             'sessions_per_week': int(form_data['sessions_per_week']),
             'target_date': form_data['target_date'].isoformat() if form_data.get('target_date') else None,
             'additional_notes': form_data.get('additional_notes', ''),
-            'user_activities_analysis': user_data
+            'user_activities_analysis': user_data,
+            'use_advanced_agent': True  # Flag pour utiliser advanced_agent.py
         }
         
         # Appel à l'API FastAPI
         response = requests.post(
             f'{fastapi_url}/v1/coaching/generate-simple-plan',
             json=payload,
-            timeout=30
+            timeout=60  # Augmenté pour l'agent avancé
         )
         
         if response.status_code == 200:
@@ -166,8 +185,8 @@ def generate_simple_plan_with_ai(user, form_data, user_data):
             }
             
     except requests.RequestException as e:
-        # Fallback : génération locale simplifiée
-        return generate_fallback_plan(form_data, user_data)
+        # Fallback : génération locale avec advanced_agent.py
+        return generate_fallback_plan_with_agent(user, form_data, user_data)
     except Exception as e:
         return {
             'success': False,
@@ -175,8 +194,331 @@ def generate_simple_plan_with_ai(user, form_data, user_data):
         }
 
 
+def generate_fallback_plan_with_agent(user, form_data, user_data):
+    """Plan d'entraînement avec Agent IA avancé (même que Streamlit)"""
+    
+    try:
+        # Utiliser le véritable agent conversationnel comme Streamlit
+        return generate_plan_with_advanced_agent(user, form_data, user_data)
+    except Exception as e:
+        # Si l'agent avancé échoue, fallback vers la logique simplifiée
+        return generate_plan_with_simple_logic(user, form_data, user_data)
+
+
+def generate_plan_with_advanced_agent(user, form_data, user_data):
+    """Génère un plan avec l'agent conversationnel avancé (comme Streamlit)"""
+    
+    # Construire un prompt sophistiqué pour l'agent (comme Coach Michael)
+    goal = form_data['goal']
+    level = form_data['level']
+    sessions = int(form_data['sessions_per_week'])
+    target_date = form_data.get('target_date')
+    additional_notes = form_data.get('additional_notes', '')
+    
+    # Données contextuelles enrichies
+    total_activities = user_data.get('total_activities', 0)
+    avg_distance = user_data.get('avg_distance_km', 0)
+    avg_duration = user_data.get('avg_duration_min', 0)
+    avg_hr = user_data.get('avg_heart_rate', 0)
+    recent_activities = user_data.get('recent_activities', [])
+    
+    # Construire un prompt contextualisé comme l'agent avancé
+    agent_prompt = f"""
+Bonjour Coach Michael ! J'ai besoin de ton expertise pour créer un plan d'entraînement personnalisé.
+
+**MON PROFIL :**
+- Utilisateur : {user.first_name} {user.last_name} ({user.email})
+- Objectif : {goal}
+- Niveau déclaré : {level}
+- Séances souhaitées par semaine : {sessions}
+- Date cible : {target_date.strftime('%d/%m/%Y') if target_date else 'Pas de date limite fixe'}
+- Notes supplémentaires : {additional_notes if additional_notes else 'Aucune'}
+
+**MON HISTORIQUE D'ENTRAÎNEMENT :**
+- Nombre total d'activités de course : {total_activities}
+- Distance moyenne par sortie : {avg_distance:.1f} km
+- Durée moyenne par sortie : {avg_duration:.0f} minutes
+- Fréquence cardiaque moyenne : {avg_hr:.0f} bpm (si disponible)
+
+**MES 5 DERNIÈRES ACTIVITÉS :**
+{chr(10).join([f"- {act['date']}: {act['distance']:.1f}km en {act['duration_min']:.0f}min" 
+               for act in recent_activities[:5]]) if recent_activities else "Aucune activité récente enregistrée"}
+
+**MA DEMANDE :**
+Peux-tu analyser mes données et me créer un plan d'entraînement personnalisé ? 
+J'aimerais que tu commences par analyser mes métriques avec tes outils, puis que tu recherches les principes d'entraînement adaptés à mon profil.
+
+Utilise ton format de tableau habituel pour me présenter le plan hebdomadaire, et n'hésite pas à me donner tes conseils d'expert !
+
+Merci Coach ! 🏃‍♂️
+"""
+    
+    # Appeler l'endpoint FastAPI avec l'agent conversationnel
+    fastapi_url = getattr(settings, 'FASTAPI_URL', 'http://localhost:8000')
+    
+    payload = {
+        'message': agent_prompt,
+        'thread_id': f'django-user-{user.id}-plan-generation'
+    }
+    
+    try:
+        # Appel avec clé API (même méthode que Streamlit)
+        api_key = os.getenv('API_KEY', 'default_key')
+        headers = {'X-API-Key': api_key, 'Content-Type': 'application/json'}
+        
+        response = requests.post(
+            f'{fastapi_url}/v1/coaching/chat-legacy',
+            json=payload,
+            headers=headers,
+            timeout=60
+        )
+        
+        if response.status_code == 200:
+            # Traiter la réponse streaming (format ndjson)
+            full_response = ""
+            for line in response.iter_lines():
+                if line:
+                    try:
+                        data = json.loads(line)
+                        if data.get("type") == "content":
+                            full_response += data.get("data", "")
+                    except:
+                        continue
+            
+            return {
+                'success': True,
+                'plan': {
+                    'title': f'Plan {goal} - Analyse Coach IA',
+                    'description': full_response,  # Réponse complète de l'agent
+                    'weekly_sessions': sessions,
+                    'generated_by': 'Coach Michael (Agent IA Avancé)',
+                    'user_analysis': user_data,
+                    'recommendations': [
+                        "Plan généré par l'agent IA avancé avec analyse de vos données",
+                        "Utilise la base de connaissances sportive et vos métriques personnelles",
+                        "Ajusté automatiquement selon votre profil et historique"
+                    ]
+                }
+            }
+        else:
+            raise Exception(f'Erreur API {response.status_code}: {response.text}')
+            
+    except Exception as e:
+        raise Exception(f'Erreur lors de l\'appel à l\'agent avancé: {str(e)}')
+
+
+def generate_plan_with_simple_logic(user, form_data, user_data):
+    """Plan d'entraînement avec logique simplifiée (fallback)"""
+    
+    # Analyser les données utilisateur pour créer un plan personnalisé
+    goal = form_data['goal']
+    level = form_data['level']
+    sessions = int(form_data['sessions_per_week'])
+    
+    # Données contextuelles de l'utilisateur
+    total_activities = user_data.get('total_activities', 0)
+    avg_distance = user_data.get('avg_distance_km', 0)
+    avg_duration = user_data.get('avg_duration_min', 0)
+    avg_hr = user_data.get('avg_heart_rate', 0)
+    
+    # Logique IA simplifiée basée sur les données
+    try:
+        # Déterminer le niveau réel basé sur les données
+        actual_level = determine_actual_level(total_activities, avg_distance, avg_duration)
+        
+        # Générer un plan adaptatif basé sur l'analyse
+        plan_content = generate_adaptive_plan(goal, actual_level, sessions, user_data)
+        
+        # Ajouter des recommandations personnalisées
+        recommendations = generate_personalized_recommendations(user_data, goal, level)
+        
+        return {
+            'success': True,
+            'plan': {
+                'title': f'Plan {goal} - Niveau {actual_level} (Logique simplifiée)',
+                'description': plan_content,
+                'weekly_sessions': sessions,
+                'recommendations': recommendations,
+                'generated_by': 'Logique Coach IA simplifiée (fallback)',
+                'user_analysis': user_data,
+                'adaptations': [
+                    f"Niveau ajusté de '{level}' à '{actual_level}' basé sur vos {total_activities} activités",
+                    f"Plan adapté pour distance moyenne de {avg_distance}km en {avg_duration}min",
+                    f"Zones cardiaques estimées basées sur FC moyenne de {avg_hr}bpm" if avg_hr else "Ajoutez un capteur cardiaque pour optimiser les zones"
+                ]
+            }
+        }
+        
+    except Exception as e:
+        # Fallback ultime avec plan basique
+        return generate_fallback_plan(form_data, user_data)
+
+
+def determine_actual_level(total_activities, avg_distance, avg_duration):
+    """Détermine le niveau réel basé sur l'historique"""
+    if total_activities == 0:
+        return 'débutant'
+    elif total_activities < 10:
+        return 'débutant'
+    elif avg_distance < 3:
+        return 'débutant'
+    elif avg_distance < 7 and avg_duration < 45:
+        return 'intermédiaire'
+    elif avg_distance >= 7 or avg_duration >= 45:
+        return 'avancé'
+    else:
+        return 'intermédiaire'
+
+
+def generate_adaptive_plan(goal, level, sessions, user_data):
+    """Génère un plan adaptatif basé sur l'analyse des données"""
+    avg_distance = user_data.get('avg_distance_km', 0)
+    
+    plan_templates = {
+        ('5k', 'débutant'): f"""
+## Plan 5K Débutant - {sessions} séances/semaine
+
+**Semaine 1-2: Base aérobie**
+- Lundi: Repos ou marche active 30min
+- Mercredi: Course/marche alternée 20min (1min course / 1min marche)
+- Vendredi: Course continue 15min allure facile
+- Dimanche: Sortie longue 25min marche/course
+
+**Semaine 3-4: Progression**
+- Augmentation progressive à 2min course / 1min marche
+- Course continue jusqu'à 20min
+- Sortie longue jusqu'à 30min
+
+**Objectif**: Courir 5km en continu en 8 semaines
+""",
+        ('5k', 'intermédiaire'): f"""
+## Plan 5K Intermédiaire - {sessions} séances/semaine
+
+**Base actuelle analysée**: {avg_distance:.1f}km moyenne, capacité confirmée
+
+**Semaine 1-2: Consolidation**
+- Mardi: Course facile 25-30min (allure conversationnelle)
+- Jeudi: Fractionné court 6x(1min rapide / 1min récup)
+- Samedi: Sortie longue 35-40min allure facile
+
+**Semaine 3-4: Spécifique 5K**
+- Fractionné 5x(3min allure 5K / 90s récup)
+- Course tempo 15min allure légèrement soutenue
+
+**Objectif**: Améliorer votre temps 5K de 30-60 secondes
+""",
+        ('10k', 'intermédiaire'): f"""
+## Plan 10K Intermédiaire - {sessions} séances/semaine
+
+**Analyse**: Progression de {avg_distance:.1f}km vers 10km
+
+**Phase 1 (Semaines 1-3): Extension endurance**
+- Course facile progressive: 30min → 45min
+- 1 séance tempo par semaine (20min allure soutenue)
+- Sortie longue: 40min → 60min
+
+**Phase 2 (Semaines 4-6): Spécifique 10K**
+- Fractionné long: 4x(5min allure 10K / 2min récup)
+- Course tempo 25-30min
+- Sortie longue avec accélérations
+
+**Objectif**: Courir 10km confortablement en 6-8 semaines
+""",
+        ('fitness', 'débutant'): f"""
+## Plan Forme Générale - {sessions} séances/semaine
+
+**Approche progressive et durable**
+
+**Semaines 1-2: Mise en route**
+- 20-25min de course facile ou course/marche
+- Focus sur la régularité plutôt que l'intensité
+- 1 jour de repos entre chaque séance
+
+**Semaines 3-4: Consolidation**
+- 25-30min de course continue
+- Introduction d'1 séance légèrement plus soutenue par semaine
+- Attention aux signaux du corps
+
+**Objectif**: Établir une routine durable et plaisante
+"""
+    }
+    
+    key = (goal, level)
+    return plan_templates.get(key, f"""
+## Plan {goal.title()} Personnalisé - {sessions} séances/semaine
+
+**Basé sur votre profil**: {user_data.get('total_activities', 0)} activités, {avg_distance:.1f}km moyenne
+
+**Approche adaptative**:
+- Progression graduelle adaptée à votre historique
+- {sessions} séances par semaine avec récupération intégrée
+- Ajustements basés sur vos capacités actuelles
+
+**Structure recommandée**:
+- 70% endurance fondamentale (allure conversationnelle)
+- 20% allure modérée (légèrement soutenue)
+- 10% travail intensif (selon progression)
+
+Votre coach IA s'adapte automatiquement à vos performances !
+    """)
+
+
+def generate_personalized_recommendations(user_data, goal, level):
+    """Génère des recommandations personnalisées"""
+    recommendations = []
+    
+    total_activities = user_data.get('total_activities', 0)
+    avg_distance = user_data.get('avg_distance_km', 0)
+    avg_hr = user_data.get('avg_heart_rate', 0)
+    
+    # Recommandations basées sur l'historique
+    if total_activities == 0:
+        recommendations.extend([
+            "🚀 Commencez par 3 sorties courtes par semaine",
+            "📱 Enregistrez vos activités pour un suivi personnalisé",
+            "👟 Investissez dans de bonnes chaussures de course"
+        ])
+    elif total_activities < 20:
+        recommendations.extend([
+            "📈 Augmentez progressivement votre fréquence d'entraînement",
+            "⏱️ Focalisez-vous sur la durée plutôt que la vitesse",
+            "🔄 Alternez les intensités pour éviter la monotonie"
+        ])
+    
+    # Recommandations basées sur la distance moyenne
+    if avg_distance < 3:
+        recommendations.append("🎯 Travaillez l'extension de vos sorties jusqu'à 5km")
+    elif avg_distance > 8:
+        recommendations.append("💪 Excellent volume ! Intégrez du travail qualitatif")
+    
+    # Recommandations cardiaque
+    if avg_hr == 0:
+        recommendations.append("❤️ Utilisez un capteur cardiaque pour optimiser vos zones")
+    elif avg_hr > 170:
+        recommendations.append("⚠️ Attention aux allures trop soutenues - privilégiez l'endurance")
+    
+    # Recommandations par objectif
+    goal_recommendations = {
+        '5k': ["🏃‍♂️ Intégrez 1 séance de fractionné court par semaine", "⏱️ Visez une progression de 10-15s par semaine"],
+        '10k': ["🏃‍♀️ Travaillez l'endurance avec des sorties de 45min+", "🎯 Pratiquez l'allure spécifique 10K en fractionné"],
+        'fitness': ["😊 Écoutez votre corps et privilégiez le plaisir", "🌟 Variez les parcours pour maintenir la motivation"]
+    }
+    
+    if goal in goal_recommendations:
+        recommendations.extend(goal_recommendations[goal])
+    
+    # Toujours ajouter les recommandations de base
+    recommendations.extend([
+        "💧 Hydratez-vous avant, pendant et après l'effort",
+        "🛌 Respectez au moins 1 jour de repos complet par semaine",
+        "🏥 Consultez un médecin en cas de douleur persistante"
+    ])
+    
+    return recommendations[:6]  # Limiter à 6 recommandations
+
+
 def generate_fallback_plan(form_data, user_data):
-    """Plan d'entraînement de base si l'API n'est pas disponible"""
+    """Plan d'entraînement de base si l'agent n'est pas disponible"""
     
     goal = form_data['goal']
     level = form_data['level']
@@ -218,6 +560,56 @@ def generate_fallback_plan(form_data, user_data):
             'user_analysis': user_data
         }
     }
+
+
+def save_generated_plan(user, form_data, plan_data, user_data):
+    """Sauvegarde le plan généré dans la base de données Azure SQL Server"""
+    from datetime import datetime, timedelta
+    
+    try:
+        # Calculer les dates du plan
+        target_date = form_data.get('target_date')
+        if target_date:
+            end_date = target_date
+            # Estimer 12 semaines de préparation par défaut
+            start_date = target_date - timedelta(weeks=12)
+        else:
+            start_date = timezone.now().date()
+            end_date = start_date + timedelta(weeks=12)
+        
+        # Créer le plan d'entraînement
+        training_plan = TrainingPlan.objects.create(
+            user=user,
+            name=plan_data.get('title', f"Plan {form_data['goal'].upper()}"),
+            description=plan_data.get('description', ''),
+            goal=form_data['goal'],
+            level=form_data['level'], 
+            sessions_per_week=int(form_data['sessions_per_week']),
+            duration_weeks=12,  # Durée standard
+            start_date=start_date,
+            end_date=end_date,
+            is_active=True
+        )
+        
+        # Créer un objectif associé si il y a une date cible
+        if target_date:
+            Goal.objects.create(
+                user=user,
+                name=f"Objectif {form_data['goal'].upper()}",
+                description=f"Atteindre l'objectif {form_data['goal']} le {target_date.strftime('%d/%m/%Y')}",
+                goal_type='time_goal',
+                target_value=0,  # Valeur par défaut
+                target_unit='time',
+                target_date=target_date,
+                is_active=True
+            )
+        
+        return training_plan
+        
+    except Exception as e:
+        # Log l'erreur mais ne pas faire échouer la génération
+        print(f"Erreur sauvegarde plan: {str(e)}")
+        return None
 
 
 def get_user_quick_stats(user):

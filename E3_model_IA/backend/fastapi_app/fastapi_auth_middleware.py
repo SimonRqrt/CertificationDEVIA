@@ -3,7 +3,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional, Dict, Any
 import logging
 import os
-from .django_auth_service import django_auth_service, UserInfo
+from django_auth_service import django_auth_service, UserInfo
 
 logger = logging.getLogger(__name__)
 
@@ -102,22 +102,13 @@ class FastAPIAuthMiddleware:
 # Instance globale du middleware
 auth_middleware = FastAPIAuthMiddleware()
 
-# Dépendances réutilisables
-def get_current_user() -> UserInfo:
-    """Dépendance pour récupérer l'utilisateur actuel"""
-    return Depends(auth_middleware.get_current_user)
+# Dépendances réutilisables - Export des fonctions directement
+# Pour utiliser avec Depends() dans les endpoints
+get_current_user = auth_middleware.get_current_user
 
-def get_current_user_optional() -> Optional[UserInfo]:
-    """Dépendance pour récupérer l'utilisateur actuel (optionnel)"""
-    return Depends(auth_middleware.get_current_user_optional)
-
-def get_current_premium_user() -> UserInfo:
-    """Dépendance pour récupérer l'utilisateur premium actuel"""
-    return Depends(auth_middleware.get_current_premium_user)
-
-def get_user_context() -> Dict[str, Any]:
-    """Dépendance pour récupérer le contexte utilisateur"""
-    return Depends(auth_middleware.get_user_context)
+get_current_user_optional = auth_middleware.get_current_user_optional
+get_current_premium_user = Depends(auth_middleware.get_current_premium_user)
+get_user_context = Depends(auth_middleware.get_user_context)
 
 
 # Fonctions utilitaires

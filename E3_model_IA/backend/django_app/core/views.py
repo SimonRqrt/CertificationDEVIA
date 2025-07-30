@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
 from django.utils import timezone
-from django.db.models import Count, Sum, Avg, Max, Min
+from django.db.models import Count, Sum, Avg, Max, Min, Q
 from datetime import datetime, timedelta
 from django.http import JsonResponse
 
@@ -11,9 +11,11 @@ from activities.models import Activity
 from coaching.models import TrainingPlan, WorkoutSession, Goal, PerformanceMetrics
 
 
-@login_required
 def user_dashboard(request):
     """Dashboard principal utilisateur - Vue d'ensemble complète"""
+    if not request.user.is_authenticated:
+        return redirect('/admin/login/')
+    
     user = request.user
     
     # Période d'analyse (30 derniers jours par défaut)
@@ -79,8 +81,8 @@ def user_dashboard(request):
         planned_date__gte=date_from.date()
     ).aggregate(
         total_planned=Count('id'),
-        completed=Count('id', filter={'status': 'completed'}),
-        skipped=Count('id', filter={'status': 'skipped'})
+        completed=Count('id', filter=Q(status='completed')),
+        skipped=Count('id', filter=Q(status='skipped'))
     )
     
     if session_stats['total_planned'] > 0:

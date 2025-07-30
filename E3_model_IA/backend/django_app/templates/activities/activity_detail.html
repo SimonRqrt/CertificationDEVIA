@@ -1,0 +1,309 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load activity_filters %}
+
+{% block title %}{{ object.activity_name }}{% endblock %}
+
+{% block content %}
+<div class="activity-detail-container">
+    <div class="activity-header">
+        <div class="breadcrumb">
+            <a href="{% url 'activities:list' %}">← Retour aux activités</a>
+        </div>
+        
+        <div class="activity-title">
+            <div class="activity-icon">
+                {% if object.activity_type == 'running' %}🏃
+                {% elif object.activity_type == 'cycling' %}🚴
+                {% elif object.activity_type == 'swimming' %}🏊
+                {% elif object.activity_type == 'walking' %}🚶
+                {% else %}🏋️{% endif %}
+            </div>
+            <div class="title-info">
+                <h1>{{ object.activity_name }}</h1>
+                <p>{{ object.start_time|date:"l d F Y à H:i" }}</p>
+            </div>
+            <div class="activity-actions">
+                <a href="{% url 'activities:edit' object.pk %}" class="btn btn-edit">✏️ Modifier</a>
+                <a href="{% url 'activities:delete' object.pk %}" class="btn btn-delete">🗑️ Supprimer</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métriques principales -->
+    <div class="metrics-grid">
+        {% if object.distance_km %}
+        <div class="metric-card">
+            <div class="metric-icon">📏</div>
+            <div class="metric-content">
+                <h3>{{ object.distance_km }} km</h3>
+                <p>Distance</p>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if object.duration_formatted %}
+        <div class="metric-card">
+            <div class="metric-icon">⏱️</div>
+            <div class="metric-content">
+                <h3>{{ object.duration_formatted }}</h3>
+                <p>Durée</p>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if object.pace_per_km %}
+        <div class="metric-card">
+            <div class="metric-icon">🏃</div>
+            <div class="metric-content">
+                <h3>{{ object.pace_per_km }}</h3>
+                <p>Allure moyenne</p>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if object.average_hr %}
+        <div class="metric-card">
+            <div class="metric-icon">💓</div>
+            <div class="metric-content">
+                <h3>{{ object.average_hr }} bpm</h3>
+                <p>FC moyenne</p>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if object.calories %}
+        <div class="metric-card">
+            <div class="metric-icon">🔥</div>
+            <div class="metric-content">
+                <h3>{{ object.calories }}</h3>
+                <p>Calories</p>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if object.elevation_gain %}
+        <div class="metric-card">
+            <div class="metric-icon">⛰️</div>
+            <div class="metric-content">
+                <h3>{{ object.elevation_gain|floatformat:0 }} m</h3>
+                <p>Dénivelé positif</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Détails de l'activité -->
+    <div class="details-section">
+        <div class="details-card">
+            <h2>📊 Détails de l'activité</h2>
+            
+            <div class="details-grid">
+                <div class="detail-item">
+                    <label>Type d'activité :</label>
+                    <span>{{ object.get_activity_type_display }}</span>
+                </div>
+                
+                {% if object.average_speed_kmh %}
+                <div class="detail-item">
+                    <label>Vitesse moyenne :</label>
+                    <span>{{ object.average_speed_kmh }} km/h</span>
+                </div>
+                {% endif %}
+                
+                {% if object.max_speed %}
+                <div class="detail-item">
+                    <label>Vitesse maximale :</label>
+                    <span>{{ object.max_speed|mul:3.6|floatformat:1 }} km/h</span>
+                </div>
+                {% endif %}
+                
+                {% if object.max_hr %}
+                <div class="detail-item">
+                    <label>FC maximale :</label>
+                    <span>{{ object.max_hr }} bpm</span>
+                </div>
+                {% endif %}
+                
+                {% if object.steps %}
+                <div class="detail-item">
+                    <label>Nombre de pas :</label>
+                    <span>{{ object.steps }}</span>
+                </div>
+                {% endif %}
+                
+                {% if object.average_cadence %}
+                <div class="detail-item">
+                    <label>Cadence moyenne :</label>
+                    <span>{{ object.average_cadence }} pas/min</span>
+                </div>
+                {% endif %}
+                
+                {% if object.temperature %}
+                <div class="detail-item">
+                    <label>Température :</label>
+                    <span>{{ object.temperature }}°C</span>
+                </div>
+                {% endif %}
+                
+                {% if object.device_name %}
+                <div class="detail-item">
+                    <label>Appareil :</label>
+                    <span>{{ object.device_name }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Notes -->
+    {% if object.notes %}
+    <div class="notes-section">
+        <div class="notes-card">
+            <h2>📝 Notes</h2>
+            <p>{{ object.notes|linebreaks }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Informations techniques -->
+    <div class="technical-section">
+        <div class="technical-card">
+            <h2>🔧 Informations techniques</h2>
+            
+            <div class="technical-grid">
+                {% if object.activity_id %}
+                <div class="technical-item">
+                    <label>ID d'activité :</label>
+                    <span>{{ object.activity_id }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="technical-item">
+                    <label>Créé le :</label>
+                    <span>{{ object.created_at|date:"d/m/Y à H:i" }}</span>
+                </div>
+                
+                <div class="technical-item">
+                    <label>Modifié le :</label>
+                    <span>{{ object.updated_at|date:"d/m/Y à H:i" }}</span>
+                </div>
+                
+                {% if object.synced_at %}
+                <div class="technical-item">
+                    <label>Synchronisé le :</label>
+                    <span>{{ object.synced_at|date:"d/m/Y à H:i" }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="technical-item">
+                    <label>Source :</label>
+                    <span>
+                        {% if object.is_manual %}
+                            📝 Saisie manuelle
+                        {% else %}
+                            🔄 Synchronisation Garmin
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.activity-detail-container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+
+.activity-header { margin-bottom: 30px; }
+.breadcrumb { margin-bottom: 15px; }
+.breadcrumb a { color: #3498db; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+
+.activity-title { 
+    display: flex; 
+    align-items: center; 
+    gap: 20px; 
+    background: white; 
+    padding: 25px; 
+    border-radius: 10px; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.activity-icon { font-size: 3em; }
+.title-info { flex: 1; }
+.title-info h1 { margin: 0 0 5px 0; color: #2c3e50; }
+.title-info p { margin: 0; color: #7f8c8d; }
+.activity-actions { display: flex; gap: 10px; }
+
+.metrics-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+    gap: 20px; 
+    margin-bottom: 30px;
+}
+.metric-card { 
+    background: white; 
+    padding: 25px; 
+    border-radius: 10px; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.metric-icon { font-size: 2.5em; }
+.metric-content h3 { margin: 0; font-size: 1.8em; color: #2c3e50; }
+.metric-content p { margin: 5px 0 0 0; color: #7f8c8d; }
+
+.details-section, .notes-section, .technical-section { margin-bottom: 30px; }
+.details-card, .notes-card, .technical-card { 
+    background: white; 
+    padding: 25px; 
+    border-radius: 10px; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.details-card h2, .notes-card h2, .technical-card h2 { 
+    color: #2c3e50; 
+    margin-bottom: 20px; 
+    border-bottom: 2px solid #ecf0f1; 
+    padding-bottom: 10px;
+}
+
+.details-grid, .technical-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+    gap: 15px;
+}
+.detail-item, .technical-item { 
+    display: flex; 
+    justify-content: space-between; 
+    padding: 12px 0; 
+    border-bottom: 1px solid #f8f9fa;
+}
+.detail-item label, .technical-item label { 
+    font-weight: 500; 
+    color: #2c3e50; 
+}
+.detail-item span, .technical-item span { 
+    color: #34495e; 
+    text-align: right;
+}
+
+.notes-card p { 
+    line-height: 1.6; 
+    color: #34495e; 
+    margin: 0;
+}
+
+.btn { 
+    padding: 10px 15px; 
+    border: none; 
+    border-radius: 6px; 
+    text-decoration: none; 
+    cursor: pointer; 
+    transition: background 0.3s;
+}
+.btn-edit { background: #f39c12; color: white; }
+.btn-edit:hover { background: #e67e22; }
+.btn-delete { background: #e74c3c; color: white; }
+.btn-delete:hover { background: #c0392b; }
+</style>
+{% endblock %}

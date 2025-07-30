@@ -1,0 +1,129 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ company.name }} - {{ company.tagline }}{% endblock %}
+
+{% block content %}
+<!-- Section Hero -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">
+                    <span class="title-line">Coach AI</span>
+                    <span class="title-line">Plateforme sportive</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Intelligence artificielle pour<br>
+                    coaching personnalisé
+                </p>
+                <div class="hero-actions">
+                    <a href="/dashboard/" class="btn-primary">🏠 Dashboard Utilisateur</a>
+                    <a href="/simple-plan/" class="btn-secondary">⚡ Plan Simplifié</a>
+                    <a href="/api/v1/coaching/running-wizard/" class="btn-tertiary">🎯 Assistant Objectifs</a>
+                    <a href="/admin/" class="btn-tertiary">⚙️ Administration</a>
+                    <a href="http://localhost:8501" class="btn-quaternary">💬 Chat IA</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="hero-visual">
+                    <div class="visual-card">
+                        <h3>🏃‍♂️ Analyses</h3>
+                        <p>Données Garmin temps réel</p>
+                    </div>
+                    <div class="visual-card">
+                        <h3>🤖 IA Coach</h3>
+                        <p>Conseils personnalisés</p>
+                    </div>
+                    <div class="visual-card">
+                        <h3>📊 Métriques</h3>
+                        <p>Suivi performances</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Section Overview -->
+<section class="overview">
+    <div class="container">
+        <div class="section-header">
+            <h2>Overview</h2>
+        </div>
+        <div class="overview-content">
+            <p class="overview-text">
+                {{ company.description }}
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Section Tech -->
+<section class="tech-section">
+    <div class="container">
+        <div class="tech-header">
+            <h2>tech</h2>
+        </div>
+        <div class="tech-grid">
+            {% for feature in features %}
+            <div class="tech-card">
+                <h3>{{ feature.title }}</h3>
+                <p>{{ feature.description }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Section Statistics -->
+<section class="stats-section">
+    <div class="container">
+        <div class="stats-grid">
+            {% for stat in statistics %}
+            <div class="stat-item">
+                <div class="stat-value">{{ stat.value }}</div>
+                <div class="stat-label">{{ stat.label }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Section Services -->
+<section class="services-section">
+    <div class="container">
+        <div class="services-content">
+            <div class="services-text">
+                <h2>Coach AI Services</h2>
+                <h3>API et interfaces complètes</h3>
+                <p>Accès complet à toutes les fonctionnalités via des APIs REST sécurisées, interface d'administration Django et interface utilisateur Streamlit intuitive.</p>
+            </div>
+            <div class="services-grid">
+                {% for service in services %}
+                <div class="service-card">
+                    <h4><a href="{{ service.url }}">{{ service.name }}</a></h4>
+                    <p>{{ service.description }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <h2>Démarrer avec Coach AI</h2>
+            <p>Accédez à l'administration ou lancez une session de coaching personnalisé.</p>
+            <div class="footer-links">
+                <a href="/simple-plan/" class="footer-link">Plan Simplifié</a>
+                <a href="/admin/" class="footer-link">Administration</a>
+                <a href="/swagger/" class="footer-link">Documentation API</a>
+                <a href="http://localhost:8501" class="footer-link">Interface Coach</a>
+            </div>
+        </div>
+    </div>
+</footer>
+{% endblock %}

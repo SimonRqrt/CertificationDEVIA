@@ -17,7 +17,12 @@ st.set_page_config(
 
 # L'URL de votre API. Assurez-vous que le service FastAPI tourne.
 
-API_URL = "http://backend:8000"
+# Configuration adaptée selon l'environnement (local vs Docker)
+import os
+if os.getenv('DOCKER_ENV') == 'true':
+    API_URL = "http://fastapi:8000"  # Nom du service Docker
+else:
+    API_URL = "http://localhost:8000"  # Développement local
 
 # On récupère la clé API depuis les secrets de Streamlit
 
@@ -87,7 +92,7 @@ if prompt := st.chat_input("Posez votre question sur votre entraînement..."):
         try:
             # Appel de l'API en mode streaming
             response = requests.post(
-                f"{API_URL}/v1/coaching/chat", 
+                f"{API_URL}/v1/coaching/chat-legacy", 
                 headers=HEADERS, 
                 json=chat_payload, 
                 stream=True

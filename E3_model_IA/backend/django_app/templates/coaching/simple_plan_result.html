@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'core/base.html' %}
 {% load static %}
 
 {% block title %}🎯 Votre Plan d'Entraînement{% endblock %}
@@ -58,6 +58,51 @@
         color: #3498db;
         font-weight: bold;
     }
+    .agent-response {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+    }
+    .agent-content {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        font-family: 'Courier New', monospace;
+        white-space: pre-wrap;
+    }
+    .agent-content h3 {
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .agent-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+    }
+    .agent-content table th,
+    .agent-content table td {
+        border: 1px solid #ddd;
+        padding: 0.75rem;
+        text-align: left;
+    }
+    .agent-content table th {
+        background-color: #3498db;
+        color: white;
+        font-weight: bold;
+    }
+    .agent-content table tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+    .agent-content strong {
+        color: #2c3e50;
+        font-weight: bold;
+    }
+    .agent-content em {
+        color: #7f8c8d;
+        font-style: italic;
+    }
 </style>
 {% endblock %}
 
@@ -90,7 +135,24 @@
                 <div class="row">
                     <div class="col-md-8">
                         <h5>Description du plan :</h5>
-                        <p class="lead">{{ plan.description }}</p>
+                        <!-- Affichage avec formatage Markdown pour Coach Michael -->
+                        <div class="plan-content">
+                            {% if plan.generated_by and "Coach Michael" in plan.generated_by %}
+                                <!-- Réponse de l'agent avancé - formatage spécial -->
+                                <div class="agent-response">
+                                    <div class="alert alert-info mb-3">
+                                        <i class="fas fa-robot me-2"></i>
+                                        <strong>{{ plan.generated_by }}</strong> - Analyse personnalisée avec base de connaissances
+                                    </div>
+                                    <div class="agent-content">
+                                        {{ plan.description|linebreaks }}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <!-- Réponse standard -->
+                                <p class="lead">{{ plan.description|linebreaks }}</p>
+                            {% endif %}
+                        </div>
                         
                         <h5 class="mt-4">Fréquence :</h5>
                         <p><strong class="stat-highlight">{{ plan.weekly_sessions }} séances par semaine</strong></p>
@@ -207,8 +269,19 @@
                 <p class="mb-4">Votre plan est prêt ! Vous pouvez maintenant commencer votre entraînement ou générer un nouveau plan avec d'autres paramètres.</p>
                 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    {% if saved_plan %}
+                    <div class="alert alert-success text-center mb-3">
+                        <i class="fas fa-save me-2"></i>
+                        <strong>Plan sauvegardé !</strong> 
+                        <a href="{% url 'coaching:plan_detail' saved_plan.pk %}" class="alert-link">Voir le détail</a>
+                    </div>
+                    {% endif %}
+                    
                     <a href="{% url 'coaching:simple_plan_generator' %}" class="btn btn-new-plan">
                         <i class="fas fa-redo me-2"></i>Nouveau Plan
+                    </a>
+                    <a href="{% url 'coaching:plan_list' %}" class="btn btn-outline-success">
+                        <i class="fas fa-list me-2"></i>Mes Plans
                     </a>
                     <a href="{% url 'activities:dashboard' %}" class="btn btn-outline-primary">
                         <i class="fas fa-chart-line me-2"></i>Voir mes Stats
@@ -234,6 +307,47 @@ document.addEventListener('DOMContentLoaded', function() {
             card.style.transform = 'translateY(0)';
         }, index * 200);
     });
+    
+    // Amélioration du rendu pour les réponses de Coach Michael
+    const agentContent = document.querySelector('.agent-content');
+    if (agentContent) {
+        formatCoachResponse(agentContent);
+    }
 });
+
+function formatCoachResponse(element) {
+    let content = element.innerHTML;
+    
+    // Convertir les tableaux Markdown simples en HTML
+    content = content.replace(/\|(.+)\|/g, function(match, tableRow) {
+        const cells = tableRow.split('|').map(cell => cell.trim()).filter(cell => cell);
+        if (cells.length > 0) {
+            // Vérifier si c'est une ligne de séparation (contient des tirets)
+            if (cells[0].includes('-')) {
+                return ''; // Ignorer les lignes de séparation
+            }
+            // Vérifier si c'est un header (première ligne non vide)
+            const isHeader = content.indexOf(match) === content.indexOf('|');
+            const tag = isHeader ? 'th' : 'td';
+            return `<tr>${cells.map(cell => `<${tag}>${cell}</${tag}>`).join('')}</tr>`;
+        }
+        return match;
+    });
+    
+    // Envelopper les tableaux
+    content = content.replace(/(<tr>.*<\/tr>)/s, '<table class="table table-bordered">$1</table>');
+    
+    // Mettre en évidence les titres avec ###
+    content = content.replace(/### (.+)/g, '<h3>$1</h3>');
+    content = content.replace(/## (.+)/g, '<h2>$1</h2>');
+    
+    // Mettre en gras **texte**
+    content = content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    
+    // Mettre en italique *texte*
+    content = content.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    
+    element.innerHTML = content;
+}
 </script>
 {% endblock %}

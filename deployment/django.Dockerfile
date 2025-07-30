@@ -36,8 +36,9 @@ COPY data/ /app/data/
 # Créer les répertoires nécessaires
 RUN mkdir -p /app/logs /app/static /app/media
 
-# Collecter les fichiers statiques
-RUN python manage.py collectstatic --noinput
+# Collecter les fichiers statiques et créer les migrations
+RUN python manage.py collectstatic --noinput \
+    && python manage.py makemigrations
 
 # Exposer le port
 EXPOSE 8002

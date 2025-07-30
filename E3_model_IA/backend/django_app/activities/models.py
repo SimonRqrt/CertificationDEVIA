@@ -130,6 +130,20 @@ class Activity(models.Model):
             models.Index(fields=['user', 'start_time']),
             models.Index(fields=['activity_type', 'start_time']),
             models.Index(fields=['user', 'activity_type']),
+            models.Index(fields=['user', 'activity_id']),
+        ]
+        constraints = [
+            # Contrainte d'unicité pour éviter les doublons par activity_id
+            models.UniqueConstraint(
+                fields=['user', 'activity_id'],
+                name='unique_user_activity_id',
+                condition=models.Q(activity_id__isnull=False)
+            ),
+            # Contrainte d'unicité pour éviter les doublons par nom et date
+            models.UniqueConstraint(
+                fields=['user', 'activity_name', 'start_time'],
+                name='unique_user_activity_name_time'
+            )
         ]
     
     def __str__(self):

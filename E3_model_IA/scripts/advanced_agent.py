@@ -25,8 +25,19 @@ import sqlite3
 import asyncio
 import aiosqlite
 
-from E1_gestion_donnees.db_manager import create_db_engine
-from src.config import DATABASE_URL, OPENAI_API_KEY
+try:
+    from E1_gestion_donnees.db_manager import create_db_engine
+except ImportError:
+    print("⚠️ Impossible d'importer db_manager - mode sans base de données")
+    create_db_engine = None
+
+try:
+    from src.config import DATABASE_URL, OPENAI_API_KEY
+except ImportError:
+    # Fallback pour FastAPI standalone
+    import os
+    DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///data/garmin_data.db')
+    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 # Chargement des variables d'environnement
 load_dotenv()

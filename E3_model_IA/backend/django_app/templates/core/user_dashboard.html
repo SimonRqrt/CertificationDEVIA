@@ -1,0 +1,732 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Coach AI{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <!-- Header avec navigation -->
+    <header class="dashboard-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="brand">
+                    <a href="/" class="brand-link">
+                        <h1>Coach AI</h1>
+                        <span>Dashboard</span>
+                    </a>
+                </div>
+                <nav class="main-nav">
+                    <a href="/api/v1/activities/" class="nav-link">📊 Activités</a>
+                    <a href="/api/v1/coaching/" class="nav-link">🎯 Coaching</a>
+                    <a href="/api/v1/coaching/running-wizard/" class="nav-link">✨ Assistant</a>
+                    <a href="http://localhost:8501" class="nav-link">💬 Chat IA</a>
+                    <a href="/admin/" class="nav-link">⚙️ Admin</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenu principal -->
+    <main class="dashboard-main">
+        <div class="container">
+            
+            <!-- Section résumé rapide -->
+            <section class="quick-summary">
+                <div class="summary-cards">
+                    <!-- Activités -->
+                    <div class="summary-card activities-card">
+                        <div class="card-icon">🏃‍♂️</div>
+                        <div class="card-content">
+                            <h3>{{ activity_stats.total_count|default:0 }}</h3>
+                            <p>Activités ({{ period_days }}j)</p>
+                            <div class="card-detail">
+                                <span>{{ activity_stats.total_distance_km|default:"0" }} km</span>
+                                <span>{{ activity_stats.total_duration_formatted|default:"0h 0min" }}</span>
+                            </div>
+                        </div>
+                        <a href="/api/v1/activities/" class="card-action">Voir détails →</a>
+                    </div>
+
+                    <!-- Plans d'entraînement -->
+                    <div class="summary-card plans-card">
+                        <div class="card-icon">📋</div>
+                        <div class="card-content">
+                            <h3>{{ active_plans.count }}</h3>
+                            <p>Plans actifs</p>
+                            <div class="card-detail">
+                                <span>{{ completed_plans }} terminé{{ completed_plans|pluralize }}</span>
+                                {% if session_stats.completion_rate %}
+                                <span>{{ session_stats.completion_rate }}% réussite</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <a href="/api/v1/coaching/plans/" class="card-action">Gérer →</a>
+                    </div>
+
+                    <!-- Objectifs -->
+                    <div class="summary-card goals-card">
+                        <div class="card-icon">🎯</div>
+                        <div class="card-content">
+                            <h3>{{ active_goals.count }}</h3>
+                            <p>Objectifs actifs</p>
+                            <div class="card-detail">
+                                <span>{{ achieved_goals }} atteint{{ achieved_goals|pluralize }}</span>
+                            </div>
+                        </div>
+                        <a href="/api/v1/coaching/quick-goal/" class="card-action">Créer →</a>
+                    </div>
+
+                    <!-- Métriques -->
+                    <div class="summary-card metrics-card">
+                        <div class="card-icon">📈</div>
+                        <div class="card-content">
+                            <h3>{% if latest_metrics %}✓{% else %}—{% endif %}</h3>
+                            <p>Métriques</p>
+                            <div class="card-detail">
+                                {% if latest_metrics %}
+                                <span>VMA: {{ latest_metrics.vma|default:"—" }}</span>
+                                <span>VO2: {{ latest_metrics.vo2_max|default:"—" }}</span>
+                                {% else %}
+                                <span>Aucune donnée</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <a href="/admin/" class="card-action">Analyser →</a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recommandations -->
+            {% if recommendations %}
+            <section class="recommendations">
+                <div class="section-header">
+                    <h2>💡 Recommandations personnalisées</h2>
+                </div>
+                <div class="recommendations-list">
+                    {% for rec in recommendations %}
+                    <div class="recommendation-card rec-{{ rec.type }}">
+                        <div class="rec-content">
+                            <h3>{{ rec.title }}</h3>
+                            <p>{{ rec.message }}</p>
+                        </div>
+                        <a href="{{ rec.url }}" class="rec-action">{{ rec.action }}</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- Grille principale -->
+            <div class="dashboard-grid">
+                
+                <!-- Colonne gauche : Activités et graphiques -->
+                <div class="grid-left">
+                    
+                    <!-- Activités récentes -->
+                    <section class="dashboard-section">
+                        <div class="section-header">
+                            <h2>🏃‍♂️ Activités récentes</h2>
+                            <a href="/api/v1/activities/" class="section-action">Voir tout</a>
+                        </div>
+                        <div class="activities-list">
+                            {% for activity in recent_activities %}
+                            <div class="activity-item">
+                                <div class="activity-type">
+                                    {% if activity.activity_type == 'running' %}🏃‍♂️
+                                    {% elif activity.activity_type == 'cycling' %}🚴‍♂️
+                                    {% elif activity.activity_type == 'swimming' %}🏊‍♂️
+                                    {% else %}⚡{% endif %}
+                                </div>
+                                <div class="activity-details">
+                                    <h4>{{ activity.activity_name }}</h4>
+                                    <div class="activity-stats">
+                                        <span>{{ activity.distance_km }} km</span>
+                                        <span>{{ activity.duration_formatted }}</span>
+                                        {% if activity.average_hr %}
+                                        <span>{{ activity.average_hr }} bpm</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="activity-date">{{ activity.start_time|date:"d/m/Y H:i" }}</div>
+                                </div>
+                                <a href="/api/v1/activities/{{ activity.id }}/" class="activity-link">→</a>
+                            </div>
+                            {% empty %}
+                            <div class="empty-state">
+                                <p>Aucune activité récente</p>
+                                <a href="/api/v1/activities/create/" class="btn-primary">Ajouter une activité</a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </section>
+
+                    <!-- Graphique évolution -->
+                    <section class="dashboard-section">
+                        <div class="section-header">
+                            <h2>📊 Évolution (14 derniers jours)</h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="dailyChart" width="400" height="200"></canvas>
+                        </div>
+                    </section>
+
+                </div>
+
+                <!-- Colonne droite : Coaching et objectifs -->
+                <div class="grid-right">
+                    
+                    <!-- Plans d'entraînement -->
+                    <section class="dashboard-section">
+                        <div class="section-header">
+                            <h2>📋 Plans d'entraînement</h2>
+                            <a href="/api/v1/coaching/running-wizard/" class="section-action">Créer</a>
+                        </div>
+                        <div class="plans-list">
+                            {% for plan in active_plans %}
+                            <div class="plan-item">
+                                <div class="plan-info">
+                                    <h4>{{ plan.name }}</h4>
+                                    <p>{{ plan.goal|capfirst }} - {{ plan.duration_weeks }} semaines</p>
+                                    <div class="plan-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 65%"></div>
+                                        </div>
+                                        <span>65% terminé</span>
+                                    </div>
+                                </div>
+                                <a href="/api/v1/coaching/plans/{{ plan.id }}/" class="plan-link">→</a>
+                            </div>
+                            {% empty %}
+                            <div class="empty-state">
+                                <p>Aucun plan d'entraînement</p>
+                                <a href="/api/v1/coaching/running-wizard/" class="btn-secondary">Assistant objectifs</a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </section>
+
+                    <!-- Prochaines séances -->
+                    <section class="dashboard-section">
+                        <div class="section-header">
+                            <h2>📅 Prochaines séances</h2>
+                        </div>
+                        <div class="sessions-list">
+                            {% for session in upcoming_sessions %}
+                            <div class="session-item session-{{ session.session_type }}">
+                                <div class="session-date">
+                                    {{ session.planned_date|date:"d/m" }}
+                                </div>
+                                <div class="session-details">
+                                    <h4>{{ session.name }}</h4>
+                                    <p>{{ session.planned_duration }} min
+                                    {% if session.planned_distance %} - {{ session.planned_distance }} km{% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="empty-state">
+                                <p>Aucune séance planifiée</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </section>
+
+                    <!-- Objectifs -->
+                    <section class="dashboard-section">
+                        <div class="section-header">
+                            <h2>🎯 Objectifs actifs</h2>
+                            <a href="/api/v1/coaching/quick-goal/" class="section-action">Ajouter</a>
+                        </div>
+                        <div class="goals-list">
+                            {% for goal in active_goals %}
+                            <div class="goal-item">
+                                <div class="goal-info">
+                                    <h4>{{ goal.name }}</h4>
+                                    <p>{{ goal.current_value|default:"0" }}/{{ goal.target_value }} {{ goal.target_unit }}</p>
+                                    <div class="goal-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: {{ goal.progress_percentage }}%"></div>
+                                        </div>
+                                        <span>{{ goal.progress_percentage|floatformat:0 }}%</span>
+                                    </div>
+                                    {% if goal.target_date %}
+                                    <div class="goal-date">Échéance: {{ goal.target_date|date:"d/m/Y" }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="empty-state">
+                                <p>Aucun objectif défini</p>
+                                <a href="/api/v1/coaching/quick-goal/" class="btn-secondary">Créer un objectif</a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+
+            <!-- Actions rapides -->
+            <section class="quick-actions">
+                <div class="section-header">
+                    <h2>🚀 Actions rapides</h2>
+                </div>
+                <div class="actions-grid">
+                    <a href="/api/v1/activities/create/" class="action-card">
+                        <div class="action-icon">📝</div>
+                        <div class="action-content">
+                            <h3>Ajouter activité</h3>
+                            <p>Enregistrer une séance manuelle</p>
+                        </div>
+                    </a>
+                    
+                    <a href="/api/v1/coaching/running-wizard/" class="action-card">
+                        <div class="action-icon">🎯</div>
+                        <div class="action-content">
+                            <h3>Créer un plan</h3>
+                            <p>Assistant objectifs personnalisé</p>
+                        </div>
+                    </a>
+                    
+                    <a href="http://localhost:8501" class="action-card">
+                        <div class="action-icon">💬</div>
+                        <div class="action-content">
+                            <h3>Chat avec l'IA</h3>
+                            <p>Coaching conversationnel</p>
+                        </div>
+                    </a>
+                    
+                    <a href="/api/v1/activities/dashboard/" class="action-card">
+                        <div class="action-icon">📊</div>
+                        <div class="action-content">
+                            <h3>Analyses détaillées</h3>
+                            <p>Statistiques et performances</p>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+        </div>
+    </main>
+</div>
+
+<!-- Scripts pour les graphiques -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Données pour le graphique quotidien
+const dailyData = {{ daily_data_json|safe }};
+
+// Configuration du graphique
+const ctx = document.getElementById('dailyChart').getContext('2d');
+const chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: Object.keys(dailyData),
+        datasets: [{
+            label: 'Distance (km)',
+            data: Object.values(dailyData).map(d => d.distance || 0),
+            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Distance (km)'
+                }
+            }
+        }
+    }
+});
+
+// Actualisation automatique des données (optionnel)
+setInterval(() => {
+    fetch('/api/v1/core/dashboard/stats/')
+        .then(response => response.json())
+        .then(data => {
+            // Mettre à jour le graphique avec les nouvelles données
+            console.log('Données actualisées:', data);
+        })
+        .catch(error => console.error('Erreur actualisation:', error));
+}, 300000); // Toutes les 5 minutes
+</script>
+
+<style>
+/* Styles spécifiques au dashboard */
+.dashboard {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.dashboard-header {
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1rem 0;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.brand-link {
+    text-decoration: none;
+    color: #1e293b;
+}
+
+.brand h1 {
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.brand span {
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
+.main-nav {
+    display: flex;
+    gap: 1rem;
+}
+
+.nav-link {
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    color: #475569;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+}
+
+.nav-link:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.dashboard-main {
+    padding: 2rem 0;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.quick-summary {
+    margin-bottom: 3rem;
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.card-icon {
+    font-size: 2rem;
+}
+
+.card-content h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+    color: #1e293b;
+}
+
+.card-content p {
+    margin: 0.25rem 0;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.card-detail {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.card-detail span {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    background: #f1f5f9;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+}
+
+.card-action {
+    margin-left: auto;
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.recommendations {
+    margin-bottom: 3rem;
+}
+
+.recommendations-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.recommendation-card {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rec-content h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+.rec-content p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.rec-action {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.rec-action:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.dashboard-section {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #1e293b;
+}
+
+.section-action {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.activities-list, .plans-list, .sessions-list, .goals-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.activity-item, .plan-item, .session-item, .goal-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: #f8fafc;
+    transition: background 0.2s;
+}
+
+.activity-item:hover, .plan-item:hover {
+    background: #f1f5f9;
+}
+
+.activity-type {
+    font-size: 1.5rem;
+}
+
+.activity-details h4, .plan-info h4, .session-details h4, .goal-info h4 {
+    margin: 0 0 0.25rem 0;
+    color: #1e293b;
+}
+
+.activity-stats, .activity-date {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.activity-date {
+    margin-top: 0.25rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 0.5rem 0 0.25rem 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #10b981;
+    transition: width 0.3s ease;
+}
+
+.chart-container {
+    height: 200px;
+    position: relative;
+}
+
+.quick-actions {
+    margin-top: 3rem;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.action-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.action-icon {
+    font-size: 2rem;
+}
+
+.action-content h3 {
+    margin: 0 0 0.25rem 0;
+    color: #1e293b;
+    font-size: 1.1rem;
+}
+
+.action-content p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #94a3b8;
+}
+
+.btn-primary, .btn-secondary {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s;
+    margin-top: 0.5rem;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+}
+
+.btn-secondary {
+    background: #f1f5f9;
+    color: #3b82f6;
+}
+
+.btn-secondary:hover {
+    background: #e2e8f0;
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .main-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}

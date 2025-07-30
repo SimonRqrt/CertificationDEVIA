@@ -1,0 +1,200 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Liste des Activités{% endblock %}
+
+{% block content %}
+<div class="activities-container">
+    <div class="page-header">
+        <h1>📋 Mes Activités</h1>
+        <div class="header-actions">
+            <a href="{% url 'activities:create' %}" class="btn btn-primary">➕ Nouvelle activité</a>
+            <a href="{% url 'activities:dashboard' %}" class="btn btn-secondary">📊 Dashboard</a>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-section">
+        <form method="get" class="filters-form">
+            <div class="filter-group">
+                <label>Type d'activité :</label>
+                <select name="activity_type">
+                    <option value="">Tous</option>
+                    <option value="running">Course à pied</option>
+                    <option value="cycling">Cyclisme</option>
+                    <option value="swimming">Natation</option>
+                    <option value="walking">Marche</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Période :</label>
+                <select name="period">
+                    <option value="7">7 derniers jours</option>
+                    <option value="30" selected>30 derniers jours</option>
+                    <option value="90">3 derniers mois</option>
+                    <option value="365">Année</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-filter">Filtrer</button>
+        </form>
+    </div>
+
+    <!-- Liste des activités -->
+    <div class="activities-list">
+        {% if activities %}
+            {% for activity in activities %}
+                <div class="activity-card">
+                    <div class="activity-header">
+                        <div class="activity-type-icon">
+                            {% if activity.activity_type == 'running' %}🏃
+                            {% elif activity.activity_type == 'cycling' %}🚴
+                            {% elif activity.activity_type == 'swimming' %}🏊
+                            {% elif activity.activity_type == 'walking' %}🚶
+                            {% else %}🏋️{% endif %}
+                        </div>
+                        <div class="activity-info">
+                            <h3>{{ activity.activity_name }}</h3>
+                            <p class="activity-date">{{ activity.start_time|date:"d/m/Y à H:i" }}</p>
+                        </div>
+                        <div class="activity-actions">
+                            <a href="{% url 'activities:detail' activity.pk %}" class="btn btn-sm">👁️ Voir</a>
+                            <a href="{% url 'activities:edit' activity.pk %}" class="btn btn-sm btn-edit">✏️ Modifier</a>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-stats">
+                        {% if activity.distance_km %}
+                            <div class="stat">
+                                <span class="stat-icon">📏</span>
+                                <span class="stat-label">Distance</span>
+                                <span class="stat-value">{{ activity.distance_km }} km</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if activity.duration_formatted %}
+                            <div class="stat">
+                                <span class="stat-icon">⏱️</span>
+                                <span class="stat-label">Durée</span>
+                                <span class="stat-value">{{ activity.duration_formatted }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if activity.pace_per_km %}
+                            <div class="stat">
+                                <span class="stat-icon">🏃</span>
+                                <span class="stat-label">Allure</span>
+                                <span class="stat-value">{{ activity.pace_per_km }} /km</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if activity.average_hr %}
+                            <div class="stat">
+                                <span class="stat-icon">💓</span>
+                                <span class="stat-label">FC moy</span>
+                                <span class="stat-value">{{ activity.average_hr }} bpm</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if activity.calories %}
+                            <div class="stat">
+                                <span class="stat-icon">🔥</span>
+                                <span class="stat-label">Calories</span>
+                                <span class="stat-value">{{ activity.calories }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {% if activity.notes %}
+                        <div class="activity-notes">
+                            <p>{{ activity.notes|truncatewords:20 }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <h3>Aucune activité trouvée</h3>
+                <p>Commencez par ajouter votre première activité sportive !</p>
+                <a href="{% url 'activities:create' %}" class="btn btn-primary">➕ Ajouter une activité</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <div class="pagination">
+            <span class="pagination-info">
+                Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }} 
+                ({{ page_obj.paginator.count }} activité{{ page_obj.paginator.count|pluralize }})
+            </span>
+            
+            <div class="pagination-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1" class="btn btn-sm">⏮️ Première</a>
+                    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-sm">⏪ Précédente</a>
+                {% endif %}
+                
+                <span class="current-page">{{ page_obj.number }}</span>
+                
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-sm">Suivante ⏩</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-sm">Dernière ⏭️</a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.activities-container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+.page-header h1 { color: #2c3e50; margin: 0; }
+.header-actions { display: flex; gap: 10px; }
+
+.filters-section { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+.filters-form { display: flex; align-items: end; gap: 20px; flex-wrap: wrap; }
+.filter-group { display: flex; flex-direction: column; gap: 5px; }
+.filter-group label { font-weight: 500; color: #2c3e50; }
+.filter-group select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; }
+
+.activities-list { display: flex; flex-direction: column; gap: 20px; }
+.activity-card { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; }
+
+.activity-header { display: flex; align-items: center; gap: 15px; padding: 20px; border-bottom: 1px solid #ecf0f1; }
+.activity-type-icon { font-size: 2em; }
+.activity-info { flex: 1; }
+.activity-info h3 { margin: 0 0 5px 0; color: #2c3e50; }
+.activity-date { margin: 0; color: #7f8c8d; font-size: 0.9em; }
+.activity-actions { display: flex; gap: 8px; }
+
+.activity-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; padding: 20px; background: #f8f9fa; }
+.stat { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.stat-icon { font-size: 1.2em; margin-bottom: 5px; }
+.stat-label { font-size: 0.8em; color: #7f8c8d; margin-bottom: 2px; }
+.stat-value { font-weight: 600; color: #2c3e50; }
+
+.activity-notes { padding: 15px 20px; color: #34495e; font-style: italic; border-top: 1px solid #ecf0f1; }
+
+.empty-state { text-align: center; padding: 60px 20px; color: #7f8c8d; }
+.empty-icon { font-size: 4em; margin-bottom: 20px; }
+.empty-state h3 { margin-bottom: 10px; color: #2c3e50; }
+
+.pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+.pagination-links { display: flex; gap: 10px; align-items: center; }
+.current-page { padding: 8px 12px; background: #3498db; color: white; border-radius: 6px; font-weight: 500; }
+
+.btn { padding: 10px 15px; background: #3498db; color: white; text-decoration: none; border-radius: 6px; border: none; cursor: pointer; transition: background 0.3s; }
+.btn:hover { background: #2980b9; }
+.btn-primary { background: #27ae60; }
+.btn-primary:hover { background: #229954; }
+.btn-secondary { background: #95a5a6; }
+.btn-secondary:hover { background: #7f8c8d; }
+.btn-edit { background: #f39c12; }
+.btn-edit:hover { background: #e67e22; }
+.btn-filter { background: #9b59b6; }
+.btn-filter:hover { background: #8e44ad; }
+.btn-sm { padding: 6px 12px; font-size: 0.9em; }
+</style>
+{% endblock %}

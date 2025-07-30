@@ -111,22 +111,42 @@ WSGI_APPLICATION = 'coach_ai_web.wsgi.application'
 DB_TYPE = env('DB_TYPE', default='sqlite')
 
 if DB_TYPE == 'sqlserver':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'mssql',
-            'NAME': env('DB_NAME', default='garmin_data'),
-            'USER': env('DB_USER', default=''),
-            'PASSWORD': env('DB_PASSWORD', default=''),
-            'HOST': env('DB_HOST', default=''),
-            'PORT': env('DB_PORT', default='1433'),
-            'OPTIONS': {
-                'driver': 'ODBC Driver 18 for SQL Server',
-                'extra_params': 'TrustServerCertificate=yes;',
-            },
+    # Configuration Azure SQL Server avec fallback automatique
+    try:
+        # Tester la connexion avant de configurer
+        import socket
+        socket.create_connection((env('DB_HOST', default=''), int(env('DB_PORT', default='1433'))), timeout=5)
+        
+        DATABASES = {
+            'default': {
+                'ENGINE': 'mssql',
+                'NAME': env('DB_NAME', default='garmin_data'),
+                'USER': env('DB_USER', default=''),
+                'PASSWORD': env('DB_PASSWORD', default=''),
+                'HOST': env('DB_HOST', default=''),
+                'PORT': env('DB_PORT', default='1433'),
+                'OPTIONS': {
+                    'driver': 'ODBC Driver 18 for SQL Server',
+                    'extra_params': 'TrustServerCertificate=yes;Encrypt=yes;Connection Timeout=30;',
+                },
+                'CONN_MAX_AGE': 0,  # Pas de connexions persistantes
+                'TEST': {
+                    'NAME': env('DB_NAME', default='garmin_data') + '_test',
+                },
+            }
         }
-    }
+        print("✅ Configuration Azure SQL Server activée")
+        
+    except (socket.error, socket.timeout, Exception) as e:
+        print(f"⚠️ Azure SQL Server inaccessible ({e}), basculement vers SQLite")
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': PROJECT_ROOT / 'data' / 'django_garmin_data.db',
+            }
+        }
 else:
-    # Fallback SQLite pour développement
+    # SQLite pour développement
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -186,6 +206,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.User'
+
+# Login URLs
+LOGIN_URL = '/api/v1/auth/login/'
+LOGIN_REDIRECT_URL = '/api/v1/core/dashboard/'
+LOGOUT_REDIRECT_URL = '/'
 
 # REST Framework settings
 REST_FRAMEWORK = {

@@ -1,0 +1,220 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}📋 Mes Plans d'Entraînement{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
+    }
+    .plan-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .plan-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    .plan-status {
+        font-size: 0.9rem;
+        font-weight: bold;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        display: inline-block;
+    }
+    .status-active {
+        background: #d4edda;
+        color: #155724;
+    }
+    .status-completed {
+        background: #cce7ff;
+        color: #004085;
+    }
+    .status-inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    .goal-badge {
+        background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: bold;
+    }
+    .btn-create-plan {
+        background: linear-gradient(45deg, #11998e, #38ef7d);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    .btn-create-plan:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
+        color: white;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #6c757d;
+    }
+    .plan-meta {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Section Hero -->
+<div class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="display-4 mb-3">📋 Mes Plans d'Entraînement</h1>
+                <p class="lead">
+                    Retrouvez tous vos plans générés par Coach IA et suivez vos progrès.
+                </p>
+                <a href="{% url 'coaching:simple_plan_generator' %}" class="btn btn-create-plan btn-lg mt-3">
+                    <i class="fas fa-plus me-2"></i>Créer un Nouveau Plan
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    {% if plans %}
+    <!-- Liste des plans -->
+    <div class="row">
+        {% for plan in plans %}
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="plan-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="mb-1">{{ plan.name }}</h5>
+                        <span class="goal-badge">{{ plan.get_goal_display }}</span>
+                    </div>
+                    <div>
+                        {% if plan.is_active %}
+                            <span class="plan-status status-active">✅ Actif</span>
+                        {% elif plan.is_completed %}
+                            <span class="plan-status status-completed">🏆 Terminé</span>
+                        {% else %}
+                            <span class="plan-status status-inactive">⏸️ Inactif</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="plan-meta mb-3">
+                    <div><strong>Niveau :</strong> {{ plan.get_level_display }}</div>
+                    <div><strong>Fréquence :</strong> {{ plan.sessions_per_week }} séances/semaine</div>
+                    <div><strong>Durée :</strong> {{ plan.duration_weeks }} semaines</div>
+                    <div><strong>Période :</strong> {{ plan.start_date|date:"d/m/Y" }} - {{ plan.end_date|date:"d/m/Y" }}</div>
+                </div>
+                
+                {% if plan.description %}
+                <p class="text-muted mb-3">
+                    {{ plan.description|truncatewords:15 }}
+                </p>
+                {% endif %}
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="fas fa-calendar me-1"></i>
+                        Créé le {{ plan.created_at|date:"d/m/Y" }}
+                    </small>
+                    <a href="{% url 'coaching:plan_detail' plan.pk %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-eye me-1"></i>Voir Détails
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="Plans pagination">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">Première</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédente</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">
+                            Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivante</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Dernière</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <!-- État vide -->
+    <div class="row">
+        <div class="col-12">
+            <div class="empty-state">
+                <div class="mb-4">
+                    <i class="fas fa-clipboard-list" style="font-size: 4rem; color: #dee2e6;"></i>
+                </div>
+                <h3 class="mb-3">Aucun plan d'entraînement</h3>
+                <p class="mb-4">
+                    Vous n'avez pas encore créé de plan d'entraînement.<br>
+                    Commencez dès maintenant avec notre générateur intelligent !
+                </p>
+                <a href="{% url 'coaching:simple_plan_generator' %}" class="btn btn-create-plan btn-lg">
+                    <i class="fas fa-magic me-2"></i>Créer mon Premier Plan
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation d'apparition progressive des cartes
+    const cards = document.querySelectorAll('.plan-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 150);
+    });
+});
+</script>
+{% endblock %}

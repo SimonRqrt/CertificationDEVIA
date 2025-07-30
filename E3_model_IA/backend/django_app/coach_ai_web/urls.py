@@ -19,10 +19,14 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import HttpResponse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+
+def test_view(request):
+    """Vue de test simple"""
+    return render(request, 'test_simple.html')
 
 def home_view(request):
     """Vue d'accueil avec design Pawatech"""
@@ -77,6 +81,11 @@ schema_view = get_schema_view(
 urlpatterns = [
     # Page d'accueil
     path('', home_view, name='home'),
+    
+    # Pages directes pour tests
+    path('test/', test_view, name='test'),
+    path('simple-plan/', lambda r: redirect('/api/v1/coaching/simple-plan/')),
+    path('dashboard/', lambda r: redirect('/api/v1/core/dashboard/')),
     
     # Administration Django
     path('admin/', admin.site.urls),

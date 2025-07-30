@@ -11,7 +11,24 @@ log = logging.getLogger(__name__)
 def create_db_engine(db_url=DATABASE_URL):
     """Crée une connexion à la base de données"""
     try:
-        engine = sa.create_engine(db_url)
+        # Paramètres de connexion pour SQL Server avec timeout
+        engine_kwargs = {
+            'pool_timeout': 30,
+            'pool_recycle': 3600,
+            'pool_pre_ping': True,
+            'connect_args': {
+                'timeout': 30,
+                'connect_timeout': 30,
+                'autocommit': True
+            }
+        }
+        
+        engine = sa.create_engine(db_url, **engine_kwargs)
+        
+        # Test de la connexion
+        with engine.connect() as conn:
+            conn.execute(sa.text("SELECT 1"))
+        
         log.info("Connexion à la base de données établie avec succès.")
         return engine
     except Exception as e:

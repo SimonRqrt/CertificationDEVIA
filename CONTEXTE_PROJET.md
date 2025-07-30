@@ -128,17 +128,17 @@ cd deployment
 docker-compose -f docker-compose-new.yml up --build
 ```
 
-### URLs services
-- **🏠 Dashboard Utilisateur** : http://localhost:8002/api/v1/core/dashboard/
-- **🎯 Générateur Plan Simplifié** : http://localhost:8002/api/v1/coaching/simple-plan/ ⭐ NOUVEAU
+### URLs services (DÉPLOYÉ EN LIGNE)
+- **🌐 Interface principale** : http://localhost/ ⭐ NGINX REVERSE PROXY
+- **🏠 Page d'accueil Django** : http://localhost:8002/ 
+- **⚡ Générateur Plan IA** : http://localhost/api/v1/coaching/simple-plan/ ⭐ AGENT INTÉGRÉ
+- **📋 Gestion Plans** : http://localhost/coaching/plans/ ⭐ SAUVEGARDE AUTO
 - **🎯 Assistant Objectifs** : http://localhost:8002/api/v1/coaching/running-wizard/
 - **📊 Gestion Activités** : http://localhost:8002/api/v1/activities/
 - **🔄 Pipeline Garmin** : http://localhost:8002/api/v1/activities/pipeline/
-- **Django Admin** : http://localhost:8002/admin/
-- **Django API** : http://localhost:8002/api/v1/
-- **FastAPI Docs** : http://localhost:8000/docs
-- **Streamlit UI** : http://localhost:8501/
-- **Swagger API** : http://localhost:8002/swagger/
+- **💬 Chat IA Streamlit** : http://localhost:8501/ ⭐ COACH MICHAEL
+- **🔧 Django Admin** : http://localhost:8002/admin/
+- **🏥 Health Check** : http://localhost/health ⭐ MONITORING
 
 ## 🧪 Tests et validation
 
@@ -255,7 +255,7 @@ DATABASE_URL=mssql+pyodbc://...
 - [ ] ⚠️ Alertes configurées avec seuils
 - [ ] ⚠️ Procédures résolution incidents
 
-## 🎯 État développement actuel (Juillet 2025)
+## 🎯 État développement actuel (Juillet 2025) - MIS À JOUR 30/07/2025
 
 ### ✅ Réalisations Session Docker Azure SQL (21/01/2025)
 - [x] **Driver ODBC corrigé** : Configuration odbcinst.ini avec bon chemin driver
@@ -303,12 +303,53 @@ DATABASE_URL=mssql+pyodbc://...
   - Statistiques de synchronisation (nouvelles activités vs doublons)
   - Gestion des erreurs d'authentification et de connexion
 
-### 🔧 Architecture finale stabilisée
-1. ✅ **Django** : Interface web + admin + SECRET_KEY sécurisée
-2. ✅ **FastAPI** : API IA + Azure SQL Server + driver ODBC fonctionnel  
-3. ✅ **Streamlit** : Interface conversationnelle + agent coaching
-4. ✅ **Docker** : 3 services healthy + variables .env + réseau configuré
-5. ✅ **Git** : Structure propre + commits documentés + roadmap évolution
+### ✅ SESSION ORGANISATION DJANGO + GÉNÉRATION PLANS IA (30/07/2025)
+- [x] **Interface Django réorganisée** : Page d'accueil avec styles modernes et navigation claire
+- [x] **Générateur de plans simplifié** : Interface 4 champs essentiels avec analyse automatique
+- [x] **FastAPI stabilisé** : Dependencies django-mssql-backend ajoutées et service fonctionnel
+- [x] **Styles CSS unifiés** : Application des styles de test à toute l'interface avec gradients et animations
+- [x] **Analyse intelligente des données** : Détermination automatique du niveau réel basée sur l'historique
+- [x] **Fallback robuste** : Génération locale garantie si FastAPI indisponible
+- [x] **Composants créés** :
+  - `templates/core/home.html` - Page d'accueil avec hero section et navigation moderne
+  - `coaching/views.py` - Générateur de plans avec analyse IA intégrée
+  - `static/css/style.css` - Styles unifiés avec système de design cohérent
+  - URL routing simplifié avec redirections automatiques
+- [x] **Fonctionnalités plan simplifié** :
+  - Analyse de 144 activités de course depuis Azure SQL Server
+  - Détermination automatique du niveau (débutant/intermédiaire/avancé)
+  - Plans adaptatifs basés sur l'historique réel de l'utilisateur
+  - Interface moderne avec statistiques visuelles
+  - Génération robuste avec double fallback (FastAPI + local)
+
+### ✅ SESSION AGENT IA AVANCÉ + SAUVEGARDE + DÉPLOIEMENT (30/07/2025 - FINALE)
+- [x] **Agent IA Coach Michael intégré** : Même qualité que Streamlit avec prompts contextualisés
+- [x] **Sauvegarde automatique plans** : Stockage Azure SQL Server via modèles Django TrainingPlan
+- [x] **Interface de résultats optimisée** : Formatage Markdown + CSS pour réponses Coach Michael
+- [x] **Amélioration qualité réponses** : Context utilisateur enrichi + base connaissances RAG
+- [x] **Fallback intelligent Azure SQL** : Détection automatique + basculement SQLite transparent
+- [x] **Architecture production déployée** : Docker + Nginx + services multiples
+- [x] **Composants finalisés** :
+  - `coaching/views.py` - Agent conversationnel intégré avec prompts avancés
+  - `templates/coaching/simple_plan_result.html` - Rendu optimisé réponses IA
+  - `templates/coaching/plan_list.html` - Interface gestion plans sauvegardés
+  - `deployment/docker-compose-simple.yml` - Configuration production simplifiée
+  - `deployment/nginx-simple.conf` - Reverse proxy optimisé
+  - `deployment/deploy_online.py` - Script déploiement automatisé
+- [x] **Déploiement en ligne réussi** :
+  - **Interface principale** : http://localhost/ (Nginx + Django + Streamlit)
+  - **Générateur plans IA** : http://localhost/api/v1/coaching/simple-plan/
+  - **Gestion plans** : http://localhost/coaching/plans/
+  - **Chat conversationnel** : http://localhost:8501/
+  - **Architecture hybride** : Azure SQL (avec fallback SQLite) + Docker + services healthy
+
+### 🔧 Architecture finale stabilisée et déployée
+1. ✅ **Django** : Interface web complète + Agent IA intégré + sauvegarde automatique
+2. ✅ **Streamlit** : Interface conversationnelle + Coach Michael RAG
+3. ✅ **Nginx** : Reverse proxy production + routing optimisé
+4. ✅ **Docker** : Architecture microservices + fallback Azure SQL → SQLite
+5. ✅ **Base de données** : Hybride Azure SQL Server avec fallback transparent SQLite
+6. ✅ **Déploiement** : Production ready avec health checks et monitoring
 
 ### 🎯 Configuration ODBC fonctionnelle (backend.Dockerfile)
 ```dockerfile
