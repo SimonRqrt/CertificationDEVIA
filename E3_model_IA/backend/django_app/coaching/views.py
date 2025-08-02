@@ -87,7 +87,7 @@ def analyze_user_activities(user):
     from django.db import connection
     
     try:
-        # Analyser les données depuis l'ancienne table activities
+        # Analyser les données depuis la table Django/Supabase activities_activity
         with connection.cursor() as cursor:
             # Statistiques générales
             cursor.execute("""
@@ -97,24 +97,27 @@ def analyze_user_activities(user):
                     AVG(CAST(duration_seconds AS FLOAT)) as avg_duration_seconds,
                     MAX(CAST(distance_meters AS FLOAT)) as max_distance_meters,
                     AVG(CASE WHEN average_hr IS NOT NULL THEN CAST(average_hr AS FLOAT) END) as avg_hr
-                FROM activities 
-                WHERE activity_type IN ('running', 'treadmill_running') 
-                   OR activity_type LIKE '%running%' 
-                   OR activity_type LIKE '%course%'
-            """)
+                FROM activities_activity 
+                WHERE user_id = %s
+                AND (activity_type IN ('running', 'treadmill_running') 
+                   OR activity_type LIKE '%%running%%' 
+                   OR activity_type LIKE '%%course%%')
+            """, [user.id])
             stats = cursor.fetchone()
             
             # Activités récentes (3 derniers mois)
             cursor.execute("""
-                SELECT TOP 10
+                SELECT 
                     activity_name, distance_meters, duration_seconds, start_time
-                FROM activities 
-                WHERE (activity_type IN ('running', 'treadmill_running') 
-                       OR activity_type LIKE '%running%' 
-                       OR activity_type LIKE '%course%')
-                AND start_time >= DATEADD(month, -3, GETDATE())
+                FROM activities_activity 
+                WHERE user_id = %s
+                AND (activity_type IN ('running', 'treadmill_running') 
+                       OR activity_type LIKE '%%running%%' 
+                       OR activity_type LIKE '%%course%%')
+                AND start_time >= datetime('now', '-3 months')
                 ORDER BY start_time DESC
-            """)
+                LIMIT 10
+            """, [user.id])
             recent_activities = cursor.fetchall()
             
         return {
@@ -151,7 +154,7 @@ def generate_simple_plan_with_ai(user, form_data, user_data):
     
     try:
         # URL de l'API FastAPI
-        fastapi_url = getattr(settings, 'FASTAPI_URL', 'http://localhost:8000')
+        fastapi_url = getattr(settings, 'FASTAPI_URL', 'http://fastapi:8000')
         
         # Préparer le payload simplifié compatible avec advanced_agent.py
         payload = {
@@ -254,11 +257,12 @@ Merci Coach ! 🏃‍♂️
 """
     
     # Appeler l'endpoint FastAPI avec l'agent conversationnel
-    fastapi_url = getattr(settings, 'FASTAPI_URL', 'http://localhost:8000')
+    fastapi_url = getattr(settings, 'FASTAPI_URL', 'http://fastapi:8000')
     
     payload = {
         'message': agent_prompt,
-        'thread_id': f'django-user-{user.id}-plan-generation'
+        'thread_id': f'django-user-{user.id}-plan-generation',
+        'user_id': user.id  # Passer le vrai user_id à FastAPI
     }
     
     try:
@@ -270,7 +274,7 @@ Merci Coach ! 🏃‍♂️
             f'{fastapi_url}/v1/coaching/chat-legacy',
             json=payload,
             headers=headers,
-            timeout=60
+            timeout=120  # 2 minutes pour laisser le temps à l'agent IA
         )
         
         if response.status_code == 200:
@@ -795,7 +799,7 @@ class RunningGoalWizardView(LoginRequiredMixin, TemplateView):
     
     def _call_fastapi_for_plan_generation(self, user, wizard_data):
         """Appel à l'API FastAPI pour générer le plan"""
-        fastapi_url = getattr(settings, 'FASTAPI_URL', 'http://localhost:8000')
+        fastapi_url = getattr(settings, 'FASTAPI_URL', 'http://fastapi:8000')
         
         # Récupérer le contexte utilisateur enrichi
         user_context = self._get_user_context_for_ai(user)

@@ -1,0 +1,89 @@
+# Docker Compose simplifié pour Supabase PostgreSQL
+
+services:
+  # Service Django (Web + API) avec Supabase PostgreSQL
+  django:
+    container_name: coach_ai_django_supabase
+    build:
+      context: ..
+      dockerfile: deployment/django.Dockerfile
+    ports:
+      - "8002:8002"
+    env_file:
+      - ../.env
+    environment:
+      - DOCKER_ENV=true
+      - DB_TYPE=postgresql
+      - DB_HOST=db.tbsxjflpsbiuklxzjwai.supabase.co
+      - DB_PORT=6543
+      - DB_NAME=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=gN0qC8NHDzjOh1LH
+    volumes:
+      - ../data:/app/data
+      - ../E3_model_IA/backend/django_app/logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Service FastAPI (IA) avec Supabase
+  fastapi:
+    container_name: coach_ai_fastapi_supabase
+    build:
+      context: ..
+      dockerfile: deployment/fastapi.Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../.env
+    environment:
+      - DOCKER_ENV=true
+      - DB_TYPE=postgresql
+      - DB_HOST=db.tbsxjflpsbiuklxzjwai.supabase.co
+      - DB_PORT=6543
+      - DB_NAME=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=gN0qC8NHDzjOh1LH
+      - DATABASE_URL=postgresql://postgres:gN0qC8NHDzjOh1LH@db.tbsxjflpsbiuklxzjwai.supabase.co:6543/postgres
+    volumes:
+      - ../data:/app/data
+      - ../knowledge_base:/app/knowledge_base
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - django
+
+  # Service Streamlit (Interface utilisateur)
+  streamlit:
+    container_name: coach_ai_streamlit_supabase
+    build:
+      context: ..
+      dockerfile: deployment/streamlit.Dockerfile
+    ports:
+      - "8501:8501"
+    env_file:
+      - ../.env
+    environment:
+      - DOCKER_ENV=true
+    volumes:
+      - ../data:/app/data
+      - ../knowledge_base:/app/knowledge_base
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - fastapi
+
+networks:
+  default:
+    name: coach_ai_supabase_network

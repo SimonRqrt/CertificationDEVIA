@@ -79,6 +79,7 @@ async def get_api_key(key: str = Security(api_key_header)):
 class ChatRequest(BaseModel):
     message: str
     thread_id: Optional[str] = None # Pour suivre une conversation existante
+    user_id: Optional[int] = None # ID utilisateur pour personnalisation
 
 # Modèle Pydantic pour les activités
 class Activity(BaseModel):
@@ -202,8 +203,8 @@ async def chat_with_coach_legacy(
     """Chat avec le coach IA (méthode legacy avec clé API)"""
     
     coaching_agent = fastapi_request.app.state.coaching_agent
-    # Utiliser un user_id par défaut pour la compatibilité
-    user_id = 1
+    # Utiliser le user_id passé par Django, ou 1 par défaut pour compatibilité
+    user_id = chat_request.user_id or 1
     full_input = f"Je suis l'utilisateur {user_id}. {chat_request.message}"
     thread_id = chat_request.thread_id or f"user-thread-{user_id}"
     config = {"configurable": {"thread_id": thread_id}}

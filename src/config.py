@@ -33,6 +33,9 @@ elif DB_TYPE == "sqlserver":
     DATABASE_URL = ( 
         f"mssql+pyodbc://{DB_USER}:{encoded_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}?driver=ODBC+Driver+18+for+SQL+Server"
     )
+elif DB_TYPE == "postgresql":
+    encoded_password = quote_plus(DB_PASSWORD) if DB_PASSWORD else ""
+    DATABASE_URL = f"postgresql://{DB_USER}:{encoded_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 else:
     raise ValueError(f"Type de base de données non pris en charge: {DB_TYPE}")
 
