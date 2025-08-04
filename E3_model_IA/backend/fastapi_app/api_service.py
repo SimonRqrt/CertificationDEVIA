@@ -3,6 +3,7 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, Request, Security
 from fastapi.security.api_key import APIKeyHeader
+from fastapi.responses import Response
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import uvicorn
@@ -11,6 +12,7 @@ from starlette.responses import StreamingResponse
 from datetime import datetime
 import uuid
 import time
+from prometheus_client import generate_latest
 
 import sys
 import os
@@ -22,8 +24,10 @@ from E1_gestion_donnees.db_manager import create_db_engine, create_tables, get_a
 from E3_model_IA.scripts.advanced_agent import get_coaching_graph
 from fastapi_auth_middleware import auth_middleware, get_current_user, get_user_context
 from django_auth_service import UserInfo
+from metrics_config import start_metrics_server, training_plans_generated
 from langchain_core.messages import HumanMessage
 import json
+import pandas as pd
 
 try:
     from src.config import API_HOST, API_PORT, API_DEBUG, DATABASE_URL
@@ -39,14 +43,23 @@ async def lifespan(app: FastAPI):
 
     rprint("[yellow]Démarrage de l'application et des services...[/yellow]")
 
+    # Démarrage serveur métriques Prometheus
+    start_metrics_server(8080)
+    rprint("[green]✅ Serveur métriques Prometheus démarré sur le port 8080[/green]")
+
     app.state.db_engine = create_db_engine()
     app.state.db_tables = create_tables(app.state.db_engine)
-    rprint("[green]✅ Moteur de base de données Azure SQLpour les données d'activité initialisé.[/green]")
+    rprint("[green]✅ Moteur de base de données pour les données d'activité initialisé.[/green]")
 
     coaching_agent = await get_coaching_graph()
     app.state.coaching_agent = coaching_agent
+    
+    # Le service analytics utilise le même moteur que l'app principale
+    app.state.analytics_engine = app.state.db_engine
+    app.state.analytics_tables = app.state.db_tables
+    rprint("[green]✅ Service Analytics SQLAlchemy E1 prêt (moteur partagé).[/green]")
 
-    rprint("[bold green]✅ Application démarrée. L'agent est prêt.[/bold green]")
+    rprint("[bold green]✅ Application démarrée. L'agent et analytics sont prêts.[/bold green]")
 
     yield
 
@@ -116,6 +129,16 @@ def root():
     return {"message": "Bienvenue sur l'API Coach AI Garmin Data"}
 
 
+@app.get("/metrics")
+def metrics():
+    """Endpoint Prometheus pour les métriques"""
+    try:
+        return Response(generate_latest(), media_type="text/plain")
+    except Exception as e:
+        # Fallback si prometheus_client n'est pas disponible
+        return Response("# Prometheus metrics endpoint\n# Service is running but metrics are not yet configured\n", media_type="text/plain")
+
+
 @app.get("/activities/", response_model=List[Activity], tags=["Données"])
 def list_activities(request: Request, skip: int = 0, limit: int = 10):
     engine = request.app.state.db_engine
@@ -174,7 +197,13 @@ async def chat_with_coach(
     async def stream_response():
         ai_response_parts = []
         
-        async for event in coaching_agent.astream({"messages": [HumanMessage(content=full_input)]}, config=config):
+        # Déterminer le mode basé sur le thread_id
+        mode = "plan_generator" if "plan-generation" in thread_id else "streamlit"
+        
+        async for event in coaching_agent.astream({
+            "messages": [HumanMessage(content=full_input)], 
+            "mode": mode
+        }, config=config):
             for step in event.values():
                 message = step["messages"][-1]
                 if hasattr(message, 'content') and message.content:
@@ -210,7 +239,14 @@ async def chat_with_coach_legacy(
     config = {"configurable": {"thread_id": thread_id}}
 
     async def stream_response():
-        async for event in coaching_agent.astream({"messages": [HumanMessage(content=full_input)]}, config=config):
+        # Déterminer le mode basé sur le thread_id
+        mode = "plan_generator" if "plan-generation" in thread_id else "streamlit"
+        print(f"🔍 DEBUG: thread_id={thread_id}, mode détecté={mode}")
+        
+        async for event in coaching_agent.astream({
+            "messages": [HumanMessage(content=full_input)], 
+            "mode": mode
+        }, config=config):
             for step in event.values():
                 message = step["messages"][-1]
                 if hasattr(message, 'content') and message.content:
@@ -357,6 +393,9 @@ async def generate_training_plan(
         
         generation_time = time.time() - start_time
         
+        # Incrémenter la métrique Prometheus
+        training_plans_generated.inc()
+        
         return TrainingPlanResponse(
             name=plan_data['name'],
             description=plan_data['description'],
@@ -426,6 +465,161 @@ async def generate_training_plan(
             ],
             generation_time=generation_time
         )
+
+
+# ===== ENDPOINTS ANALYTICS AVANCÉS (SQLAlchemy E1) =====
+
+def get_performance_trends_data(engine, user_id: int, period_weeks: int = 12):
+    """Analyse des tendances de performance avec moyennes mobiles"""
+    from sqlalchemy import text
+    
+    query = text("""
+    SELECT 
+        start_time,
+        distance_meters/1000.0 as distance_km,
+        duration_seconds/60.0 as duration_min,
+        CASE 
+            WHEN duration_seconds > 0 THEN (distance_meters/duration_seconds) * 3.6 
+            ELSE 0 
+        END as pace_kmh,
+        average_hr,
+        COALESCE(training_load, 0) as training_load
+    FROM activities 
+    WHERE user_id = :user_id 
+      AND start_time >= datetime('now', '-' || :weeks || ' days')
+      AND duration_seconds > 600  -- Au moins 10 minutes
+    ORDER BY start_time DESC
+    LIMIT 50
+    """)
+    
+    with engine.connect() as conn:
+        result = conn.execute(query, {'user_id': user_id, 'weeks': period_weeks * 7})
+        trends = [dict(row._mapping) for row in result]
+    
+    return {
+        'user_id': user_id,
+        'period_weeks': period_weeks,
+        'trends_count': len(trends),
+        'trends': trends
+    }
+
+def get_zones_analysis_data(engine, user_id: int):
+    """Analyse des zones d'entraînement basée sur la FC"""
+    from sqlalchemy import text
+    
+    # D'abord, récupérer la FC max
+    max_hr_query = text("""
+    SELECT MAX(max_hr) as max_hr_recorded,
+           COUNT(*) as activities_with_hr
+    FROM activities 
+    WHERE user_id = :user_id AND max_hr IS NOT NULL
+    """)
+    
+    zones_query = text("""
+    SELECT 
+        CASE 
+            WHEN average_hr <= (SELECT MAX(max_hr) * 0.7 FROM activities WHERE user_id = :user_id AND max_hr IS NOT NULL) 
+                THEN 'Zone 1-2 - Endurance'
+            WHEN average_hr <= (SELECT MAX(max_hr) * 0.85 FROM activities WHERE user_id = :user_id AND max_hr IS NOT NULL) 
+                THEN 'Zone 3-4 - Tempo/Seuil'
+            ELSE 'Zone 5 - VO2max'
+        END as hr_zone,
+        COUNT(*) as activities_count,
+        ROUND(AVG(duration_seconds)/60.0, 1) as avg_duration_min,
+        ROUND(AVG(average_hr), 0) as avg_hr
+    FROM activities 
+    WHERE user_id = :user_id 
+      AND average_hr IS NOT NULL 
+      AND duration_seconds > 300
+    GROUP BY 1
+    ORDER BY avg_hr
+    """)
+    
+    with engine.connect() as conn:
+        max_hr_result = conn.execute(max_hr_query, {'user_id': user_id}).fetchone()
+        zones_result = conn.execute(zones_query, {'user_id': user_id})
+        zones = [dict(row._mapping) for row in zones_result]
+    
+    max_hr_info = dict(max_hr_result._mapping) if max_hr_result else {}
+    
+    return {
+        'user_id': user_id,
+        'max_hr_info': max_hr_info,
+        'zones_analysis': zones
+    }
+
+@app.get("/v1/analytics/trends/{user_id}", tags=["Analytics E1"])
+async def get_performance_trends(
+    user_id: int,
+    fastapi_request: Request,
+    period_weeks: int = 12,
+    api_key: str = Depends(get_api_key)
+):
+    """Analyse des tendances de performance (SQLAlchemy E1)"""
+    
+    engine = fastapi_request.app.state.analytics_engine
+    if not engine:
+        raise HTTPException(status_code=503, detail="Moteur analytics non disponible")
+    
+    try:
+        trends = get_performance_trends_data(engine, user_id, period_weeks)
+        return trends
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur analytics trends: {str(e)}")
+
+@app.get("/v1/analytics/zones/{user_id}", tags=["Analytics E1"])
+async def get_training_zones_analysis(
+    user_id: int,
+    fastapi_request: Request,
+    api_key: str = Depends(get_api_key)
+):
+    """Analyse des zones d'entraînement FC (SQLAlchemy E1)"""
+    
+    engine = fastapi_request.app.state.analytics_engine
+    if not engine:
+        raise HTTPException(status_code=503, detail="Moteur analytics non disponible")
+    
+    try:
+        zones_analysis = get_zones_analysis_data(engine, user_id)
+        return zones_analysis
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur analytics zones: {str(e)}")
+
+@app.get("/v1/analytics/dashboard/{user_id}", tags=["Analytics E1"])
+async def get_analytics_dashboard(
+    user_id: int,
+    fastapi_request: Request,
+    period_weeks: int = 12,
+    api_key: str = Depends(get_api_key)
+):
+    """Dashboard complet analytics (SQLAlchemy E1)"""
+    
+    engine = fastapi_request.app.state.analytics_engine
+    if not engine:
+        raise HTTPException(status_code=503, detail="Moteur analytics non disponible")
+    
+    try:
+        dashboard_data = {
+            'user_id': user_id,
+            'period_weeks': period_weeks,
+            'generated_at': datetime.now().isoformat(),
+        }
+        
+        # Récupérer les analyses
+        try:
+            dashboard_data['trends'] = get_performance_trends_data(engine, user_id, period_weeks)
+        except Exception as e:
+            dashboard_data['trends'] = {'error': str(e)}
+            
+        try:
+            dashboard_data['zones'] = get_zones_analysis_data(engine, user_id)
+        except Exception as e:
+            dashboard_data['zones'] = {'error': str(e)}
+        
+        return dashboard_data
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur dashboard analytics: {str(e)}")
 
 
 def start_api():

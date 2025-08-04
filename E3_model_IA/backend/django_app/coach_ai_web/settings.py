@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'django_extensions',
+    'django_prometheus',
     'drf_yasg',
     
     # Local apps
@@ -109,42 +110,57 @@ WSGI_APPLICATION = 'coach_ai_web.wsgi.application'
 
 # Configuration de base de données dynamique
 DB_TYPE = env('DB_TYPE', default='sqlite')
+PRODUCTION_MODE = env('PRODUCTION_MODE', default=False)
+DISABLE_SQLITE_FALLBACK = env('DISABLE_SQLITE_FALLBACK', default=False)
 
-if DB_TYPE == 'sqlserver':
-    # Configuration Azure SQL Server avec fallback automatique
-    try:
-        # Tester la connexion avant de configurer
-        import socket
-        socket.create_connection((env('DB_HOST', default=''), int(env('DB_PORT', default='1433'))), timeout=5)
-        
+if DB_TYPE == 'postgresql':
+    # Configuration Supabase PostgreSQL
+    should_test_connection = not PRODUCTION_MODE  # En production, on fait confiance à l'hébergeur
+    
+    if should_test_connection:
+        try:
+            # Tester la connexion avant de configurer (développement uniquement)
+            import socket
+            socket.create_connection((env('DB_HOST', default=''), int(env('DB_PORT', default='5432'))), timeout=10)
+            connection_ok = True
+        except (socket.error, socket.timeout, Exception) as e:
+            connection_ok = False
+            print(f"⚠️ Test connexion échoué: {e}")
+    else:
+        connection_ok = True  # En production, on assume que la connexion fonctionne
+    
+    if connection_ok or PRODUCTION_MODE:
         DATABASES = {
             'default': {
-                'ENGINE': 'mssql',
-                'NAME': env('DB_NAME', default='garmin_data'),
-                'USER': env('DB_USER', default=''),
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': env('DB_NAME', default='postgres'),
+                'USER': env('DB_USER', default='postgres'),
                 'PASSWORD': env('DB_PASSWORD', default=''),
                 'HOST': env('DB_HOST', default=''),
-                'PORT': env('DB_PORT', default='1433'),
+                'PORT': env('DB_PORT', default='5432'),
                 'OPTIONS': {
-                    'driver': 'ODBC Driver 18 for SQL Server',
-                    'extra_params': 'TrustServerCertificate=yes;Encrypt=yes;Connection Timeout=30;',
+                    'sslmode': 'require',
                 },
-                'CONN_MAX_AGE': 0,  # Pas de connexions persistantes
+                'CONN_MAX_AGE': 600 if PRODUCTION_MODE else 0,  # Connexions persistantes en production
                 'TEST': {
                     'NAME': env('DB_NAME', default='garmin_data') + '_test',
                 },
             }
         }
-        print("✅ Configuration Azure SQL Server activée")
+        print("✅ Configuration Supabase PostgreSQL activée")
         
-    except (socket.error, socket.timeout, Exception) as e:
-        print(f"⚠️ Azure SQL Server inaccessible ({e}), basculement vers SQLite")
+    elif not DISABLE_SQLITE_FALLBACK:
+        print(f"⚠️ Supabase PostgreSQL inaccessible, basculement vers SQLite")
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.sqlite3',
                 'NAME': PROJECT_ROOT / 'data' / 'django_garmin_data.db',
             }
         }
+    else:
+        # Mode production strict : échec si PostgreSQL inaccessible
+        raise Exception("PostgreSQL requis en production mais inaccessible. Vérifiez votre configuration Supabase.")
+        
 else:
     # SQLite pour développement
     DATABASES = {

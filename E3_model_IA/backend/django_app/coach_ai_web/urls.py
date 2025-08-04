@@ -23,10 +23,14 @@ from django.shortcuts import redirect, render
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 def test_view(request):
     """Vue de test simple"""
     return render(request, 'test_simple.html')
+
+def metrics_views(request):
+    return HttpResponse(generate_latest(), content_type=CONTENT_TYPE_LATEST)
 
 def home_view(request):
     """Vue d'accueil avec design Pawatech"""
@@ -84,8 +88,6 @@ urlpatterns = [
     
     # Pages directes pour tests
     path('test/', test_view, name='test'),
-    path('simple-plan/', lambda r: redirect('/api/v1/coaching/simple-plan/')),
-    path('dashboard/', lambda r: redirect('/api/v1/core/dashboard/')),
     
     # Administration Django
     path('admin/', admin.site.urls),
@@ -100,6 +102,9 @@ urlpatterns = [
     path('api/v1/activities/', include('activities.urls')),
     path('api/v1/coaching/', include('coaching.urls')),
     path('api/v1/core/', include('core.urls')),
+
+    path("metrics/", metrics_views),
+    path('', include('django_prometheus.urls')),
     
     # Route directe de test pour dashboard
     path('dashboard-test/', lambda r: HttpResponse('<h1>Test Dashboard</h1><a href="/admin/">Admin</a>')),

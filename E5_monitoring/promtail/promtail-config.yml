@@ -1,0 +1,89 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Logs Docker containers
+  - job_name: containers
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: containerlogs
+          __path__: /var/lib/docker/containers/*/*log
+    pipeline_stages:
+      - json:
+          expressions:
+            output: log
+            stream: stream
+            attrs:
+      - json:
+          expressions:
+            tag:
+          source: attrs
+      - regex:
+          expression: (?P<container_name>(?:[^|]*))\|\|(?P<image_name>(?:[^|]*))\|\|(?P<image_id>(?:[^|]*))\|\|(?P<container_id>(?:[^|]*))
+          source: tag
+      - timestamp:
+          format: RFC3339Nano
+          source: time
+      - labels:
+          stream:
+          container_name:
+          image_name:
+          image_id:
+          container_id:
+      - output:
+          source: output
+
+  # Logs Django
+  - job_name: django
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: django
+          service: django
+          __path__: /var/log/django/*.log
+    pipeline_stages:
+      - regex:
+          expression: '^\[(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] (?P<level>\w+) (?P<message>.*)'
+      - timestamp:
+          format: '2006-01-02 15:04:05'
+          source: timestamp
+      - labels:
+          level:
+
+  # Logs FastAPI  
+  - job_name: fastapi
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: fastapi
+          service: fastapi
+          __path__: /var/log/fastapi/*.log
+    pipeline_stages:
+      - regex:
+          expression: '(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - (?P<level>\w+) - (?P<message>.*)'
+      - timestamp:
+          format: '2006-01-02 15:04:05'
+          source: timestamp
+      - labels:
+          level:
+
+  # Logs Streamlit
+  - job_name: streamlit
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: streamlit
+          service: streamlit
+          __path__: /var/log/streamlit/*.log

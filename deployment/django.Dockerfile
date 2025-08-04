@@ -8,18 +8,13 @@ ENV DJANGO_SETTINGS_MODULE=coach_ai_web.settings
 # Répertoire de travail
 WORKDIR /app
 
-# Installer les dépendances système avec Microsoft ODBC Driver
+# Installer les dépendances système avec PostgreSQL
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         build-essential \
         curl \
         libpq-dev \
-        unixodbc-dev \
-        gnupg2 \
-    && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
-    && curl https://packages.microsoft.com/config/debian/12/prod.list > /etc/apt/sources.list.d/mssql-release.list \
-    && apt-get update \
-    && ACCEPT_EULA=Y apt-get install -y msodbcsql18 \
+        postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Copier les requirements Django

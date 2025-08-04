@@ -3,6 +3,9 @@ fastapi
 uvicorn
 pydantic
 
+# Monitoring
+prometheus_client
+
 # Django pour l'authentification
 Django==4.2.7
 django-environ
@@ -20,6 +23,7 @@ PyJWT
 
 # Base de données
 SQLAlchemy
+psycopg2-binary
 pyodbc
 alembic
 django-mssql-backend
@@ -37,6 +41,8 @@ langgraph-checkpoint-sqlite
 openai
 langchain-openai
 faiss-cpu
+unstructured[md]
+python-magic
 
 # Gestion des environnements
 python-dotenv

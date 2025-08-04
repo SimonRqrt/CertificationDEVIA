@@ -1,0 +1,107 @@
+groups:
+- name: coaching_app_alerts
+  rules:
+  
+  # === PERFORMANCES ===
+  - alert: DjangoHighResponseTime
+    expr: histogram_quantile(0.95, rate(django_request_duration_seconds_bucket[5m])) > 0.5
+    for: 2m
+    labels:
+      severity: warning
+      service: django
+    annotations:
+      summary: "Django response time élevé (> 500ms)"
+      description: "Le temps de réponse Django P95 est de {{ $value }}s sur les 5 dernières minutes"
+
+  - alert: FastAPIHighLatency
+    expr: histogram_quantile(0.95, rate(fastapi_request_duration_seconds_bucket[5m])) > 1.0
+    for: 2m
+    labels:
+      severity: warning
+      service: fastapi
+    annotations:
+      summary: "FastAPI latence élevée (> 1s)"
+      description: "La latence FastAPI P95 est de {{ $value }}s"
+
+  - alert: OpenAIHighLatency
+    expr: histogram_quantile(0.95, rate(openai_request_duration_seconds_bucket[5m])) > 10.0
+    for: 1m
+    labels:
+      severity: critical
+      service: openai
+    annotations:
+      summary: "OpenAI API très lente (> 10s)"
+      description: "Les appels OpenAI prennent {{ $value }}s en moyenne"
+
+  # === DISPONIBILITÉ ===
+  - alert: ServiceDown
+    expr: up == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Service {{ $labels.job }} est DOWN"
+      description: "Le service {{ $labels.job }} ne répond plus depuis 1 minute"
+
+  - alert: HighErrorRate
+    expr: rate(django_http_requests_total{status=~"5.."}[5m]) / rate(django_http_requests_total[5m]) > 0.1
+    for: 2m
+    labels:
+      severity: warning
+      service: django
+    annotations:
+      summary: "Taux d'erreur Django élevé (> 10%)"
+      description: "{{ $value | humanizePercentage }} d'erreurs 5xx sur Django"
+
+  # === COÛTS IA ===
+  - alert: OpenAIHighCost
+    expr: increase(openai_tokens_total[1h]) * 0.00002 > 10
+    for: 0m
+    labels:
+      severity: warning
+      service: openai
+    annotations:
+      summary: "Coût OpenAI élevé (> 10€/h)"
+      description: "Consommation: {{ $value }} tokens/h ≈ {{ $value | humanize }}€"
+
+  - alert: OpenAITokenRateLimit
+    expr: rate(openai_tokens_total[1m]) > 1000
+    for: 2m
+    labels:
+      severity: critical
+      service: openai
+    annotations:
+      summary: "Rate limit OpenAI approché (> 1000 tokens/min)"
+      description: "Débit actuel: {{ $value }} tokens/min"
+
+  # === SÉCURITÉ ===
+  - alert: HighAuthFailureRate
+    expr: rate(django_auth_failures_total[1m]) > 10
+    for: 1m
+    labels:
+      severity: warning
+      service: security
+    annotations:
+      summary: "Tentatives d'authentification suspectes (> 10/min)"
+      description: "{{ $value }} échecs d'authentification par minute"
+
+  # === RESOURCES ===
+  - alert: HighMemoryUsage
+    expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+    for: 5m
+    labels:
+      severity: critical
+      service: infrastructure
+    annotations:
+      summary: "Utilisation mémoire critique (> 90%)"
+      description: "Mémoire utilisée: {{ $value | humanizePercentage }}"
+
+  - alert: DatabaseConnectionsHigh
+    expr: django_db_connections_active / django_db_connections_max > 0.8
+    for: 3m
+    labels:
+      severity: warning
+      service: database
+    annotations:
+      summary: "Pool de connexions DB saturé (> 80%)"
+      description: "{{ $value | humanizePercentage }} du pool utilisé"

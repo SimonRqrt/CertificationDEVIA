@@ -1,0 +1,54 @@
+global:
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'alertmanager@coach-ai.com'
+  smtp_auth_username: ''
+  smtp_auth_password: ''
+
+route:
+  group_by: ['alertname', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'web.hook'
+  routes:
+  - match:
+      severity: critical
+    receiver: 'critical-alerts'
+  - match:
+      service: openai
+    receiver: 'openai-alerts'
+
+receivers:
+- name: 'web.hook'
+  webhook_configs:
+  - url: 'http://localhost:5001/webhook'
+    send_resolved: true
+
+- name: 'critical-alerts'
+  webhook_configs:
+  - url: 'http://localhost:5001/webhook/critical'
+    send_resolved: true
+  # email_configs:
+  # - to: 'admin@coach-ai.com'
+  #   subject: 'CRITICAL: {{ .GroupLabels.alertname }}'
+  #   body: |
+  #     Alert: {{ .GroupLabels.alertname }}
+  #     Service: {{ .GroupLabels.service }}
+  #     Severity: {{ .GroupLabels.severity }}
+  #     
+  #     {{ range .Alerts }}
+  #     Description: {{ .Annotations.description }}
+  #     {{ end }}
+
+- name: 'openai-alerts'  
+  webhook_configs:
+  - url: 'http://localhost:5001/webhook/openai'
+    send_resolved: true
+    
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    # Même service et même alerte
+    equal: ['alertname', 'service']

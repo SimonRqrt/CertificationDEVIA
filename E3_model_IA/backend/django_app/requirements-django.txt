@@ -9,11 +9,12 @@ Pillow==10.0.1
 django-environ==0.11.2
 drf-yasg==1.21.10
 
+# Monitoring
+prometheus_client
+
 # Base de données
 psycopg2-binary==2.9.7
 aiosqlite
-pymssql
-mssql-django
 
 # Gestion des environnements
 python-dotenv

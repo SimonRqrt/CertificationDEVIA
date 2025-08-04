@@ -1,13 +1,18 @@
 import sys
 import os
 import json
+import time
 from pathlib import Path
 from rich import print as rprint
 from typing import Annotated, List, Any
 from dotenv import load_dotenv
 
+# Import des métriques (désactivé temporairement pour éviter les erreurs)
+# from src.metrics import openai_errors_total, openai_requests_total, openai_response_time
+
 import operator
-from typing_extensions import TypedDict
+import openai
+from typing_extensions import TypedDict, NotRequired
 
 from langgraph.graph import END, StateGraph
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
@@ -46,8 +51,8 @@ api_key = OPENAI_API_KEY
 if not api_key:
     raise ValueError("❌ Clé API OpenAI manquante. Assurez-vous que OPENAI_API_KEY est bien définie dans le fichier .env.")
 
-# DÉFINIT LA PERSONNALITÉ ET LES RÈGLES DE L'AGENT
-SYSTEM_PROMPT = """
+# DÉFINIT LES DEUX MODES DE L'AGENT
+STREAMLIT_SYSTEM_PROMPT = """
 Tu es un coach sportif expert, prudent et encourageant, basé sur les données. Ton nom est "Coach Michael", mais tu précises quand tu te présentes que tu es un coach IA. Tu dois demander à l'utilisateur s'il préfère que tu sois un coach plutôt aggressif, doux, motivant, pour que tu adoptes ta personnalité en fonction de ses réponses.
 
 Ta mission est de créer des plans d'entraînement hebdomadaires personnalisés.
@@ -76,13 +81,115 @@ Quand tu présentes un plan d'entraînement, utilise TOUJOURS le format Markdown
 **Important :** Sois toujours positif et prudent. Ajoute toujours une note pour rappeler à l'utilisateur d'écouter son corps et de consulter un médecin.
 """
 
+DJANGO_PLAN_GENERATOR_PROMPT = """
+Tu es Coach Michael, un expert en planification d'entraînement de course à pied. Tu génères des plans d'entraînement structurés et personnalisés SUR PLUSIEURS SEMAINES.
+
+**Ton processus OBLIGATOIRE :**
+1. **Analyse des données :** Utilise TOUJOURS l'outil `get_user_metrics_from_db` pour analyser le profil utilisateur.
+    - Si les données utilisateur sont incomplètes ou absentes, adapte le plan en fonction de profils génériques (débutant, intermédiaire, avancé).
+
+2. **Durée obligatoire :** Génère TOUJOURS un plan qui couvre la durée demandée (exemple : 8 semaines = 8 semaines complètes de programme).
+
+**FORMAT OBLIGATOIRE - TABLEAU MULTI-SEMAINES :**
+
+## Semaine 1
+| Jour | Type Séance | Durée | Description | Intensité |
+|------|-------------|-------|-------------|-----------|
+| Lundi | Repos | - | Récupération complète | Repos |
+| Mardi | Endurance | 45min | Footing léger en endurance fondamentale | Faible |
+| Mercredi | Fractionné | 60min | 2x(8x30/30) à 100% VMA + échauffement | Élevée |
+| Jeudi | Repos | - | Récupération active ou étirements | Repos |
+| Vendredi | Seuil | 60min | 3x8min à 85-90% FCM + échauffement | Modérée |
+| Samedi | Repos | - | Préparation sortie longue | Repos |
+| Dimanche | Sortie longue | 90min | Endurance fondamentale continue | Faible |
+
+## Semaine 2  
+| Jour | Type Séance | Durée | Description | Intensité |
+|------|-------------|-------|-------------|-----------|
+| Lundi | Repos | - | Récupération complète | Repos |
+| Mardi | Endurance | 50min | Footing léger en endurance fondamentale | Faible |
+| Mercredi | Fractionné | 65min | 3x(8x30/30) à 100% VMA + échauffement | Élevée |
+| Jeudi | Repos | - | Récupération active ou étirements | Repos |
+| Vendredi | Seuil | 65min | 4x8min à 85-90% FCM + échauffement | Modérée |
+| Samedi | Repos | - | Préparation sortie longue | Repos |
+| Dimanche | Sortie longue | 100min | Endurance fondamentale continue | Faible |
+
+[Continue pour toutes les semaines demandées avec progression...]
+
+**🎯 Objectif estimé :**
+[Type d'objectif réaliste à atteindre dans la durée demandée]
+
+**💡 Conseils personnalisés :**
+    - Si une erreur d’outil survient, continue avec les éléments disponibles et précise qu’une mise à jour sera nécessaire.
+2. **Recherche expertise :** Utilise l'outil `get_training_knowledge` pour adapter le plan aux principes scientifiques.
+    - Lorsque tu utilises `get_training_knowledge`, cite la source ou le concept clé utilisé (ex : "Principe de surcharge progressive").
+3. **Génération directe :** Produis IMMÉDIATEMENT un plan structuré en tableau.
+
+**⚠️ Ne fais AUCUNE SUPPOSITION :** Utilise uniquement les résultats des outils fournis.  
+**⚠️ Ne change JAMAIS la structure du tableau hebdomadaire ni l'ordre des sections.**  
+**❌ NE POSE JAMAIS DE QUESTIONS.**
+
+**Format OBLIGATOIRE - Génère TOUJOURS cette structure exacte :**
+
+### 📋 Plan d'entraînement personnalisé
+
+**🎯 Analyse de votre profil :**
+[Résumé des métriques utilisateur en 2-3 lignes]
+
+**📅 Programme hebdomadaire :**
+- Le volume hebdomadaire (nombre de jours et durée totale) doit s’adapter à la disponibilité et au niveau de l’utilisateur.
+
+| Jour | Type Séance | Durée | Description | Intensité |
+|------|-------------|-------|-------------|-----------|
+| Lundi | Repos | - | Récupération active ou repos complet | Repos |
+| Mardi | Endurance | 45min | Footing en aisance respiratoire | Faible |
+| Mercredi | Fractionné | 50min | 2x(8x30/30) à 95-100% VMA | Élevée |
+| Jeudi | Repos | - | Étirements ou marche active | Repos |
+| Vendredi | Seuil | 60min | 3x8min à 85-90% FCM + échauffement | Modérée |
+| Samedi | Repos | - | Préparation sortie longue | Repos |
+| Dimanche | Sortie longue | 90min | Endurance fondamentale continue | Faible |
+
+**🎯 Objectif estimé (optionnel) :**
+[Type d’objectif réaliste à atteindre dans 6 à 8 semaines (ex : courir 10 km en moins de 55 minutes)]
+
+**💡 Conseils personnalisés :**
+[2-3 conseils spécifiques basés sur les données utilisateur]
+- Les conseils doivent être basés sur les métriques individuelles (ex : fréquence cardiaque élevée, manque de récupération, faible régularité).
+
+**⚠️ Recommandations importantes :**
+- Écoutez votre corps et adaptez l'intensité si nécessaire
+- Hydratez-vous régulièrement pendant les séances
+- En cas de douleur, consultez un professionnel de santé
+"""
+
+
+# Mode par défaut (Streamlit)
+SYSTEM_PROMPT = STREAMLIT_SYSTEM_PROMPT
+
 # Initialisation du LLM et des embeddings
 llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, api_key=api_key)
 embedding = OpenAIEmbeddings(api_key=api_key)
 
 # Chargement des documents et initialisation de la base de connaissances
 try:
-    loader = DirectoryLoader("knowledge_base/", glob="**/*.md", show_progress=True)
+    # Chercher knowledge_base dans plusieurs emplacements possibles
+    possible_paths = [
+        "knowledge_base/",
+        "/app/knowledge_base/", 
+        "../../../knowledge_base/",
+        "../../knowledge_base/"
+    ]
+    
+    knowledge_base_path = None
+    for path in possible_paths:
+        if os.path.exists(path) and os.path.isdir(path):
+            knowledge_base_path = path
+            break
+    
+    if not knowledge_base_path:
+        raise FileNotFoundError("Directory not found: 'knowledge_base/'")
+        
+    loader = DirectoryLoader(knowledge_base_path, glob="**/*.md", show_progress=True)
     documents = loader.load()
     if not documents:
         rprint("[bold red]⚠️ Dossier 'knowledge_base' vide ou manquant. L'outil RAG ne fonctionnera pas.[/bold red]")
@@ -127,6 +234,62 @@ def get_training_knowledge(query: str) -> str:
         return f"Erreur lors de la recherche : {str(e)}"
 
 
+def get_db_engine_with_fallback():
+    """
+    Crée une connexion à la base de données avec fallback Django SQLite si PostgreSQL échoue.
+    """
+    # FORCER LE SQLITE POUR CORRIGER LE PROBLÈME TEMPORAIREMENT
+    docker_env = os.getenv('DOCKER_ENV')
+    print(f"🔍 DEBUG: DOCKER_ENV={docker_env}, type={type(docker_env)}")
+    
+    if docker_env == 'true':
+        print("🔄 Mode Docker - utilisation directe SQLite Django...")
+        rprint("[yellow]🔄 Mode Docker - utilisation directe SQLite Django...[/yellow]")
+    else:
+        print(f"🔄 Mode local (DOCKER_ENV={docker_env}) - tentative PostgreSQL d'abord...")
+        try:
+            # Essayer d'abord la configuration par défaut (PostgreSQL/SQL Server)
+            engine = create_db_engine()
+            # Test rapide de connexion
+            with engine.connect() as conn:
+                conn.execute(sa.text("SELECT 1"))
+            rprint("[green]✅ Connexion DB principale réussie[/green]")
+            return engine
+        except Exception as e:
+            rprint(f"[yellow]⚠️ DB principale inaccessible: {e}[/yellow]")
+            rprint("[yellow]🔄 Basculement vers SQLite Django...[/yellow]")
+        
+    # Fallback vers la base SQLite Django  
+    django_db_path = "/app/data/django_garmin_data.db"
+    if not os.path.exists(django_db_path):
+        # En développement local
+        django_db_path = "data/django_garmin_data.db"
+    
+    if os.path.exists(django_db_path):
+        sqlite_url = f"sqlite:///{django_db_path}"
+        engine = sa.create_engine(sqlite_url, connect_args={'check_same_thread': False})
+        rprint(f"[green]✅ SQLite activé: {django_db_path}[/green]")
+        
+        # Test de connexion et vérification des tables
+        try:
+            with engine.connect() as conn:
+                result = conn.execute(sa.text("SELECT name FROM sqlite_master WHERE type='table' AND name='activities_activity'"))
+                table_exists = result.fetchone()
+                if table_exists:
+                    rprint(f"[green]✅ Table activities_activity trouvée[/green]")
+                else:
+                    rprint(f"[red]❌ Table activities_activity manquante[/red]")
+                    # Afficher toutes les tables disponibles
+                    result = conn.execute(sa.text("SELECT name FROM sqlite_master WHERE type='table'"))
+                    tables = [row[0] for row in result.fetchall()]
+                    rprint(f"[yellow]📋 Tables disponibles: {tables}[/yellow]")
+        except Exception as e:
+            rprint(f"[red]❌ Erreur test connexion SQLite: {e}[/red]")
+        
+        return engine
+    else:
+        raise Exception(f"❌ Aucune base de données accessible (ni principale ni SQLite)")
+
 @tool
 def get_user_metrics_from_db(user_id: int) -> str:
     """
@@ -134,24 +297,87 @@ def get_user_metrics_from_db(user_id: int) -> str:
     Retourne les données au format JSON.
     """
     try:
-        engine = create_db_engine()
-        metadata = sa.MetaData()
-        metrics_table = sa.Table("metrics", metadata, autoload_with=engine)
+        engine = get_db_engine_with_fallback()
+        rprint(f"[cyan]🔍 DEBUG get_user_metrics_from_db: engine={engine.url}[/cyan]")
         with engine.connect() as conn:
-            stmt = sa.select(metrics_table).where(
-                metrics_table.c.user_id == user_id
-            ).order_by(sa.desc(metrics_table.c.date_calcul))
-            result = conn.execute(stmt).mappings().first()
+            # Essayer d'abord avec la table metrics FastAPI
+            try:
+                metadata = sa.MetaData()
+                metrics_table = sa.Table("metrics", metadata, autoload_with=engine)
+                stmt = sa.select(metrics_table).where(
+                    metrics_table.c.user_id == user_id
+                ).order_by(sa.desc(metrics_table.c.date_calcul))
+                result = conn.execute(stmt).mappings().first()
+                
+                if result:
+                    return json.dumps(dict(result), default=str)
+            except:
+                pass
+            
+            # Fallback : calculer les métriques depuis activities_activity (Django)
+            # Déterminer le type de base pour adapter la requête
+            if 'sqlite' in str(engine.url):
+                date_filter = "date('now', '-90 days')"
+            else:
+                date_filter = "CURRENT_DATE - INTERVAL '90 days'"
+            
+            result = conn.execute(sa.text(f"""
+                SELECT 
+                    COUNT(*) as total_activities,
+                    AVG(distance_meters/1000.0) as avg_distance_km,
+                    AVG(duration_seconds/60.0) as avg_duration_min,
+                    AVG(average_hr) as avg_heart_rate,
+                    MAX(start_time) as last_activity_date,
+                    AVG(average_speed) as avg_speed_kmh,
+                    SUM(distance_meters/1000.0) as total_distance_km,
+                    SUM(duration_seconds/3600.0) as total_duration_hours
+                FROM activities_activity 
+                WHERE user_id = :user_id
+                    AND start_time >= {date_filter}
+            """), {"user_id": user_id}).fetchone()
 
-        if not result:
+        if not result or result[0] == 0:
             return json.dumps({"error": f"Aucune métrique trouvée pour l'utilisateur {user_id}."})
         
-        return json.dumps(dict(result), default=str)
+        # Convertir en dictionnaire avec noms explicites
+        metrics = {
+            "user_id": user_id,
+            "total_activities": result[0],
+            "avg_distance_km": round(result[1] or 0, 2),
+            "avg_duration_min": round(result[2] or 0, 1),
+            "avg_heart_rate": round(result[3] or 0, 0) if result[3] else None,
+            "last_activity_date": result[4],
+            "avg_speed_kmh": round(result[5] or 0, 2),
+            "total_distance_km": round(result[6] or 0, 1),
+            "total_duration_hours": round(result[7] or 0, 1),
+            "period": "90 derniers jours"
+        }
+        
+        return json.dumps(metrics, default=str)
     
     except Exception as e:
         rprint(f"[bold red]Erreur dans l'outil get_user_metrics_from_db : {e}[/bold red]")
         return json.dumps({"error": f"Erreur de base de données lors de la récupération des métriques pour l'utilisateur {user_id}."})
 
+
+def call_openai_agent(messages):
+    """Appel OpenAI avec métriques Prometheus"""
+    # openai_requests_total.inc()  # Temporairement désactivé
+    start_time = time.time()
+    try:
+        # API OpenAI moderne
+        client = openai.OpenAI()
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=messages
+        )
+        duration = time.time() - start_time
+        # openai_response_time.observe(duration)  # Temporairement désactivé
+        return response
+    except Exception as e:
+        # openai_errors_total.inc()  # Temporairement désactivé
+        rprint(f"[bold red]Erreur OpenAI: {e}[/bold red]")
+        raise
 
 # === Enregistrement des outils ===
 tools = [get_user_metrics_from_db, get_training_knowledge, get_weather_forecast]
@@ -163,11 +389,19 @@ llm_with_tools = llm.bind_tools(tools)
 # === Structure d'état du graphe ===
 class AgentState(TypedDict):
     messages: Annotated[list[AnyMessage], operator.add]
+    mode: NotRequired[str]  # "streamlit" ou "plan_generator"
 
 
 # === Fonctions du graphe ===
 def call_llm(state: AgentState) -> AgentState:
-    system_msg = SystemMessage(content=SYSTEM_PROMPT)
+    # Déterminer le mode basé sur le contexte ou utiliser le mode par défaut
+    mode = state.get("mode", "streamlit")
+    if mode == "plan_generator":
+        system_prompt = DJANGO_PLAN_GENERATOR_PROMPT
+    else:
+        system_prompt = STREAMLIT_SYSTEM_PROMPT
+    
+    system_msg = SystemMessage(content=system_prompt)
     full_history = [system_msg] + state["messages"]
     
     try:

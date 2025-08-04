@@ -128,7 +128,7 @@ def run_garmin_pipeline_for_user(user, garmin_email: str, garmin_password: str) 
                 'activities_processed': 0
             }
         
-        # 2. Récupération des activités directement depuis Garmin
+        # 2. Récupération des activités depuis Garmin Connect
         logger.info("Récupération des activités depuis Garmin Connect...")
         raw_activities = get_all_garmin_activities(garmin_client, batch_size=50)
         
@@ -139,7 +139,29 @@ def run_garmin_pipeline_for_user(user, garmin_email: str, garmin_password: str) 
                 'activities_processed': 0
             }
         
-        # 3. Stockage direct en base Django
+        logger.info(f"✅ {len(raw_activities)} activités récupérées depuis Garmin Connect")
+        
+        # 3a. FLUX E1 - Sauvegarde JSON + stockage E1 pour respecter les critères d'évaluation
+        try:
+            from E1_gestion_donnees.data_manager import save_raw_data, process_garmin_activities
+            from E1_gestion_donnees.db_manager import create_db_engine, create_tables, store_activities_in_db
+            
+            # Sauvegarder JSON brut (requis pour E1-C1)
+            json_file = save_raw_data(raw_activities)
+            logger.info(f"📄 Données brutes E1 sauvegardées : {json_file}")
+            
+            # Traitement et stockage E1 avec user_id cohérent (requis pour E1-C3, E1-C4)
+            processed_data = process_garmin_activities(raw_activities, user_id=user.id)
+            engine = create_db_engine()
+            tables = create_tables(engine)
+            e1_stored = store_activities_in_db(engine, tables, processed_data)
+            logger.info(f"📊 {e1_stored} activités stockées dans système E1 pour utilisateur {user.id}")
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Erreur flux E1 (n'affecte pas l'utilisateur) : {e}")
+        
+        # 3b. FLUX DJANGO - Stockage direct avec user_id correct pour l'utilisateur connecté
+        logger.info(f"🎯 Stockage Django pour l'utilisateur {user.email} (ID: {user.id})")
         activities_count = store_activities_in_django(user, raw_activities)
         
         logger.info(f"Pipeline terminée avec succès. {activities_count} activités traitées.")
@@ -192,7 +214,7 @@ def store_activities_in_django(user, raw_activities: list) -> int:
         .values_list('activity_id', flat=True)
     )
     
-    logger.info(f"Utilisateur {user.email} a déjà {len(existing_activity_ids)} activités")
+    logger.info(f"🔍 Utilisateur {user.email} (ID: {user.id}) a déjà {len(existing_activity_ids)} activités existantes")
     
     for activity_data in raw_activities:
         try:
@@ -267,13 +289,13 @@ def store_activities_in_django(user, raw_activities: list) -> int:
                     existing_activity_ids.add(activity_id)
                 
                 stored_count += 1
-                logger.info(f"Activité '{activity.activity_name}' stockée avec succès (ID: {activity_id})")
+                logger.info(f"✅ Activité '{activity.activity_name}' stockée pour utilisateur {user.id} (Garmin ID: {activity_id})")
             
         except Exception as e:
             logger.error(f"Erreur lors du stockage d'une activité : {str(e)}")
             continue
     
-    logger.info(f"Pipeline terminée : {stored_count} nouvelles activités, {skipped_count} doublons évités")
+    logger.info(f"🎯 Pipeline terminée pour utilisateur {user.id}: {stored_count} nouvelles activités, {skipped_count} doublons évités")
     return stored_count
 
 

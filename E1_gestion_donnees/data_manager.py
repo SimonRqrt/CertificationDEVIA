@@ -103,7 +103,7 @@ def process_garmin_activities(activities: List[Dict[str, Any]], user_id: int) ->
             "activity_id": activity.get("activityId"),
             "activity_name": activity.get("activityName"),
             "activity_type": activity.get("activityType", {}).get("typeKey"),
-            "start_time": activity.get("startTimeLocal"),
+            "start_time": pd.to_datetime(activity.get("startTimeLocal")) if activity.get("startTimeLocal") else None,
             "distance_meters": activity.get("distance",0.0),
             "duration_seconds": activity.get("duration",0.0),
             "average_speed": activity.get("averageSpeed"),
@@ -116,7 +116,7 @@ def process_garmin_activities(activities: List[Dict[str, Any]], user_id: int) ->
             "start_latitude": activity.get("startLatitude"),
             "start_longitude": activity.get("startLongitude"),
             "device_name": activity.get("deviceName"),
-            "created_timestamp": datetime.now().isoformat(),
+            "created_timestamp": datetime.now(),
             # Champs enrichis
             "steps": activity.get("steps"),
             "average_running_cadence": activity.get("averageRunningCadenceInStepsPerMinute"),
@@ -309,7 +309,7 @@ def compute_performance_metrics(activities_df: pd.DataFrame, user_id: int) -> Di
     # et on arrondit pour la lisibilité.
     metrics = {
         "user_id": user_id,
-        "date_calcul": now.isoformat(),
+        "date_calcul": now,
         "vma_kmh": vma_kmh,
         "vo2max_estime": round(float(df['vo2max_estime'].max()), 1) if 'vo2max_estime' in df.columns and not df['vo2max_estime'].isnull().all() else None,
         "charge_7j": round(float(charge_7j), 1),

@@ -11,17 +11,31 @@ log = logging.getLogger(__name__)
 def create_db_engine(db_url=DATABASE_URL):
     """Crée une connexion à la base de données"""
     try:
-        # Paramètres de connexion pour SQL Server avec timeout
+        # Configuration adaptée selon le type de base de données
         engine_kwargs = {
             'pool_timeout': 30,
             'pool_recycle': 3600,
-            'pool_pre_ping': True,
-            'connect_args': {
+            'pool_pre_ping': True
+        }
+        
+        # Paramètres spécifiques selon le type de BDD
+        if 'postgresql' in db_url:
+            # Paramètres PostgreSQL compatibles
+            engine_kwargs['connect_args'] = {
+                'application_name': 'coach_ai_fastapi'
+            }
+        elif 'mssql' in db_url or 'sqlserver' in db_url:
+            # Paramètres SQL Server
+            engine_kwargs['connect_args'] = {
                 'timeout': 30,
                 'connect_timeout': 30,
                 'autocommit': True
             }
-        }
+        elif 'sqlite' in db_url:
+            # Paramètres SQLite
+            engine_kwargs['connect_args'] = {
+                'check_same_thread': False
+            }
         
         engine = sa.create_engine(db_url, **engine_kwargs)
         
@@ -33,6 +47,20 @@ def create_db_engine(db_url=DATABASE_URL):
         return engine
     except Exception as e:
         log.error("Erreur lors de la création du moteur de base de données.", exc_info=True)
+        
+        # Fallback vers SQLite si la connexion échoue (utile pour Supabase inaccessible)
+        if 'postgresql' in db_url or 'mssql' in db_url:
+            log.warning("Tentative de fallback vers SQLite Django...")
+            fallback_url = "sqlite:///data/django_garmin_data.db"
+            try:
+                fallback_engine = sa.create_engine(fallback_url, connect_args={'check_same_thread': False})
+                with fallback_engine.connect() as conn:
+                    conn.execute(sa.text("SELECT 1"))
+                log.info("Fallback SQLite Django établi avec succès (378 activités).")
+                return fallback_engine
+            except Exception as fallback_error:
+                log.error("Échec du fallback SQLite.", exc_info=True)
+        
         raise
 
 def create_tables(engine) -> Dict[str, sa.Table]:
@@ -79,7 +107,7 @@ def create_tables(engine) -> Dict[str, sa.Table]:
         sa.Column("start_latitude", sa.Float),
         sa.Column("start_longitude", sa.Float),
         sa.Column("device_name", sa.String(100)),
-        sa.Column("created_timestamp", sa.String(50)),
+        sa.Column("created_timestamp", sa.DateTime),
         # Données complémentaires Garmin
         sa.Column("steps", sa.Integer),
         sa.Column("average_running_cadence", sa.Float),
@@ -281,13 +309,25 @@ def store_metrics_in_db(engine, tables: Dict, metrics_data: Dict[str, Any]):
 def get_activities_from_db(engine, tables, limit=10, offset=0):
     """Récupère les activités depuis la base de données"""
     with engine.connect() as conn:
-        # Ajouter ORDER BY start_time DESC pour trier par date décroissante
-        select_stmt = sa.select(tables["activities"]) \
-            .order_by(sa.desc(tables["activities"].c.start_time)) \
-            .limit(limit) \
-            .offset(offset)
-        result = conn.execute(select_stmt).fetchall()
-        return result
+        # Vérifier si on utilise Django SQLite (tables Django) ou FastAPI (tables normales)
+        try:
+            # Essayer d'abord avec les tables Django
+            result = conn.execute(sa.text("""
+                SELECT id, activity_id, activity_name, activity_type, start_time, 
+                       distance_meters, duration_seconds, average_hr, user_id
+                FROM activities_activity 
+                ORDER BY start_time DESC 
+                LIMIT :limit OFFSET :offset
+            """), {"limit": limit, "offset": offset}).fetchall()
+            return result
+        except:
+            # Fallback vers les tables FastAPI normales
+            select_stmt = sa.select(tables["activities"]) \
+                .order_by(sa.desc(tables["activities"].c.start_time)) \
+                .limit(limit) \
+                .offset(offset)
+            result = conn.execute(select_stmt).fetchall()
+            return result
 
 def get_activity_by_id(engine, tables, activity_id):
     """Récupère une activité spécifique par son ID"""
