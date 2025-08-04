@@ -21,9 +21,9 @@ services:
       - DB_PASSWORD=gN0qC8NHDzjOh1LH
     volumes:
       - ../data:/app/data
-      - ../E3_model_IA/backend/django_app/logs:/app/logs
-      - ../E3_model_IA/backend/django_app/templates:/app/templates
-      - ../E3_model_IA/backend/django_app/static:/app/static
+      - ../E1_gestion_donnees/api_rest/logs:/app/logs
+      - ../E1_gestion_donnees/api_rest/templates:/app/templates
+      - ../E1_gestion_donnees/api_rest/static:/app/static
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/admin/"]

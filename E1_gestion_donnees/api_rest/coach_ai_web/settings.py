@@ -22,8 +22,8 @@ if os.getenv('DOCKER_ENV'):
     # En Docker, le PROJECT_ROOT est /app
     PROJECT_ROOT = Path('/app')
 else:
-    # En local (3 levels up: django_app -> backend -> E3_model_IA -> CertificationDEVIA)
-    PROJECT_ROOT = BASE_DIR.parent.parent.parent
+    # En local (3 levels up: api_rest -> E1_gestion_donnees -> CertificationDEVIA)
+    PROJECT_ROOT = BASE_DIR.parent.parent
 
 # Environment variables
 env = environ.Env(

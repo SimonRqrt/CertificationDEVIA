@@ -43,7 +43,8 @@ RUN pip install --no-cache-dir --upgrade pip \
 COPY E3_model_IA/ /app/E3_model_IA/
 COPY E1_gestion_donnees/ /app/E1_gestion_donnees/
 COPY src/ /app/src/
-COPY knowledge_base/ /app/knowledge_base/
+# Copier explicitement la knowledge_base avec tout le contenu
+COPY E3_model_IA/knowledge_base /app/knowledge_base
 COPY data/ /app/data/
 
 # Définir le PYTHONPATH (éviter le conflit avec Django)

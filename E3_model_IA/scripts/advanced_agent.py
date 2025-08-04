@@ -176,6 +176,7 @@ try:
     possible_paths = [
         "knowledge_base/",
         "/app/knowledge_base/", 
+        "/app/E3_model_IA/knowledge_base/",
         "../../../knowledge_base/",
         "../../knowledge_base/"
     ]

@@ -9,10 +9,10 @@ import jwt
 from datetime import datetime, timedelta
 import logging
 
-# Configuration Django
+# Configuration Django - mise à jour après réorganisation
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = BASE_DIR.parent.parent
-DJANGO_APP_DIR = BASE_DIR / 'django_app'
+DJANGO_APP_DIR = PROJECT_ROOT / 'E1_gestion_donnees' / 'api_rest'
 
 # Ajouter les chemins Django au PYTHONPATH
 sys.path.insert(0, str(PROJECT_ROOT))
