@@ -20,9 +20,16 @@ st.set_page_config(
 # Configuration adaptée selon l'environnement (local vs Docker)
 import os
 if os.getenv('DOCKER_ENV') == 'true':
-    API_URL = "http://fastapi:8000"  # Nom du service Docker
+    # Architecture optimisée E1/E3
+    FASTAPI_URL = "http://fastapi:8000"     # E3 - IA uniquement
+    DJANGO_URL = "http://django:8002"       # E1 - Données uniquement
 else:
-    API_URL = "http://localhost:8000"  # Développement local
+    # Architecture optimisée E1/E3  
+    FASTAPI_URL = "http://localhost:8000"   # E3 - IA uniquement
+    DJANGO_URL = "http://localhost:8002"    # E1 - Données uniquement
+
+# Compatibilité avec l'ancien code
+API_URL = FASTAPI_URL  # Pour les endpoints IA
 
 # On récupère la clé API depuis les secrets de Streamlit
 
@@ -129,7 +136,8 @@ elif page == "Liste des Activités":
     st.title("📋 Liste des Activités Récentes")
 
     try:
-        response = requests.get(f"{API_URL}/activities?skip=0&amp;limit=500", headers=HEADERS)
+        # Utilisation Django REST API (E1) pour les données
+        response = requests.get(f"{DJANGO_URL}/api/v1/activities/?limit=500", headers=HEADERS)
         response.raise_for_status()
         data = response.json()
         df = pd.DataFrame(data)

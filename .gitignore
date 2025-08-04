@@ -181,3 +181,9 @@ cython_debug/
 .json
 .db
 .toml
+
+# Documentation markdown files (too verbose for commits)
+CONTEXTE_PROJET.md
+ARCHITECTURE_INTELLIGENTE.md
+TODO_CERTIFICATION.md
+*.md

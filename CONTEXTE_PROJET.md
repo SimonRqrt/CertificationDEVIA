@@ -666,6 +666,34 @@ RUN apt-get update && ACCEPT_EULA=Y apt-get install -y --no-install-recommends m
 - **Django** : Approche guidée, formulaires, plans structurés
 - **Streamlit** : Échange libre, conseils personnalisés, coaching conversationnel
 
+## ⚠️ ARCHITECTURE À OPTIMISER - IDENTIFICATION 04/08/2025
+
+### 🏗️ **PROBLÈME ARCHITECTURAL IDENTIFIÉ**
+
+L'architecture actuelle ne respecte pas parfaitement la séparation des responsabilités E1/E3 :
+
+#### **État actuel (fonctionnel mais non optimal) :**
+- **FastAPI** : Expose à la fois l'IA (`/v1/coaching/`) ET les données (`/activities/`)
+- **Django REST** : Gère à la fois les données ET le coaching via des vues
+- **Duplication** : Les deux APIs exposent des fonctionnalités similaires
+
+#### **Architecture optimale recommandée :**
+- **E1 - Django REST uniquement** : API dédiée restitution données Garmin
+  - Endpoints : `/api/v1/activities/`, `/api/v1/users/`, `/api/v1/metrics/`
+  - Rôle : CRUD données, authentification, gestion utilisateurs
+- **E3 - FastAPI uniquement** : API dédiée exposition modèle IA
+  - Endpoints : `/v1/coaching/chat`, `/v1/coaching/plans`, `/v1/coaching/analysis`
+  - Rôle : Modèle IA, génération plans, analyse intelligente
+- **E4 - Streamlit** : Consomme les deux APIs séparément selon le besoin
+
+#### **Plan de refactoring (optionnel) :**
+1. Supprimer endpoints `/activities/` de FastAPI
+2. Migrer logique coaching de Django vers FastAPI pur
+3. Standardiser communication inter-API (Django → FastAPI)
+4. Séparer clairement les responsabilités métier
+
+**Note** : L'architecture actuelle fonctionne parfaitement pour la certification. Cette optimisation est recommandée pour une mise en production.
+
 ## 🔧 PROCHAINES ÉTAPES TECHNIQUES - MIS À JOUR 04/08/2025
 
 ### 🔴 **PRIORITÉ IMMÉDIATE - AGENT IA MULTI-SEMAINES** 

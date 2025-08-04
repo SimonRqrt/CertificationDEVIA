@@ -20,7 +20,7 @@ import os
 # Add project root to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../..'))
 
-from E1_gestion_donnees.db_manager import create_db_engine, create_tables, get_activities_from_db, get_activity_by_id
+from E1_gestion_donnees.db_manager import create_db_engine, create_tables
 from E3_model_IA.scripts.advanced_agent import get_coaching_graph
 from fastapi_auth_middleware import auth_middleware, get_current_user, get_user_context
 from django_auth_service import UserInfo
@@ -94,34 +94,11 @@ class ChatRequest(BaseModel):
     thread_id: Optional[str] = None # Pour suivre une conversation existante
     user_id: Optional[int] = None # ID utilisateur pour personnalisation
 
-# Modèle Pydantic pour les activités
-class Activity(BaseModel):
-    activity_id: int
-    activity_name: str
-    activity_type: Optional[str] = None
-    start_time: datetime
-    distance_meters: Optional[float] = None
-    duration_seconds: Optional[float] = None
-    average_speed: Optional[float] = None
-    max_speed: Optional[float] = None
-    calories: Optional[int] = None
-    average_hr: Optional[float] = None
-    max_hr: Optional[int] = None
-    elevation_gain: Optional[float] = None
-    elevation_loss: Optional[float] = None
-    
-    class Config:
-        from_attributes = True
-
-class GPSData(BaseModel):
-    id: int
-    activity_id: int
-    latitude: float
-    longitude: float
-    timestamp: str  
-
-    class Config:
-        from_attributes = True
+# ==========================================
+# MODÈLES DE DONNÉES SUPPRIMÉS (Architecture E1/E3)
+# → Les données sont gérées par Django REST API
+# → FastAPI se concentre uniquement sur l'IA
+# =========================================
 
 
 @app.get("/")
@@ -139,21 +116,12 @@ def metrics():
         return Response("# Prometheus metrics endpoint\n# Service is running but metrics are not yet configured\n", media_type="text/plain")
 
 
-@app.get("/activities/", response_model=List[Activity], tags=["Données"])
-def list_activities(request: Request, skip: int = 0, limit: int = 10):
-    engine = request.app.state.db_engine
-    tables = request.app.state.db_tables
-    results = get_activities_from_db(engine, tables, limit, skip)
-    return [dict(row._mapping) for row in results]
-
-@app.get("/activities/{activity_id}", response_model=dict, tags=["Données"])
-def get_activity(activity_id: int, request: Request):
-    engine = request.app.state.db_engine
-    tables = request.app.state.db_tables
-    result = get_activity_by_id(engine, tables, activity_id)
-    if result is None:
-        raise HTTPException(status_code=404, detail="Activité non trouvée")
-    return dict(result._mapping)
+# ==========================================
+# ENDPOINTS /activities/ SUPPRIMÉS
+# → Utiliser Django REST API /api/v1/activities/ 
+# ==========================================
+# Cette API se concentre uniquement sur l'IA (E3)
+# Les données sont gérées par Django REST (E1)
 
 # \== Endpoint d'IA (Bloc E3) ==
 
