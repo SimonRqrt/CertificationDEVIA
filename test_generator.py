@@ -6,7 +6,7 @@ import os
 import sys
 
 # Ajouter le répertoire Django au PYTHONPATH
-sys.path.insert(0, '/Users/sims/Documents/Simplon_DEV_IA/Certification/CertificationDEVIA/E3_model_IA/backend/django_app')
+sys.path.insert(0, '/Users/sims/Documents/Simplon_DEV_IA/Certification/CertificationDEVIA/E1_gestion_donnees/api_rest')
 
 # Configuration Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'coach_ai_web.settings')

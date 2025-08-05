@@ -23,9 +23,9 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copier le code Streamlit
 COPY E4_app_IA/frontend/streamlit_app/ /app/
 
-# Créer le répertoire .streamlit et copier secrets.toml
+# Créer le répertoire .streamlit avec template secrets
 RUN mkdir -p /app/.streamlit
-COPY E4_app_IA/frontend/streamlit_app/.streamlit/secrets.toml /app/.streamlit/
+RUN echo '# API_KEY="your_api_key_here"' > /app/.streamlit/secrets.toml
 
 # Exposer le port
 EXPOSE 8501

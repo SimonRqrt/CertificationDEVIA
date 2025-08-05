@@ -23,7 +23,7 @@ from django.db import transaction
 from django.conf import settings
 
 # Configuration Django
-sys.path.append('/Users/sims/Documents/Simplon_DEV_IA/Certification/CertificationDEVIA/E3_model_IA/backend/django_app')
+sys.path.append('/Users/sims/Documents/Simplon_DEV_IA/Certification/CertificationDEVIA/E1_gestion_donnees/api_rest')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'coach_ai_web.settings')
 django.setup()
 

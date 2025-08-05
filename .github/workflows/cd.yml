@@ -1,0 +1,26 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-only:
+    runs-on: ubuntu-latest
+
+    steps:
+    
+uses: actions/checkout@v3
+
+    
+name: Simulate Docker build (no push, no deploy)
+    run: |
+      echo "Building image for local testing only..."
+      docker build -t local/coach_ai_django_supabase:latest .
+
+    
+name: No deployment target
+    run: echo "No server configured for deployment yet."

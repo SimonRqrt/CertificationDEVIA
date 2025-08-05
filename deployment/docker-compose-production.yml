@@ -20,8 +20,8 @@ services:
       - ../.env
     volumes:
       - ../data:/app/data
-      - ../E3_model_IA/backend/django_app/templates:/app/templates
-      - ../E3_model_IA/backend/django_app/static:/app/static
+      - ../E1_gestion_donnees/api_rest/templates:/app/templates
+      - ../E1_gestion_donnees/api_rest/static:/app/static
     networks:
       - coach_ai_production_network
     restart: unless-stopped

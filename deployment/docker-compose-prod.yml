@@ -15,9 +15,9 @@ services:
       - DJANGO_SETTINGS_MODULE=coach_ai_web.settings
     volumes:
       - ../data:/app/data
-      - ../E3_model_IA/backend/django_app/logs:/app/logs
-      - ../E3_model_IA/backend/django_app/templates:/app/templates
-      - ../E3_model_IA/backend/django_app/static:/app/static
+      - ../E1_gestion_donnees/api_rest/logs:/app/logs
+      - ../E1_gestion_donnees/api_rest/templates:/app/templates
+      - ../E1_gestion_donnees/api_rest/static:/app/static
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/admin/"]
@@ -93,7 +93,7 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - ./ssl:/etc/ssl/certs
-      - ../E3_model_IA/backend/django_app/static:/var/www/static
+      - ../E1_gestion_donnees/api_rest/static:/var/www/static
     depends_on:
       - django
       - fastapi

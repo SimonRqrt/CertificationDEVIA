@@ -18,14 +18,14 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Copier les requirements Django
-COPY E3_model_IA/backend/django_app/requirements-django.txt /app/requirements.txt
+COPY E1_gestion_donnees/api_rest/requirements-django.txt /app/requirements.txt
 
 # Installer les dépendances Python
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
 # Copier le code Django
-COPY E3_model_IA/backend/django_app/ /app/
+COPY E1_gestion_donnees/api_rest/ /app/
 COPY data/ /app/data/
 
 # Créer les répertoires nécessaires
