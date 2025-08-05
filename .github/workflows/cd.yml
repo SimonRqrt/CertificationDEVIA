@@ -30,22 +30,27 @@ jobs:
         run: |
           echo "🚀 Déploiement en cours..."
           
+          # Installer Docker si nécessaire
+          sudo apt-get update
+          sudo apt-get install -y docker.io docker-compose
+          sudo systemctl start docker
+          
           # Arrêter les conteneurs existants
           cd deployment
-          docker compose -f docker-compose-supabase.yml down || true
+          sudo docker compose -f docker-compose-supabase.yml down || true
           
           # Nettoyer les images anciennes
-          docker system prune -f
+          sudo docker system prune -f
           
           # Rebuild et démarrer
-          docker compose -f docker-compose-supabase.yml up -d --build
+          sudo docker compose -f docker-compose-supabase.yml up -d --build
           
           # Attendre que les services soient prêts
-          sleep 30
+          sleep 45
           
           # Vérifier la santé des services
           echo "🔍 Vérification de la santé des services..."
-          docker compose -f docker-compose-supabase.yml ps
+          sudo docker compose -f docker-compose-supabase.yml ps
 
       - name: Health check
         run: |

@@ -31,12 +31,12 @@ COPY data/ /app/data/
 # Créer les répertoires nécessaires
 RUN mkdir -p /app/logs /app/static /app/media
 
-# Collecter les fichiers statiques et créer les migrations
-RUN python manage.py collectstatic --noinput \
-    && python manage.py makemigrations
+# Copier le script de démarrage
+COPY deployment/start_django.sh /app/start_django.sh
+RUN chmod +x /app/start_django.sh
 
 # Exposer le port
 EXPOSE 8002
 
 # Commande de démarrage
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8002"]
+CMD ["/app/start_django.sh"]
