@@ -82,7 +82,7 @@
             {% else %}
                 <div class="empty-state">
                     <p>Aucune activité récente</p>
-                    <a href="{% url 'activities:create' %}" class="btn btn-primary">Ajouter une activité</a>
+                    <p>Vos activités synchronisées apparaîtront ici.</p>
                 </div>
             {% endif %}
         </div>
@@ -154,17 +154,13 @@
     <div class="quick-actions">
         <h2>⚡ Actions rapides</h2>
         <div class="actions-grid">
-            <a href="{% url 'activities:create' %}" class="action-btn">
-                <span>➕</span>
-                Ajouter une activité
-            </a>
             <a href="{% url 'activities:list' %}" class="action-btn">
                 <span>📋</span>
                 Voir toutes les activités
             </a>
-            <a href="#" class="action-btn">
+            <a href="/admin/" class="action-btn">
                 <span>📈</span>
-                Analyses avancées
+                Administration
             </a>
         </div>
     </div>

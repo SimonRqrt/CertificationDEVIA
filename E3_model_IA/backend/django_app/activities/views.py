@@ -143,7 +143,7 @@ def dashboard_view(request):
     
     # Statistiques générales
     stats = activities.aggregate(
-        total_activities=Count('id'),
+        total_count=Count('id'),
         total_distance=Sum('distance_meters'),
         total_duration=Sum('duration_seconds'),
         avg_pace=Avg('average_pace'),

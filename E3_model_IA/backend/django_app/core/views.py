@@ -5,10 +5,15 @@ from django.views.generic import TemplateView
 from django.utils import timezone
 from django.db.models import Count, Sum, Avg, Max, Min, Q
 from datetime import datetime, timedelta
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 
 from activities.models import Activity
 from coaching.models import TrainingPlan, WorkoutSession, Goal, PerformanceMetrics
+
+
+def health_check(request):
+    """Endpoint de santé pour le monitoring Docker"""
+    return HttpResponse("OK", content_type="text/plain")
 
 
 def user_dashboard(request):
@@ -137,9 +142,9 @@ def user_dashboard(request):
         recommendations.append({
             'type': 'activity',
             'title': 'Commencez votre parcours fitness',
-            'message': 'Enregistrez votre première activité ou créez un plan d\'entraînement.',
-            'action': 'Ajouter une activité',
-            'url': '/api/v1/activities/create/'
+            'message': 'Créez un plan d\'entraînement personnalisé pour débuter.',
+            'action': 'Créer un plan',
+            'url': '/api/v1/coaching/simple-plan/'
         })
     elif activity_stats['total_count'] < period_days / 7 * 3:  # Moins de 3 séances/semaine
         recommendations.append({
@@ -147,18 +152,11 @@ def user_dashboard(request):
             'title': 'Augmentez votre fréquence',
             'message': f'Vous n\'avez fait que {activity_stats["total_count"]} activités en {period_days} jours.',
             'action': 'Créer un plan',
-            'url': '/api/v1/coaching/running-wizard/'
+            'url': '/api/v1/coaching/simple-plan/'
         })
     
-    # Recommandation objectifs
-    if not active_goals.exists():
-        recommendations.append({
-            'type': 'goal',
-            'title': 'Définissez vos objectifs',
-            'message': 'Fixez-vous des objectifs clairs pour rester motivé.',
-            'action': 'Créer un objectif',
-            'url': '/api/v1/coaching/quick-goal/'
-        })
+    # Recommandation objectifs - supprimée car intégrée dans les plans
+    # Les objectifs sont maintenant gérés directement dans la création de plans
     
     # Recommandation plan d'entraînement
     if not active_plans.exists():
@@ -166,8 +164,8 @@ def user_dashboard(request):
             'type': 'plan',
             'title': 'Structurez votre entraînement',
             'message': 'Un plan personnalisé vous aidera à progresser efficacement.',
-            'action': 'Assistant objectifs',
-            'url': '/api/v1/coaching/running-wizard/'
+            'action': 'Créer un plan',
+            'url': '/api/v1/coaching/simple-plan/'
         })
     
     context = {

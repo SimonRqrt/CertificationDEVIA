@@ -17,8 +17,7 @@
                 </div>
                 <nav class="main-nav">
                     <a href="/api/v1/activities/" class="nav-link">📊 Activités</a>
-                    <a href="/api/v1/coaching/" class="nav-link">🎯 Coaching</a>
-                    <a href="/api/v1/coaching/running-wizard/" class="nav-link">✨ Assistant</a>
+                    <a href="/api/v1/coaching/simple-plan/" class="nav-link">🎯 Coaching</a>
                     <a href="http://localhost:8501" class="nav-link">💬 Chat IA</a>
                     <a href="/admin/" class="nav-link">⚙️ Admin</a>
                 </nav>
@@ -73,7 +72,7 @@
                                 <span>{{ achieved_goals }} atteint{{ achieved_goals|pluralize }}</span>
                             </div>
                         </div>
-                        <a href="/api/v1/coaching/quick-goal/" class="card-action">Créer →</a>
+                        <a href="/api/v1/coaching/simple-plan/" class="card-action">Créer plan →</a>
                     </div>
 
                     <!-- Métriques -->
@@ -153,7 +152,6 @@
                             {% empty %}
                             <div class="empty-state">
                                 <p>Aucune activité récente</p>
-                                <a href="/api/v1/activities/create/" class="btn-primary">Ajouter une activité</a>
                             </div>
                             {% endfor %}
                         </div>
@@ -171,98 +169,6 @@
 
                 </div>
 
-                <!-- Colonne droite : Coaching et objectifs -->
-                <div class="grid-right">
-                    
-                    <!-- Plans d'entraînement -->
-                    <section class="dashboard-section">
-                        <div class="section-header">
-                            <h2>📋 Plans d'entraînement</h2>
-                            <a href="/api/v1/coaching/running-wizard/" class="section-action">Créer</a>
-                        </div>
-                        <div class="plans-list">
-                            {% for plan in active_plans %}
-                            <div class="plan-item">
-                                <div class="plan-info">
-                                    <h4>{{ plan.name }}</h4>
-                                    <p>{{ plan.goal|capfirst }} - {{ plan.duration_weeks }} semaines</p>
-                                    <div class="plan-progress">
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: 65%"></div>
-                                        </div>
-                                        <span>65% terminé</span>
-                                    </div>
-                                </div>
-                                <a href="/api/v1/coaching/plans/{{ plan.id }}/" class="plan-link">→</a>
-                            </div>
-                            {% empty %}
-                            <div class="empty-state">
-                                <p>Aucun plan d'entraînement</p>
-                                <a href="/api/v1/coaching/running-wizard/" class="btn-secondary">Assistant objectifs</a>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </section>
-
-                    <!-- Prochaines séances -->
-                    <section class="dashboard-section">
-                        <div class="section-header">
-                            <h2>📅 Prochaines séances</h2>
-                        </div>
-                        <div class="sessions-list">
-                            {% for session in upcoming_sessions %}
-                            <div class="session-item session-{{ session.session_type }}">
-                                <div class="session-date">
-                                    {{ session.planned_date|date:"d/m" }}
-                                </div>
-                                <div class="session-details">
-                                    <h4>{{ session.name }}</h4>
-                                    <p>{{ session.planned_duration }} min
-                                    {% if session.planned_distance %} - {{ session.planned_distance }} km{% endif %}
-                                    </p>
-                                </div>
-                            </div>
-                            {% empty %}
-                            <div class="empty-state">
-                                <p>Aucune séance planifiée</p>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </section>
-
-                    <!-- Objectifs -->
-                    <section class="dashboard-section">
-                        <div class="section-header">
-                            <h2>🎯 Objectifs actifs</h2>
-                            <a href="/api/v1/coaching/quick-goal/" class="section-action">Ajouter</a>
-                        </div>
-                        <div class="goals-list">
-                            {% for goal in active_goals %}
-                            <div class="goal-item">
-                                <div class="goal-info">
-                                    <h4>{{ goal.name }}</h4>
-                                    <p>{{ goal.current_value|default:"0" }}/{{ goal.target_value }} {{ goal.target_unit }}</p>
-                                    <div class="goal-progress">
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: {{ goal.progress_percentage }}%"></div>
-                                        </div>
-                                        <span>{{ goal.progress_percentage|floatformat:0 }}%</span>
-                                    </div>
-                                    {% if goal.target_date %}
-                                    <div class="goal-date">Échéance: {{ goal.target_date|date:"d/m/Y" }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% empty %}
-                            <div class="empty-state">
-                                <p>Aucun objectif défini</p>
-                                <a href="/api/v1/coaching/quick-goal/" class="btn-secondary">Créer un objectif</a>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </section>
-
-                </div>
             </div>
 
             <!-- Actions rapides -->
@@ -271,22 +177,6 @@
                     <h2>🚀 Actions rapides</h2>
                 </div>
                 <div class="actions-grid">
-                    <a href="/api/v1/activities/create/" class="action-card">
-                        <div class="action-icon">📝</div>
-                        <div class="action-content">
-                            <h3>Ajouter activité</h3>
-                            <p>Enregistrer une séance manuelle</p>
-                        </div>
-                    </a>
-                    
-                    <a href="/api/v1/coaching/running-wizard/" class="action-card">
-                        <div class="action-icon">🎯</div>
-                        <div class="action-content">
-                            <h3>Créer un plan</h3>
-                            <p>Assistant objectifs personnalisé</p>
-                        </div>
-                    </a>
-                    
                     <a href="http://localhost:8501" class="action-card">
                         <div class="action-icon">💬</div>
                         <div class="action-content">
@@ -533,7 +423,7 @@ setInterval(() => {
 
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr;
     gap: 2rem;
     margin-bottom: 3rem;
 }

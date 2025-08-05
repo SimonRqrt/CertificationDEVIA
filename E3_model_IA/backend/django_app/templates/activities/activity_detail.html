@@ -24,8 +24,7 @@
                 <p>{{ object.start_time|date:"l d F Y à H:i" }}</p>
             </div>
             <div class="activity-actions">
-                <a href="{% url 'activities:edit' object.pk %}" class="btn btn-edit">✏️ Modifier</a>
-                <a href="{% url 'activities:delete' object.pk %}" class="btn btn-delete">🗑️ Supprimer</a>
+                <span class="readonly-indicator">🔒 Lecture seule</span>
             </div>
         </div>
     </div>
@@ -301,9 +300,12 @@
     cursor: pointer; 
     transition: background 0.3s;
 }
-.btn-edit { background: #f39c12; color: white; }
-.btn-edit:hover { background: #e67e22; }
-.btn-delete { background: #e74c3c; color: white; }
-.btn-delete:hover { background: #c0392b; }
+.readonly-indicator { 
+    color: #7f8c8d; 
+    font-size: 0.9em; 
+    padding: 8px 12px; 
+    background: #ecf0f1; 
+    border-radius: 6px; 
+}
 </style>
 {% endblock %}

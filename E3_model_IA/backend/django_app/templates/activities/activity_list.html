@@ -8,7 +8,6 @@
     <div class="page-header">
         <h1>📋 Mes Activités</h1>
         <div class="header-actions">
-            <a href="{% url 'activities:create' %}" class="btn btn-primary">➕ Nouvelle activité</a>
             <a href="{% url 'activities:dashboard' %}" class="btn btn-secondary">📊 Dashboard</a>
         </div>
     </div>
@@ -58,7 +57,6 @@
                         </div>
                         <div class="activity-actions">
                             <a href="{% url 'activities:detail' activity.pk %}" class="btn btn-sm">👁️ Voir</a>
-                            <a href="{% url 'activities:edit' activity.pk %}" class="btn btn-sm btn-edit">✏️ Modifier</a>
                         </div>
                     </div>
                     
@@ -115,8 +113,7 @@
             <div class="empty-state">
                 <div class="empty-icon">📭</div>
                 <h3>Aucune activité trouvée</h3>
-                <p>Commencez par ajouter votre première activité sportive !</p>
-                <a href="{% url 'activities:create' %}" class="btn btn-primary">➕ Ajouter une activité</a>
+                <p>Vos activités sportives synchronisées apparaîtront ici.</p>
             </div>
         {% endif %}
     </div>

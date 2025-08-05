@@ -82,7 +82,14 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
+def health_check(request):
+    """Endpoint de santé simple"""
+    return HttpResponse("OK", content_type="text/plain")
+
 urlpatterns = [
+    # Health check
+    path('health/', health_check, name='health'),
+    
     # Page d'accueil
     path('', home_view, name='home'),
     
