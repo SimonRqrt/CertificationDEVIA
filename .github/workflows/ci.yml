@@ -1,4 +1,4 @@
-name: CI Pipelines
+name: CI Pipeline
 
 on:
   push:
@@ -16,7 +16,7 @@ name: Checkout repository
       uses: actions/checkout@v4
 
       
-name: Set up Python
+name: Set up Pythonn
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
