@@ -15,11 +15,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Simulate Docker build (no push, no deploy)
+      - name: Debug — check .env presence
+        run: ls -la
+
+      - name: Run docker compose (build only, no deploy)
+        working-directory: .
         run: |
-          echo "Running docker-compose (no build image manually)"
+          echo "Running docker compose (build only, no deploy)..."
           docker compose -f deployment/docker-compose-supabase.yml up -d --build
 
-
-      - name: No deployment target
+      - name: No deployment target yet
         run: echo "No server configured for deployment yet."
