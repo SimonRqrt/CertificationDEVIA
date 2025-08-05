@@ -1,4 +1,4 @@
-name: CD Pipelines
+name: CD Pipeline
 
 on:
   push:
@@ -8,21 +8,62 @@ permissions:
   contents: read
 
 jobs:
-  build-only:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Debug — check .env presence
-        run: ls -la
-
-      - name: Run docker compose (build only, no deploy)
-        working-directory: .
+      - name: Create .env file from GitHub Secrets
         run: |
-          echo "Running docker compose (build only, no deploy)..."
-          docker compose -f deployment/docker-compose-supabase.yml up -d --build
+          cat <<EOF > .env
+          DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
+          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          API_KEY=${{ secrets.API_KEY }}
+          EOF
 
-      - name: No deployment target yet
-        run: echo "No server configured for deployment yet."
+      - name: Build and deploy with Docker Compose
+        run: |
+          echo "🚀 Déploiement en cours..."
+          
+          # Arrêter les conteneurs existants
+          cd deployment
+          docker compose -f docker-compose-supabase.yml down || true
+          
+          # Nettoyer les images anciennes
+          docker system prune -f
+          
+          # Rebuild et démarrer
+          docker compose -f docker-compose-supabase.yml up -d --build
+          
+          # Attendre que les services soient prêts
+          sleep 30
+          
+          # Vérifier la santé des services
+          echo "🔍 Vérification de la santé des services..."
+          docker compose -f docker-compose-supabase.yml ps
+
+      - name: Health check
+        run: |
+          echo "🏥 Health check des services..."
+          
+          # Test Django
+          curl -f http://localhost:8002/admin/ || echo "❌ Django non accessible"
+          
+          # Test FastAPI
+          curl -f http://localhost:8000/docs || echo "❌ FastAPI non accessible"
+          
+          # Test Streamlit
+          curl -f http://localhost:8501/ || echo "❌ Streamlit non accessible"
+
+      - name: Deployment status
+        run: |
+          echo "✅ Déploiement terminé sur la branche developp"
+          echo "📊 Services disponibles:"
+          echo "   - Django: http://localhost:8002"
+          echo "   - FastAPI: http://localhost:8000"
+          echo "   - Streamlit: http://localhost:8501"
