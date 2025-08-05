@@ -1,74 +1,38 @@
-name: CD Pipeline
+name: CD Simple
 
 on:
   push:
     branches: [ developp ]
-
-permissions:
-  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create .env file from GitHub Secrets
+      - name: Create .env
         run: |
           cat <<EOF > .env
-          DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
-          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-          DATABASE_URL=${{ secrets.DATABASE_URL }}
-          API_KEY=${{ secrets.API_KEY }}
+          DJANGO_SECRET_KEY=dev-secret-key-123
+          POSTGRES_DB=coach_ai_db
+          POSTGRES_USER=postgres
+          POSTGRES_PASSWORD=dev-password
+          DATABASE_URL=postgresql://postgres:dev-password@localhost:5432/coach_ai_db
+          API_KEY=dev-api-key
+          DEBUG=True
           EOF
 
-      - name: Build and deploy with Docker Compose
+      - name: Deploy
         run: |
-          echo "🚀 Déploiement en cours..."
+          echo "🚀 Déploiement..."
           
-          # Installer Docker si nécessaire
-          sudo apt-get update
-          sudo apt-get install -y docker.io docker-compose
-          sudo systemctl start docker
+          # Copier .env
+          cp .env deployment/.env
           
-          # Arrêter les conteneurs existants
+          # Déployer
           cd deployment
-          sudo docker compose -f docker-compose-supabase.yml down || true
+          docker compose -f docker-compose-supabase.yml up -d --build
           
-          # Nettoyer les images anciennes
-          sudo docker system prune -f
-          
-          # Rebuild et démarrer
-          sudo docker compose -f docker-compose-supabase.yml up -d --build
-          
-          # Attendre que les services soient prêts
-          sleep 45
-          
-          # Vérifier la santé des services
-          echo "🔍 Vérification de la santé des services..."
-          sudo docker compose -f docker-compose-supabase.yml ps
-
-      - name: Health check
-        run: |
-          echo "🏥 Health check des services..."
-          
-          # Test Django
-          curl -f http://localhost:8002/admin/ || echo "❌ Django non accessible"
-          
-          # Test FastAPI
-          curl -f http://localhost:8000/docs || echo "❌ FastAPI non accessible"
-          
-          # Test Streamlit
-          curl -f http://localhost:8501/ || echo "❌ Streamlit non accessible"
-
-      - name: Deployment status
-        run: |
-          echo "✅ Déploiement terminé sur la branche developp"
-          echo "📊 Services disponibles:"
-          echo "   - Django: http://localhost:8002"
-          echo "   - FastAPI: http://localhost:8000"
-          echo "   - Streamlit: http://localhost:8501"
+          echo "✅ Déploiement terminé !"
