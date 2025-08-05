@@ -18,7 +18,8 @@ jobs:
       - name: Simulate Docker build (no push, no deploy)
         run: |
           echo "Running docker-compose (no build image manually)"
-          docker-compose -f deployment/docker-compose-supabase.yml up -d --build
+          docker compose -f deployment/docker-compose-supabase.yml up -d --build
+
 
       - name: No deployment target
         run: echo "No server configured for deployment yet."
