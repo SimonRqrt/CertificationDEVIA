@@ -22,28 +22,45 @@ scrape_configs:
     static_configs:
       - targets: ['node_exporter:9100']
 
-  # Django App
-  - job_name: 'django'
+  # === ARCHITECTURE COACH AI ===
+  
+  # FastAPI - API Unifiée (Données + IA)
+  - job_name: 'coach-api-fastapi'
+    static_configs:
+      - targets: ['host.docker.internal:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    
+  # FastAPI - Métriques Agent IA (port séparé)
+  - job_name: 'coach-ai-metrics'
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Django - Interface Admin + Génération Plans
+  - job_name: 'coach-django'
     static_configs:
       - targets: ['host.docker.internal:8002']
     metrics_path: '/metrics'
     scrape_interval: 10s
 
-  # FastAPI App  
-  - job_name: 'fastapi'
+  # Streamlit - Interface Utilisateur (port corrigé)
+  - job_name: 'coach-streamlit'
     static_configs:
-      - targets: ['host.docker.internal:8000']
-    metrics_path: '/metrics'
-    scrape_interval: 10s
-
-  # Streamlit App
-  - job_name: 'streamlit'
-    static_configs:
-      - targets: ['host.docker.internal:8501']
+      - targets: ['host.docker.internal:8502']
     metrics_path: '/_stcore/metrics'
     scrape_interval: 15s
-
-  # Métriques Docker (si docker stats exposé)
+    
+  # PostgreSQL - Base de données centrale
+  - job_name: 'coach-postgresql'
+    static_configs:
+      - targets: ['host.docker.internal:5432']
+    scrape_interval: 30s
+    
+  # === SERVICES SYSTÈME ===
+  
+  # Métriques Docker 
   - job_name: 'docker'
     static_configs:
       - targets: ['host.docker.internal:9323']

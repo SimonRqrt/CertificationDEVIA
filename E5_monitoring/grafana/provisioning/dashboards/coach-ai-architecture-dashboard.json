@@ -1,0 +1,245 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "🏗️ Coach AI - Architecture Unifiée Dashboard",
+    "tags": ["coach-ai", "architecture", "postgresql", "agent-ia", "rag"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "🚀 Statut Architecture Complète",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 24, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "up{job=~\"coach-.*\"}",
+            "legendFormat": "{{job}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "mappings": [
+              {"options": {"0": {"text": "DOWN", "color": "red"}}, "type": "value"},
+              {"options": {"1": {"text": "UP", "color": "green"}}, "type": "value"}
+            ],
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            }
+          }
+        }
+      },
+      
+      {
+        "id": 2,
+        "title": "🤖 Agent IA - Performances",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(openai_response_time_seconds_bucket[5m]))",
+            "legendFormat": "OpenAI P95 Response Time",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(training_plans_generated_total[5m]) * 60",
+            "legendFormat": "Plans générés/min",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "color": {"mode": "palette-classic"}
+          }
+        }
+      },
+      
+      {
+        "id": 3,
+        "title": "📊 PostgreSQL - Métriques Centrales",
+        "type": "timeseries", 
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+        "targets": [
+          {
+            "expr": "django_db_connections_active",
+            "legendFormat": "Connexions Actives",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(user_activities_processed_total[5m]) * 60",
+            "legendFormat": "Activités traitées/min",
+            "refId": "B"
+          },
+          {
+            "expr": "rate(database_queries_total[5m]) * 60",
+            "legendFormat": "Requêtes DB/min",
+            "refId": "C"
+          }
+        ]
+      },
+      
+      {
+        "id": 4,
+        "title": "🔗 FastAPI - API Unifiée",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+        "targets": [
+          {
+            "expr": "rate(fastapi_requests_total[5m]) * 60",
+            "legendFormat": "Requêtes/min",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(fastapi_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "P95 Latency",
+            "refId": "B"
+          }
+        ]
+      },
+      
+      {
+        "id": 5,
+        "title": "🎨 Interface Utilisateur (Streamlit + Django)",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+        "targets": [
+          {
+            "expr": "rate(django_http_requests_total{endpoint=~\".*coaching.*\"}[5m]) * 60",
+            "legendFormat": "Django Coaching/min",
+            "refId": "A"
+          },
+          {
+            "expr": "up{job=\"coach-streamlit\"}",
+            "legendFormat": "Streamlit Status",
+            "refId": "B"
+          }
+        ]
+      },
+      
+      {
+        "id": 6,
+        "title": "🧠 Base de Connaissances RAG",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 22},
+        "targets": [
+          {
+            "expr": "up{job=\"coach-ai-metrics\"}",
+            "legendFormat": "RAG Status",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"options": {"0": {"text": "RAG DOWN", "color": "red"}}, "type": "value"},
+              {"options": {"1": {"text": "RAG UP", "color": "green"}}, "type": "value"}
+            ]
+          }
+        }
+      },
+      
+      {
+        "id": 7,
+        "title": "💰 Coûts IA (OpenAI)",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 8, "x": 8, "y": 22},
+        "targets": [
+          {
+            "expr": "increase(openai_tokens_total[1h]) * 0.00002",
+            "legendFormat": "Coût estimé €/h",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencyEUR",
+            "color": {"mode": "continuous-GrYlRd"},
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 5},
+                {"color": "red", "value": 10}
+              ]
+            }
+          }
+        }
+      },
+      
+      {
+        "id": 8,
+        "title": "⚠️ Erreurs par Service",
+        "type": "timeseries",
+        "gridPos": {"h": 6, "w": 8, "x": 16, "y": 22},
+        "targets": [
+          {
+            "expr": "rate(django_http_requests_total{status=~\"5..\"}[5m]) * 60",
+            "legendFormat": "Django 5xx/min",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(openai_errors_total[5m]) * 60",
+            "legendFormat": "OpenAI Errors/min", 
+            "refId": "B"
+          },
+          {
+            "expr": "rate(django_auth_failures_total[5m]) * 60",
+            "legendFormat": "Auth Failures/min",
+            "refId": "C"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "unit": "short"
+          }
+        }
+      },
+      
+      {
+        "id": 9,
+        "title": "📈 Métriques Métier - Coach AI",
+        "type": "table",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 28},
+        "targets": [
+          {
+            "expr": "training_plans_generated_total",
+            "legendFormat": "Plans générés total",
+            "refId": "A",
+            "format": "table",
+            "instant": true
+          },
+          {
+            "expr": "user_activities_processed_total", 
+            "legendFormat": "Activités traitées total",
+            "refId": "B",
+            "format": "table",
+            "instant": true
+          },
+          {
+            "expr": "openai_requests_total",
+            "legendFormat": "Requêtes IA total",
+            "refId": "C",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "transformations": [
+          {
+            "id": "merge",
+            "options": {}
+          }
+        ]
+      }
+    ]
+  }
+}
