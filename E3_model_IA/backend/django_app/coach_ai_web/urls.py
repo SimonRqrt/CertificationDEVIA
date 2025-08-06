@@ -43,18 +43,17 @@ def home_view(request):
             'description': 'Solution complète d\'analyse et de coaching sportif personnalisé. Intégration données Garmin, IA conversationnelle et analyses de performances avancées.'
         },
         'statistics': [
-            {'label': 'Analyses IA', 'value': '24/7'},
-            {'label': 'Données Garmin', 'value': 'Temps réel'},
-            {'label': 'Coaching', 'value': 'Personnalisé'},
-            {'label': 'API', 'value': 'REST + JWT'}
+            {'label': 'analysées', 'value': 'Données Garmin'},
+            {'label': 'Personnalisé', 'value': 'Coaching'},
+            {'label': 'Hebdomadaire', 'value': 'Plan'}
         ],
         'features': [
-            {'title': 'Authentification JWT', 'description': 'Système d\'authentification sécurisé avec tokens JWT et gestion des utilisateurs.'},
+            {'title': 'Authentification JWT', 'description': 'Système d\'authentification sécurisé avec tokens JWT.'},
             {'title': 'Intégration Garmin', 'description': 'Extraction automatique des données d\'activités sportives depuis Garmin Connect.'},
             {'title': 'Agent IA Conversationnel', 'description': 'Coaching personnalisé basé sur LangGraph et RAG avec base de connaissances.'},
             {'title': 'API FastAPI', 'description': 'API moderne et performante pour l\'intégration avec les applications tierces.'},
             {'title': 'Interface Streamlit', 'description': 'Interface utilisateur intuitive pour l\'interaction avec l\'IA de coaching.'},
-            {'title': 'Base de données Azure', 'description': 'Stockage sécurisé et scalable des données utilisateurs et d\'activités.'}
+            {'title': 'Base de données SQL', 'description': 'Stockage sécurisé des données utilisateurs et d\'activités.'}
         ],
         'services': [
             {'name': 'Administration Django', 'url': '/admin/', 'description': 'Gestion complète des utilisateurs et données'},

@@ -1,0 +1,17 @@
+# API REST Simple - Dépendances minimales
+
+# FastAPI et serveur
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# JWT pour authentification
+python-jose[cryptography]==3.3.0
+
+# Hachage mots de passe
+passlib[bcrypt]==1.7.4
+
+# Base de données
+sqlalchemy==2.0.23
+
+# Validation
+pydantic==2.5.0
