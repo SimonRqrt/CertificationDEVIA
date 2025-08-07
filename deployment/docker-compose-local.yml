@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL locale
+  postgres:
+    image: postgres:15-alpine
+    container_name: coach_ia_postgres
+    environment:
+      POSTGRES_DB: coach_ia_db
+      POSTGRES_USER: coach_user
+      POSTGRES_PASSWORD: coach_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/pgdata
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coach_user -d coach_ia_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - coach_ia_network
+
+  # Service Django (Web + API)
+  django:
+    build:
+      context: ..
+      dockerfile: deployment/django.Dockerfile
+    container_name: coach_ia_django
+    environment:
+      - DB_TYPE=postgresql
+      - DB_NAME=coach_ia_db
+      - DB_USER=coach_user
+      - DB_PASSWORD=coach_password
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DEBUG=False
+    volumes:
+      - ../data:/app/data
+      - ../media:/app/media
+    ports:
+      - "8002:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - coach_ia_network
+    command: >
+      sh -c "
+        python manage.py migrate &&
+        python manage.py collectstatic --noinput &&
+        gunicorn coach_ai_web.wsgi:application --bind 0.0.0.0:8002 --workers 4
+      "
+
+  # Service FastAPI (IA + API REST)
+  fastapi:
+    build:
+      context: ..
+      dockerfile: deployment/fastapi.Dockerfile
+    container_name: coach_ia_fastapi
+    environment:
+      - DATABASE_URL=postgresql://coach_user:coach_password@postgres:5432/coach_ia_db
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ../data:/app/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - coach_ia_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  coach_ia_network:
+    driver: bridge

@@ -43,9 +43,9 @@ def home_view(request):
             'description': 'Solution complète d\'analyse et de coaching sportif personnalisé. Intégration données Garmin, IA conversationnelle et analyses de performances avancées.'
         },
         'statistics': [
-            {'label': 'analysées', 'value': 'Données Garmin'},
-            {'label': 'Personnalisé', 'value': 'Coaching'},
-            {'label': 'Hebdomadaire', 'value': 'Plan'}
+            {'label': '', 'value': 'Données Garmin analysées'},
+            {'label': '', 'value': 'Coaching Personnalisé'},
+            {'label': '', 'value': 'Plan Hebdomadaire'}
         ],
         'features': [
             {'title': 'Authentification JWT', 'description': 'Système d\'authentification sécurisé avec tokens JWT.'},
@@ -62,7 +62,7 @@ def home_view(request):
             {'name': 'API Coaching', 'url': '/api/v1/coaching/', 'description': 'IA conversationnelle et coaching personnalisé'},
             {'name': 'Documentation Swagger', 'url': '/swagger/', 'description': 'Documentation interactive des APIs'},
             {'name': 'FastAPI (Port 8000)', 'url': 'http://localhost:8000', 'description': 'Service IA et APIs'},
-            {'name': 'Streamlit (Port 8501)', 'url': 'http://localhost:8501', 'description': 'Interface utilisateur'}
+            {'name': 'Streamlit (Port 8502)', 'url': 'http://localhost:8502', 'description': 'Interface utilisateur'}
         ]
     }
     

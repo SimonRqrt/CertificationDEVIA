@@ -1,8 +1,6 @@
 import streamlit as st
 import requests
 import pandas as pd
-import folium
-from streamlit_folium import folium_static
 import json
 
 # \--- Configuration de la Page ---
@@ -20,16 +18,16 @@ st.set_page_config(
 # Configuration adaptée selon l'environnement (local vs Docker)
 import os
 if os.getenv('DOCKER_ENV') == 'true':
-    # Architecture optimisée E1/E3
-    FASTAPI_URL = "http://fastapi:8000"     # E3 - IA uniquement
-    DJANGO_URL = "http://django:8002"       # E1 - Données uniquement
+    # Architecture unifiée PostgreSQL - FastAPI comme point d'accès principal
+    FASTAPI_URL = "http://fastapi:8000"     # API unifiée (données + IA)
+    DJANGO_URL = "http://django:8002"       # Backup et admin
 else:
-    # Architecture optimisée E1/E3  
-    FASTAPI_URL = "http://localhost:8000"   # E3 - IA uniquement
-    DJANGO_URL = "http://localhost:8002"    # E1 - Données uniquement
+    # Architecture unifiée PostgreSQL - FastAPI comme point d'accès principal  
+    FASTAPI_URL = "http://localhost:8000"   # API unifiée (données + IA)
+    DJANGO_URL = "http://localhost:8002"    # Backup et admin
 
-# Compatibilité avec l'ancien code
-API_URL = FASTAPI_URL  # Pour les endpoints IA
+# Architecture unifiée : FastAPI comme point d'accès unique
+API_URL = FASTAPI_URL  # FastAPI unifié avec PostgreSQL Django
 
 # On récupère la clé API depuis les secrets de Streamlit
 
@@ -48,9 +46,13 @@ HEADERS = {"X-API-Key": API_KEY}
 
 st.sidebar.title("Navigation")
 
-# On ajoute la page 'Coach AI' et on la met en premier
+# Navigation avec architecture unifiée
 
-page = st.sidebar.radio("Aller à", ["Coach AI", "Liste des Activités", "Carte GPS"])
+page = st.sidebar.radio("Aller à", [
+    "Coach AI", 
+    "Liste des Activités", 
+    "Statistiques Utilisateur"
+])
 
 # \==============================================================================
 
@@ -135,57 +137,136 @@ if prompt := st.chat_input("Posez votre question sur votre entraînement..."):
 elif page == "Liste des Activités":
     st.title("📋 Liste des Activités Récentes")
 
+    # Configuration fixe pour l'utilisateur principal
+    user_id = 2  # Utilisateur principal du système
+    limit = 50   # Nombre fixe d'activités à afficher
+
     try:
-        # Utilisation Django REST API (E1) pour les données
-        response = requests.get(f"{DJANGO_URL}/api/v1/activities/?limit=500", headers=HEADERS)
+        # Utilisation de l'API FastAPI unifiée avec PostgreSQL
+        response = requests.get(f"{API_URL}/v1/activities/{user_id}?limit={limit}", headers=HEADERS)
         response.raise_for_status()
         data = response.json()
-        df = pd.DataFrame(data)
-        st.dataframe(df)
-    except requests.exceptions.RequestException as e:
-        st.error(f"Erreur lors de la récupération des activités : {e}")
-
-
-# \==============================================================================
-
-# PAGE 3 : CARTE GPS
-
-# \==============================================================================
-
-elif page == "Carte GPS":
-    st.title("🗺️ Affichage d'un Parcours GPS")
-
-    activity_id = st.number_input("Entrez l'ID de l'activité :", min_value=1, step=1, value=None)
-
-    if activity_id and st.button("Charger le parcours"):
-        try:
-            # Note: L'API de données devrait aussi être sécurisée.
-            # Pour l'instant on ajoute l'en-tête, mais il faudrait l'implémenter dans l'API.
-            response = requests.get(f"{API_URL}/gps_data/{activity_id}/gps", headers=HEADERS) # Endpoint à créer
-            response.raise_for_status()
-
-            data = response.json()
-            df_gps = pd.DataFrame(data)
-    
-            if df_gps.empty:
-                st.warning("Aucune donnée GPS disponible pour cette activité.")
-            else:
-            # Création de la carte
-                m = folium.Map(location=[df_gps["latitude"].mean(), df_gps["longitude"].mean()], zoom_start=14)
-                points = list(zip(df_gps["latitude"], df_gps["longitude"]))
-                folium.PolyLine(points, color="red", weight=3, opacity=0.8).add_to(m)
+        
+        if data.get("activities"):
+            # Transformation des données pour un affichage optimal
+            activities_list = data["activities"]
+            df = pd.DataFrame(activities_list)
             
-                # Ajout de marqueurs de début et de fin
-                folium.Marker(points[0], popup="Début", icon=folium.Icon(color="green")).add_to(m)
-                folium.Marker(points[-1], popup="Fin", icon=folium.Icon(color="red")).add_to(m)
-                
-                # Affichage de la carte dans Streamlit
-                folium_static(m, width=700, height=500)
+            # Colonnes à afficher (sélection des plus importantes)
+            display_columns = [
+                'activity_name', 'activity_type', 'start_time', 
+                'distance_km', 'duration_seconds', 'calories', 
+                'average_hr', 'pace_per_km'
+            ]
+            
+            # Filtrage des colonnes existantes
+            available_columns = [col for col in display_columns if col in df.columns]
+            df_display = df[available_columns].copy()
+            
+            # Formatage pour l'affichage
+            if 'start_time' in df_display.columns:
+                df_display['start_time'] = pd.to_datetime(df_display['start_time'], format='ISO8601').dt.strftime('%Y-%m-%d %H:%M')
+            
+            if 'duration_seconds' in df_display.columns:
+                df_display['duration_min'] = (df_display['duration_seconds'] / 60).round(1)
+                df_display = df_display.drop('duration_seconds', axis=1)
+            
+            st.success(f"✅ {data['total_returned']} activités récupérées depuis PostgreSQL")
+            st.dataframe(df_display, use_container_width=True)
+            
+            # Statistiques rapides
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Total activités", data['total_returned'])
+            with col2:
+                total_distance = df['distance_km'].sum() if 'distance_km' in df.columns else 0
+                st.metric("Distance totale (km)", f"{total_distance:.1f}")
+            with col3:
+                avg_hr = df['average_hr'].mean() if 'average_hr' in df.columns else 0
+                st.metric("FC moyenne", f"{avg_hr:.0f}" if avg_hr > 0 else "N/A")
+            with col4:
+                total_calories = df['calories'].sum() if 'calories' in df.columns else 0
+                st.metric("Calories totales", f"{total_calories:.0f}")
+        else:
+            st.warning("Aucune activité trouvée pour cet utilisateur")
+            
+    except requests.exceptions.RequestException as e:
+        st.error(f"Erreur de connexion à l'API FastAPI : {e}")
+        st.info("💡 Vérifiez que le serveur FastAPI est démarré sur localhost:8000")
+    except Exception as e:
+        st.error(f"Erreur lors du traitement des données : {e}")
 
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 404:
-                st.error("Activité ou données GPS non trouvées. Vérifiez l'ID.")
-            else:
-                st.error(f"Erreur HTTP : {e}")
-        except requests.exceptions.RequestException as e:
-            st.error(f"Erreur de connexion à l'API : {e}")
+# \==============================================================================
+
+# PAGE 3 : STATISTIQUES UTILISATEUR
+
+# \==============================================================================
+
+elif page == "Statistiques Utilisateur":
+    st.title("📊 Statistiques Utilisateur")
+
+    # Configuration fixe pour l'utilisateur principal
+    user_id = 2  # Utilisateur principal du système
+
+    try:
+        # Récupération des statistiques via FastAPI unifiée
+        response = requests.get(f"{API_URL}/v1/stats/{user_id}", headers=HEADERS)
+        response.raise_for_status()
+        stats_data = response.json()
+        
+        if stats_data.get("stats"):
+            stats = stats_data["stats"]
+            
+            st.success("✅ Statistiques récupérées depuis PostgreSQL")
+            
+            # Métriques principales
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Total Activités", stats.get("total_activities", 0))
+            with col2:
+                st.metric("Distance Totale", f"{stats.get('total_distance_km', 0):.1f} km")
+            with col3:
+                st.metric("Temps Total", f"{stats.get('total_duration_hours', 0):.1f}h")
+            with col4:
+                st.metric("Calories Totales", f"{stats.get('total_calories', 0):,}")
+            
+            # Métriques avancées
+            col5, col6, col7 = st.columns(3)
+            with col5:
+                avg_hr = stats.get('avg_heart_rate')
+                st.metric("FC Moyenne", f"{avg_hr} bpm" if avg_hr else "N/A")
+            with col6:
+                st.metric("Distance Max", f"{stats.get('max_distance_km', 0):.1f} km")
+            with col7:
+                st.metric("Durée Max", f"{stats.get('max_duration_hours', 0):.1f}h")
+            
+            # Répartition par type d'activité
+            if stats.get("activity_types"):
+                st.subheader("🏃 Répartition par Type d'Activité")
+                
+                activity_types = stats["activity_types"]
+                types_df = pd.DataFrame([
+                    {
+                        "Type": activity_type.replace("_", " ").title(),
+                        "Nombre": data["count"],
+                        "Distance (km)": data["total_distance_km"]
+                    }
+                    for activity_type, data in activity_types.items()
+                ])
+                
+                # Tri par nombre d'activités
+                types_df = types_df.sort_values("Nombre", ascending=False)
+                st.dataframe(types_df, use_container_width=True)
+                
+                # Graphique en barres
+                st.bar_chart(types_df.set_index("Type")["Nombre"])
+                
+        else:
+            st.warning("Aucune statistique trouvée pour cet utilisateur")
+            
+    except requests.exceptions.RequestException as e:
+        st.error(f"Erreur de connexion à l'API : {e}")
+    except Exception as e:
+        st.error(f"Erreur lors du traitement des statistiques : {e}")
+
+

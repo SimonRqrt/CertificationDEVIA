@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const services = [
             { url: '/api/v1/auth/', element: document.querySelector('[href="/api/v1/auth/"]') },
             { url: 'http://localhost:8000/docs', element: document.querySelector('[href="http://localhost:8000"]') },
-            { url: 'http://localhost:8501/', element: document.querySelector('[href="http://localhost:8501"]') }
+            { url: 'http://localhost:8502/', element: document.querySelector('[href="http://localhost:8502"]') }
         ];
 
         services.forEach(service => {

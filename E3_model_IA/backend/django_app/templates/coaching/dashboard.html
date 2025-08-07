@@ -24,7 +24,7 @@
                                 <span>{{ plan.duration_weeks }} semaines</span>
                                 <span>{{ plan.sessions_per_week }} séances/semaine</span>
                             </div>
-                            <a href="{% url 'coaching:plan_detail' plan.pk %}" class="btn btn-primary">Voir le plan</a>
+                            <span class="btn btn-secondary disabled">Plan en lecture seule</span>
                         </div>
                     {% endfor %}
                 </div>

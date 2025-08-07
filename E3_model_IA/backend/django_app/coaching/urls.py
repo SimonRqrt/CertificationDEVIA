@@ -1,5 +1,5 @@
 from django.urls import path, include
-from . import views
+from . import views, api_views
 
 app_name = 'coaching'
 
@@ -21,11 +21,12 @@ urlpatterns = [
     
     # ===== GESTION DES PLANS D'ENTRAÎNEMENT (LECTURE SEULE) =====
     path('plans/', views.TrainingPlanListView.as_view(), name='plan_list'),
-    # Détails des plans désactivés - lecture seule uniquement
+    # Détails des plans désactivés - utilise simple_plan_result.html à la place
     # path('plans/<int:pk>/', views.TrainingPlanDetailView.as_view(), name='plan_detail'),
     
-    # ===== API ENDPOINTS (pour intégration future) =====
-    # Ces endpoints pourront être développés plus tard
-    # path('api/generate-plan/', views.api_generate_plan, name='api_generate_plan'),
-    # path('api/update-session/', views.api_update_session, name='api_update_session'),
+    # ===== API ENDPOINTS AGENT IA =====
+    path('api/chat/', api_views.chat_with_coach, name='api_chat'),
+    path('api/generate-plan/', api_views.generate_training_plan, name='api_generate_plan'),
+    path('api/context/', api_views.user_coaching_context, name='api_context'),
+    path('api/sessions/', api_views.coaching_sessions_history, name='api_sessions'),
 ]

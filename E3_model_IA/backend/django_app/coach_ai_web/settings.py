@@ -108,67 +108,35 @@ WSGI_APPLICATION = 'coach_ai_web.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Configuration de base de données dynamique
-DB_TYPE = env('DB_TYPE', default='sqlite')
-PRODUCTION_MODE = env('PRODUCTION_MODE', default=False)
-DISABLE_SQLITE_FALLBACK = env('DISABLE_SQLITE_FALLBACK', default=False)
+# Configuration PostgreSQL obligatoire
+DB_TYPE = env('DB_TYPE', default='postgresql')
 
 if DB_TYPE == 'postgresql':
-    # Configuration Supabase PostgreSQL
-    should_test_connection = not PRODUCTION_MODE  # En production, on fait confiance à l'hébergeur
-    
-    if should_test_connection:
-        try:
-            # Tester la connexion avant de configurer (développement uniquement)
-            import socket
-            socket.create_connection((env('DB_HOST', default=''), int(env('DB_PORT', default='5432'))), timeout=10)
-            connection_ok = True
-        except (socket.error, socket.timeout, Exception) as e:
-            connection_ok = False
-            print(f"⚠️ Test connexion échoué: {e}")
-    else:
-        connection_ok = True  # En production, on assume que la connexion fonctionne
-    
-    if connection_ok or PRODUCTION_MODE:
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.postgresql',
-                'NAME': env('DB_NAME', default='postgres'),
-                'USER': env('DB_USER', default='postgres'),
-                'PASSWORD': env('DB_PASSWORD', default=''),
-                'HOST': env('DB_HOST', default=''),
-                'PORT': env('DB_PORT', default='5432'),
-                'OPTIONS': {
-                    'sslmode': 'require',
-                },
-                'CONN_MAX_AGE': 600 if PRODUCTION_MODE else 0,  # Connexions persistantes en production
-                'TEST': {
-                    'NAME': env('DB_NAME', default='garmin_data') + '_test',
-                },
-            }
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': env('DB_NAME', default='coach_ia_db'),
+            'USER': env('DB_USER', default='coach_user'),
+            'PASSWORD': env('DB_PASSWORD', default='coach_password'),
+            'HOST': env('DB_HOST', default='localhost'),
+            'PORT': env('DB_PORT', default='5432'),
+            'OPTIONS': {
+                'sslmode': env('DB_SSLMODE', default='prefer'),
+            },
+            'CONN_MAX_AGE': 600,
+            'CONN_HEALTH_CHECKS': True,
         }
-        print("✅ Configuration Supabase PostgreSQL activée")
-        
-    elif not DISABLE_SQLITE_FALLBACK:
-        print(f"⚠️ Supabase PostgreSQL inaccessible, basculement vers SQLite")
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': PROJECT_ROOT / 'data' / 'django_garmin_data.db',
-            }
-        }
-    else:
-        # Mode production strict : échec si PostgreSQL inaccessible
-        raise Exception("PostgreSQL requis en production mais inaccessible. Vérifiez votre configuration Supabase.")
-        
+    }
+    print("✅ Configuration PostgreSQL activée")
 else:
-    # SQLite pour développement
+    # Configuration SQLite de secours (développement uniquement)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': PROJECT_ROOT / 'data' / 'django_garmin_data.db',
         }
     }
+    print("⚠️ Mode SQLite activé")
 
 
 # Password validation

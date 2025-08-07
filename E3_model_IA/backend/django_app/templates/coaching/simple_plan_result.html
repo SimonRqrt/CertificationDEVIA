@@ -1,5 +1,6 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load activity_filters %}
 
 {% block title %}🎯 Votre Plan d'Entraînement{% endblock %}
 
@@ -237,6 +238,63 @@
         background: rgba(52, 152, 219, 0.1);
         border-radius: 4px;
         padding: 2px 6px;
+    }
+    
+    /* Styles pour le contenu markdown converti */
+    .markdown-content {
+        line-height: 1.6;
+    }
+    .markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4 {
+        color: #2c3e50;
+        margin: 1.5rem 0 1rem 0;
+        font-weight: 600;
+    }
+    .markdown-content h1 { font-size: 1.8rem; border-bottom: 2px solid #16a085; padding-bottom: 0.5rem; }
+    .markdown-content h2 { font-size: 1.5rem; color: #16a085; }
+    .markdown-content h3 { font-size: 1.3rem; }
+    .markdown-content h4 { font-size: 1.1rem; }
+    
+    .markdown-content ul, .markdown-content ol {
+        padding-left: 2rem;
+        margin: 1rem 0;
+    }
+    .markdown-content li {
+        margin: 0.5rem 0;
+        line-height: 1.5;
+    }
+    .markdown-content strong {
+        color: #e74c3c;
+        font-weight: 600;
+    }
+    .markdown-content em {
+        color: #8e44ad;
+        font-style: italic;
+    }
+    .markdown-content p {
+        margin: 1rem 0;
+        text-align: justify;
+    }
+    .markdown-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .markdown-content table th, .markdown-content table td {
+        padding: 0.8rem;
+        text-align: left;
+        border-bottom: 1px solid #ecf0f1;
+    }
+    .markdown-content table th {
+        background: #16a085;
+        color: white;
+        font-weight: 600;
+    }
+    .markdown-content table tr:hover {
+        background: rgba(22, 160, 133, 0.05);
     }
     
     /* Styles pour les types d'entraînement */
@@ -540,7 +598,9 @@
                                 </div>
                             {% else %}
                                 <!-- Réponse standard -->
-                                <p class="lead">{{ plan.description|linebreaks }}</p>
+                                <div class="markdown-content">
+                                    {{ plan.description|markdown_to_html }}
+                                </div>
                             {% endif %}
                         </div>
                         
@@ -552,8 +612,8 @@
                                 Conseils Détaillés du Coach
                             </h5>
                             <div class="agent-content-section">
-                                <div class="agent-content">
-                                    {{ plan.description|linebreaks }}
+                                <div class="agent-content markdown-content">
+                                    {{ plan.description|markdown_to_html }}
                                 </div>
                             </div>
                         </div>
@@ -678,7 +738,7 @@
                     <div class="alert alert-success text-center mb-3">
                         <i class="fas fa-save me-2"></i>
                         <strong>Plan sauvegardé !</strong> 
-                        <a href="{% url 'coaching:plan_detail' saved_plan.pk %}" class="alert-link">Voir le détail</a>
+                        Plan sauvegardé en lecture seule
                     </div>
                     {% endif %}
                     

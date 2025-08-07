@@ -134,8 +134,8 @@ def simple_plan_generator(request):
                 # Analyser automatiquement les données existantes de l'utilisateur
                 user_data = analyze_user_activities(request.user)
                 
-                # Générer le plan directement avec l'agent avancé (sans FastAPI pour éviter les problèmes de dépendances)
-                plan_response = generate_fallback_plan_with_agent(request.user, form_data, user_data)
+                # Essayer FastAPI d'abord, puis fallback si échec
+                plan_response = generate_plan_with_fastapi_first(request.user, form_data, user_data)
                 
                 if plan_response.get('success'):
                     # Sauvegarder automatiquement le plan généré
@@ -198,7 +198,7 @@ def analyze_user_activities(user):
                 AND (activity_type IN ('running', 'treadmill_running') 
                        OR activity_type LIKE '%%running%%' 
                        OR activity_type LIKE '%%course%%')
-                AND start_time >= datetime('now', '-3 months')
+                AND start_time >= NOW() - INTERVAL '3 months'
                 ORDER BY start_time DESC
                 LIMIT 10
             """, [user.id])
@@ -237,8 +237,8 @@ def generate_simple_plan_with_ai(user, form_data, user_data):
     """Génère un plan d'entraînement simple avec l'IA utilisant advanced_agent.py"""
     
     try:
-        # URL de l'API FastAPI
-        fastapi_url = getattr(settings, 'FASTAPI_URL', 'http://fastapi:8000')
+        # URL de l'API FastAPI (localhost en développement)
+        fastapi_url = getattr(settings, 'FASTAPI_URL', 'http://localhost:8000')
         
         # Préparer le payload simplifié compatible avec advanced_agent.py
         payload = {
@@ -253,11 +253,17 @@ def generate_simple_plan_with_ai(user, form_data, user_data):
             'use_advanced_agent': True  # Flag pour utiliser advanced_agent.py
         }
         
-        # Appel à l'API FastAPI
+        # Appel à l'API FastAPI (endpoint correct avec authentification)
+        headers = {
+            'Content-Type': 'application/json',
+            'X-API-Key': 'coach_ai_secure_key_2025'
+        }
+        
         response = requests.post(
-            f'{fastapi_url}/v1/coaching/generate-simple-plan',
+            f'{fastapi_url}/v1/coaching/generate-training-plan',
             json=payload,
-            timeout=60  # Augmenté pour l'agent avancé
+            headers=headers,
+            timeout=180  # 3 minutes pour l'agent IA avancé
         )
         
         if response.status_code == 200:
@@ -280,6 +286,93 @@ def generate_simple_plan_with_ai(user, form_data, user_data):
             'error': str(e)
         }
 
+
+def generate_plan_with_fastapi_first(user, form_data, user_data):
+    """Fonction principale qui essaie FastAPI d'abord, puis fallbacks"""
+    
+    # 1. Essayer FastAPI optimisé
+    try:
+        print("🚀 Tentative FastAPI...")
+        result = generate_plan_with_fastapi(user, form_data, user_data)
+        if result.get('success'):
+            print("✅ FastAPI a réussi !")
+            return result
+        else:
+            print(f"❌ FastAPI a échoué: {result.get('error')}")
+    except Exception as e:
+        print(f"❌ Erreur FastAPI: {e}")
+    
+    # 2. Fallback vers agent local  
+    try:
+        print("🔄 Fallback vers agent local...")
+        return generate_fallback_plan_with_agent(user, form_data, user_data)
+    except Exception as e:
+        print(f"❌ Erreur agent local: {e}")
+    
+    # 3. Fallback final vers logique simple
+    print("🔄 Fallback vers logique simple...")
+    return generate_plan_with_simple_logic(user, form_data, user_data)
+
+def generate_plan_with_fastapi(user, form_data, user_data):
+    """Appel à FastAPI pour générer un plan d'entraînement"""
+    
+    # URL de l'API FastAPI (localhost en développement)
+    fastapi_url = getattr(settings, 'FASTAPI_URL', 'http://localhost:8000')
+    
+    # Préparer le payload simplifié compatible avec notre endpoint FastAPI
+    payload = {
+        'user_email': user.email,
+        'user_id': user.id,
+        'goal': form_data['goal'],
+        'level': form_data['level'],
+        'sessions_per_week': int(form_data['sessions_per_week']),
+        'target_date': form_data['target_date'].isoformat() if form_data.get('target_date') else None,
+        'additional_notes': form_data.get('additional_notes', ''),
+        'user_activities_analysis': user_data,
+        'use_advanced_agent': True
+    }
+    
+    # Appel à l'API FastAPI avec authentification
+    headers = {
+        'Content-Type': 'application/json',
+        'X-API-Key': 'coach_ai_secure_key_2025'
+    }
+    
+    try:
+        response = requests.post(
+            f'{fastapi_url}/v1/coaching/generate-training-plan',
+            json=payload,
+            headers=headers,
+            timeout=180  # 3 minutes pour l'agent IA avancé
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            return {
+                'success': True,
+                'plan': {
+                    'description': result.get('plan_content', ''),
+                    'generated_by': 'Coach Michael (FastAPI)',
+                    'generation_time': result.get('generation_time_seconds', 0),
+                    'method': result.get('method', 'fastapi')
+                }
+            }
+        else:
+            return {
+                'success': False,
+                'error': f'API Error: {response.status_code} - {response.text[:200]}'
+            }
+            
+    except requests.RequestException as e:
+        return {
+            'success': False,
+            'error': f'Request Error: {str(e)}'
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'error': f'Unexpected Error: {str(e)}'
+        }
 
 def generate_fallback_plan_with_agent(user, form_data, user_data):
     """Plan d'entraînement avec Agent IA avancé (même que Streamlit)"""
@@ -869,9 +962,15 @@ class RunningGoalWizardView(LoginRequiredMixin, TemplateView):
                     request, 
                     f'Plan d\'entraînement "{training_plan.name}" créé avec succès!'
                 )
-                return HttpResponseRedirect(
-                    reverse('coaching:plan_detail', kwargs={'pk': training_plan.pk})
-                )
+                
+                # Rediriger vers le template de résultat avec les données du plan
+                return render(request, 'coaching/simple_plan_result.html', {
+                    'plan': training_plan,
+                    'ai_response': generation_result.get('plan', {}) if generation_result.get('success') else None,
+                    'success': True,
+                    'form_data': form.cleaned_data,
+                    'user_data': user_data
+                })
         
         except Exception as e:
             messages.error(

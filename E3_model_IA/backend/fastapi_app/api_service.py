@@ -20,7 +20,7 @@ import os
 # Add project root to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../..'))
 
-from E1_gestion_donnees.db_manager import create_db_engine, create_tables
+from django_db_connector import db_connector
 from E3_model_IA.scripts.advanced_agent import get_coaching_graph
 from fastapi_auth_middleware import auth_middleware, get_current_user, get_user_context
 from django_auth_service import UserInfo
@@ -47,17 +47,20 @@ async def lifespan(app: FastAPI):
     start_metrics_server(8080)
     rprint("[green]✅ Serveur métriques Prometheus démarré sur le port 8080[/green]")
 
-    app.state.db_engine = create_db_engine()
-    app.state.db_tables = create_tables(app.state.db_engine)
-    rprint("[green]✅ Moteur de base de données pour les données d'activité initialisé.[/green]")
+    # Connexion à PostgreSQL Django
+    app.state.db_connector = db_connector
+    connection_test = db_connector.test_connection()
+    if connection_test['status'] == 'connected':
+        rprint(f"[green]✅ PostgreSQL Django connectée: {connection_test['total_activities']} activités[/green]")
+    else:
+        rprint(f"[red]❌ Erreur connexion PostgreSQL: {connection_test['error']}[/red]")
 
     coaching_agent = await get_coaching_graph()
     app.state.coaching_agent = coaching_agent
     
-    # Le service analytics utilise le même moteur que l'app principale
-    app.state.analytics_engine = app.state.db_engine
-    app.state.analytics_tables = app.state.db_tables
-    rprint("[green]✅ Service Analytics SQLAlchemy E1 prêt (moteur partagé).[/green]")
+    # Service analytics utilise le connecteur PostgreSQL
+    app.state.analytics_db = db_connector
+    rprint("[green]✅ Service Analytics PostgreSQL Django prêt.[/green]")
 
     rprint("[bold green]✅ Application démarrée. L'agent et analytics sont prêts.[/bold green]")
 
@@ -117,11 +120,54 @@ def metrics():
 
 
 # ==========================================
-# ENDPOINTS /activities/ SUPPRIMÉS
-# → Utiliser Django REST API /api/v1/activities/ 
+# ENDPOINTS DONNÉES - PostgreSQL Django
 # ==========================================
-# Cette API se concentre uniquement sur l'IA (E3)
-# Les données sont gérées par Django REST (E1)
+
+@app.get("/v1/activities/{user_id}", tags=["Données"])
+async def get_user_activities(
+    user_id: int,
+    limit: Optional[int] = 20,
+    fastapi_request: Request = None
+):
+    """Récupérer les activités d'un utilisateur depuis PostgreSQL Django"""
+    try:
+        db_connector = fastapi_request.app.state.db_connector
+        activities = db_connector.get_user_activities(user_id, limit=limit)
+        
+        return {
+            "user_id": user_id,
+            "total_returned": len(activities),
+            "activities": activities
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur récupération activités: {str(e)}")
+
+@app.get("/v1/stats/{user_id}", tags=["Données"]) 
+async def get_user_stats(
+    user_id: int,
+    fastapi_request: Request = None
+):
+    """Obtenir les statistiques d'un utilisateur depuis PostgreSQL Django"""
+    try:
+        db_connector = fastapi_request.app.state.db_connector
+        stats = db_connector.get_user_stats(user_id)
+        
+        return {
+            "user_id": user_id,
+            "stats": stats
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur calcul statistiques: {str(e)}")
+
+@app.get("/v1/database/status", tags=["Système"])
+async def database_status(fastapi_request: Request = None):
+    """Vérifier le statut de la connexion PostgreSQL Django"""
+    try:
+        db_connector = fastapi_request.app.state.db_connector
+        status = db_connector.test_connection()
+        return status
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur test connexion: {str(e)}")
 
 # \== Endpoint d'IA (Bloc E3) ==
 
@@ -226,6 +272,18 @@ async def chat_with_coach_legacy(
 
 # ===== GÉNÉRATION DE PLANS D'ENTRAÎNEMENT =====
 
+class SimpleTrainingPlanRequest(BaseModel):
+    """Modèle simplifié pour Django"""
+    user_id: int
+    user_email: str
+    goal: str
+    level: str
+    sessions_per_week: int
+    target_date: Optional[str] = None
+    additional_notes: Optional[str] = None
+    user_activities_analysis: Optional[Dict[str, Any]] = None
+    use_advanced_agent: bool = True
+
 class TrainingPlanRequest(BaseModel):
     """Modèle pour la demande de génération de plan d'entraînement"""
     user_id: int
@@ -247,11 +305,82 @@ class TrainingPlanResponse(BaseModel):
     generation_time: float
 
 
-@app.post("/v1/coaching/generate-training-plan", response_model=TrainingPlanResponse, tags=["Coaching IA"])
-async def generate_training_plan(
+@app.post("/v1/coaching/generate-training-plan", tags=["Coaching IA"])
+async def generate_training_plan_simple(
+    plan_request: SimpleTrainingPlanRequest,
+    fastapi_request: Request,
+    api_key: str = Depends(get_api_key)
+):
+    """Génération simplifiée de plan pour Django"""
+    
+    if not plan_request.use_advanced_agent:
+        return {"error": "Agent avancé requis"}
+    
+    try:
+        # Utiliser l'agent IA avancé
+        coaching_agent = fastapi_request.app.state.coaching_agent
+        
+        # Construction du prompt optimisé (plus court et direct)
+        full_input = f"""Je suis l'utilisateur {plan_request.user_id}.
+
+GÉNÈRE un plan d'entraînement personnalisé:
+- Objectif: {plan_request.goal}  
+- Niveau: {plan_request.level}
+- {plan_request.sessions_per_week} séances/semaine
+
+1. UTILISE get_user_metrics_from_db({plan_request.user_id})
+2. Analyse les données
+3. Génère plan 8 semaines avec tableaux markdown
+
+Sois concis et efficace."""
+
+        # Utiliser le bon format pour l'agent (comme dans chat-legacy)
+        thread_id = f"plan-generation-{plan_request.user_id}"
+        config = {"configurable": {"thread_id": thread_id}}
+        
+        print(f"🤖 Génération plan pour user {plan_request.user_id}...")
+        start_generation = time.time()
+        
+        # Optimisation : utiliser invoke au lieu d'astream pour plus de vitesse
+        result = coaching_agent.invoke({
+            "messages": [HumanMessage(content=full_input)], 
+            "mode": "plan_generator"
+        }, config=config)
+        
+        # Extraire la réponse de l'agent
+        full_response = ""
+        if "messages" in result and result["messages"]:
+            last_message = result["messages"][-1]
+            if hasattr(last_message, 'content'):
+                full_response = last_message.content
+        
+        generation_time = time.time() - start_generation
+        print(f"⏱️ Plan généré en {generation_time:.2f}s")
+        
+        print(f"🤖 Plan généré (longueur: {len(full_response)} chars)")
+        
+        if not full_response or len(full_response) < 50:
+            print(f"❌ Réponse trop courte: {full_response}")
+            full_response = "Erreur: Plan non généré correctement"
+        
+        return {
+            "success": True,
+            "plan_content": full_response,
+            "user_id": plan_request.user_id,
+            "goal": plan_request.goal,
+            "method": "invoke_optimized",
+            "generation_time_seconds": round(generation_time, 2)
+        }
+        
+    except Exception as e:
+        print(f"❌ Exception dans génération plan: {str(e)}")
+        return {"error": f"Erreur génération plan: {str(e)}"}
+
+@app.post("/v1/coaching/generate-training-plan-advanced", response_model=TrainingPlanResponse, tags=["Coaching IA"])
+async def generate_training_plan_advanced(
     plan_request: TrainingPlanRequest,
     fastapi_request: Request,
-    current_user: UserInfo = Depends(get_current_user)
+    api_key: str = Depends(get_api_key)
 ):
     """Génération automatique d'un plan d'entraînement personnalisé"""
     

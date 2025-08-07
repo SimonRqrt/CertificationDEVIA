@@ -1,16 +1,8 @@
+import markdown
 from django import template
 from django.utils.safestring import mark_safe
-import markdown
 
 register = template.Library()
-
-@register.filter
-def mul(value, multiplier):
-    """Multiplie une valeur par un nombre"""
-    try:
-        return float(value) * float(multiplier)
-    except (ValueError, TypeError):
-        return 0
 
 @register.filter
 def markdown_to_html(value):
