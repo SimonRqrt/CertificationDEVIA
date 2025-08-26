@@ -11,11 +11,12 @@ drf-yasg==1.21.10
 
 # Monitoring
 prometheus_client
-django-prometheus
 
-# Base de données
+# Base de données et traitement de données
 psycopg2-binary==2.9.7
 aiosqlite
+pandas
+numpy
 
 # Gestion des environnements
 python-dotenv
@@ -28,6 +29,24 @@ httpx
 # Utilitaires
 python-dateutil
 requests
+markdown
+bleach
 
 # Logging
 loguru
+
+# WSGI Server
+gunicorn
+
+# Agent IA dependencies
+openai
+langchain-openai
+langchain-community
+langchain-core
+langgraph
+langgraph-checkpoint-sqlite
+sqlite-vec
+faiss-cpu
+rich
+unstructured
+python-magic

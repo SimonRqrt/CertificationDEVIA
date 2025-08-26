@@ -2,7 +2,7 @@
 {% load static %}
 {% load activity_filters %}
 
-{% block title %}🎯 Votre Plan d'Entraînement{% endblock %}
+{% block title %}Votre Plan d'Entraînement{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -481,7 +481,7 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 mx-auto text-center">
-                <h1 class="display-4 mb-3">🎯 Votre Plan Personnalisé</h1>
+                <h1 class="display-4 mb-3"><span class="flaticon-target"></span>Votre Plan Personnalisé</h1>
                 <p class="lead">
                     Plan généré avec succès ! Voici vos recommandations d'entraînement personnalisées.
                 </p>
@@ -499,7 +499,7 @@
                     <span class="goal-badge">{{ plan.title|default:"Plan Personnalisé" }}</span>
                 </div>
                 
-                <h3 class="text-center mb-4">📋 Votre Programme</h3>
+                <h3 class="text-center mb-4"><i class="fas fa-list"></i> Votre Programme</h3>
                 
                 <div class="row">
                     <div class="col-md-8">
@@ -517,7 +517,7 @@
                                     <!-- Nouveau: Planning structuré -->
                                     {% if plan.training_schedule.schedule %}
                                     <div class="structured-schedule mb-4">
-                                        <h4 class="mb-3">📅 Planning d'Entraînement</h4>
+                                        <h4 class="mb-3"><span class="flaticon-calendar"></span>Planning d'Entraînement</h4>
                                         <div class="table-responsive">
                                             <table class="table table-hover schedule-table-structured">
                                                 <thead>
@@ -531,7 +531,7 @@
                                                 </thead>
                                                 <tbody>
                                                     {% for session in plan.training_schedule.schedule %}
-                                                    <tr class="session-row session-{{ session.type|lower|default:'other' }}">
+                                                    <tr class="session-row session-{{ session.type|slugify|default:'other' }}">
                                                         <td class="day-cell">
                                                             {% if session.week > 1 %}
                                                                 <small class="text-muted">S{{ session.week }}</small><br>
@@ -540,7 +540,7 @@
                                                         </td>
                                                         <td class="type-cell">
                                                             {% if session.type %}
-                                                                <span class="badge training-badge-{{ session.type|lower }}">
+                                                                <span class="badge training-badge-{{ session.type|slugify }}">
                                                                     {{ session.type }}
                                                                 </span>
                                                             {% else %}
@@ -575,13 +575,13 @@
                                                 <div class="col-md-4">
                                                     <div class="summary-stat">
                                                         <div class="stat-number">{{ plan.training_schedule.total_weeks }}</div>
-                                                        <div class="stat-label">Semaine{{ plan.training_schedule.total_weeks|pluralize }}</div>
+                                                        <div class="stat-label">Semaine{% if plan.training_schedule.total_weeks|default:0|add:0 > 1 %}s{% endif %}</div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="summary-stat">
                                                         <div class="stat-number">{{ plan.training_schedule.total_sessions }}</div>
-                                                        <div class="stat-label">Séance{{ plan.training_schedule.total_sessions|pluralize }} actives</div>
+                                                        <div class="stat-label">Séance{% if plan.training_schedule.total_sessions|default:0|add:0 > 1 %}s{% endif %} actives</div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4">
@@ -651,7 +651,7 @@
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="plan-card">
-                <h3 class="mb-4">💡 Recommandations Importantes</h3>
+                <h3 class="mb-4"><span class="flaticon-idea"></span>Recommandations Importantes</h3>
                 {% for recommendation in plan.recommendations %}
                 <div class="recommendation-item">
                     <i class="fas fa-check-circle text-success me-2"></i>
@@ -668,7 +668,7 @@
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="plan-card">
-                <h3 class="mb-4">📊 Analyse de Vos Données</h3>
+                <h3 class="mb-4"><span class="flaticon-analytics"></span>Analyse de Vos Données</h3>
                 <div class="row">
                     <div class="col-md-3">
                         <div class="analysis-card text-center">
@@ -730,7 +730,7 @@
     <div class="row justify-content-center">
         <div class="col-lg-6 text-center">
             <div class="plan-card">
-                <h4 class="mb-3">🚀 Et maintenant ?</h4>
+                <h4 class="mb-3"><span class="flaticon-rocket"></span>Et maintenant ?</h4>
                 <p class="mb-4">Votre plan est prêt ! Vous pouvez maintenant commencer votre entraînement ou générer un nouveau plan avec d'autres paramètres.</p>
                 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-center">
@@ -773,264 +773,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }, index * 200);
     });
     
-    // Amélioration du rendu pour les réponses de Coach Michael
-    const agentContent = document.querySelector('.agent-content');
-    if (agentContent) {
-        formatCoachResponse(agentContent);
-    }
+    // Décoration non-destructive du contenu agent
+    document.querySelectorAll('.agent-content').forEach(decorateAgentContent);
 });
 
-function parseMarkdownToHTML(markdown) {
-    let html = markdown;
-    
-    // Étape 1: Traiter les tableaux Markdown
-    html = parseMarkdownTables(html);
-    
-    // Étape 2: Traiter les titres
-    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-    
-    // Étape 3: Traiter le texte en gras et italique
-    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
-    
-    // Étape 4: Traiter les listes
-    html = parseMarkdownLists(html);
-    
-    // Étape 5: Traiter les paragraphes
-    html = parseMarkdownParagraphs(html);
-    
-    return html;
-}
+function decorateAgentContent(root) {
+  root.querySelectorAll('table').forEach((table) => {
+    table.classList.add('training-table', 'schedule-table');
 
-function parseMarkdownTables(text) {
-    const lines = text.split('\n');
-    let result = [];
-    let inTable = false;
-    let tableHeaders = [];
-    let tableRows = [];
-    let skipNextHeaderLine = false;
-    
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        
-        // Détecter une ligne de tableau (contient | et au moins 2 colonnes)
-        if (line.includes('|') && line.split('|').filter(cell => cell.trim() !== '').length >= 2) {
-            const cells = line.split('|')
-                .map(cell => cell.trim())
-                .filter(cell => cell !== '');
-            
-            // Ignorer les lignes de séparation (avec des tirets)
-            if (cells.some(cell => cell.match(/^[-:]+$/))) {
-                continue; // Ligne de séparation, on l'ignore
-            }
-            
-            // Vérifier si c'est une ligne de headers dupliquée (contient Jour, Type, Durée, etc.)
-            const cellsText = cells.map(c => c.toLowerCase()).join(' ');
-            const isDuplicateHeader = (cellsText.includes('jour') && 
-                                     (cellsText.includes('type') || cellsText.includes('séance') || cellsText.includes('session'))) ||
-                                    (cellsText.includes('day') && cellsText.includes('type')) ||
-                                    (cellsText.includes('durée') && cellsText.includes('intensité')) ||
-                                    (cells.length >= 4 && cells.every(cell => cell.length < 15 && 
-                                     /^\s*(jour|day|type|séance|session|durée|duration|description|intensité|intensity)\s*$/i.test(cell.toLowerCase())));
-            
-            if (isDuplicateHeader) {
-                continue; // Ignorer complètement les headers dupliqués par l'agent
-            }
-            
-            if (!inTable) {
-                // Première ligne du tableau - on utilise nos headers HTML
-                inTable = true;
-                tableHeaders = []; // Headers vides car on utilise ceux en HTML
-                tableRows = [];
-                // Si c'est une ligne de header dupliquée, on l'ignore
-                if (isDuplicateHeader) {
-                    continue;
-                }
-            }
-            
-            // Ligne de données (pas de headers)
-            tableRows.push(cells);
-        } else {
-            // Fin du tableau ou ligne normale
-            if (inTable) {
-                // Construire le tableau HTML sans headers (on utilise ceux du HTML)
-                let tableHtml = '<table class="table table-striped training-table schedule-table-structured">\n';
-                
-                // Pas de headers car ils sont déjà dans le HTML du template
-                
-                // Body seulement
-                if (tableRows.length > 0) {
-                    tableHtml += '<tbody>\n';
-                    tableRows.forEach(row => {
-                        tableHtml += '<tr>\n';
-                        row.forEach((cell, index) => {
-                            let cellClass = '';
-                            if (index === 0) cellClass = 'day-cell';
-                            else if (index === 1) cellClass = 'type-cell';
-                            else if (index === 2) cellClass = 'duration-cell';
-                            else if (index === 3) cellClass = 'description-cell';
-                            else if (index === 4) cellClass = 'intensity-cell';
-                            
-                            tableHtml += `<td class="${cellClass}">${cell}</td>\n`;
-                        });
-                        tableHtml += '</tr>\n';
-                    });
-                    tableHtml += '</tbody>\n';
-                }
-                
-                tableHtml += '</table>\n';
-                result.push(tableHtml);
-                
-                inTable = false;
-                tableHeaders = [];
-                tableRows = [];
-            }
-            
-            if (line !== '') {
-                result.push(line);
-            }
-        }
-    }
-    
-    // Gérer le cas où le texte se termine par un tableau
-    if (inTable && tableRows.length > 0) {
-        let tableHtml = '<table class="table table-striped training-table schedule-table-structured">\n';
-        
-        // Pas de headers car ils sont déjà dans le HTML du template
-        
-        tableHtml += '<tbody>\n';
-        tableRows.forEach(row => {
-            tableHtml += '<tr>\n';
-            row.forEach((cell, index) => {
-                let cellClass = '';
-                if (index === 0) cellClass = 'day-cell';
-                else if (index === 1) cellClass = 'type-cell';
-                else if (index === 2) cellClass = 'duration-cell';
-                else if (index === 3) cellClass = 'description-cell';
-                else if (index === 4) cellClass = 'intensity-cell';
-                
-                tableHtml += `<td class="${cellClass}">${cell}</td>\n`;
-            });
-            tableHtml += '</tr>\n';
-        });
-        tableHtml += '</tbody>\n';
-        
-        tableHtml += '</table>\n';
-        result.push(tableHtml);
-    }
-    
-    return result.join('\n');
-}
+    table.querySelectorAll('tbody tr').forEach((tr) => {
+      const tds = tr.querySelectorAll('td');
+      if (tds.length >= 1) tds[0].classList.add('day-cell');
+      if (tds.length >= 2) tds[1].classList.add('type-cell');
+      if (tds.length >= 3) tds[2].classList.add('duration-cell');
+      if (tds.length >= 4) tds[3].classList.add('description-cell');
+      if (tds.length >= 5) tds[4].classList.add('intensity-cell');
 
-function parseMarkdownLists(text) {
-    // Traiter les listes à puces
-    let lines = text.split('\n');
-    let result = [];
-    let inList = false;
-    let listItems = [];
-    
-    for (let line of lines) {
-        if (line.trim().match(/^[-*+] /)) {
-            if (!inList) {
-                inList = true;
-                listItems = [];
-            }
-            listItems.push(line.trim().substring(2));
-        } else {
-            if (inList) {
-                result.push('<ul>');
-                listItems.forEach(item => {
-                    result.push(`<li>${item}</li>`);
-                });
-                result.push('</ul>');
-                inList = false;
-                listItems = [];
-            }
-            if (line.trim() !== '') {
-                result.push(line);
-            }
+      tds.forEach((td) => {
+        const txt = td.textContent.trim().toLowerCase();
+        if (/\d+(\.\d+)?\s*(km|min|km\/h|bpm)/i.test(txt)) {
+          td.classList.add('numeric-value');
         }
-    }
-    
-    // Gérer le cas où le texte se termine par une liste
-    if (inList) {
-        result.push('<ul>');
-        listItems.forEach(item => {
-            result.push(`<li>${item}</li>`);
-        });
-        result.push('</ul>');
-    }
-    
-    return result.join('\n');
-}
-
-function parseMarkdownParagraphs(text) {
-    // Diviser en blocs séparés par des lignes vides
-    let blocks = text.split('\n\n').filter(block => block.trim() !== '');
-    let result = [];
-    
-    for (let block of blocks) {
-        block = block.trim();
-        
-        // Ne pas encapsuler les éléments HTML existants dans des paragraphes
-        if (block.match(/^<(h[1-6]|table|ul|ol|div)/i)) {
-            result.push(block);
-        } else if (block !== '') {
-            result.push(`<p>${block.replace(/\n/g, '<br>')}</p>`);
-        }
-    }
-    
-    return result.join('\n\n');
-}
-
-function formatCoachResponse(element) {
-    let content = element.textContent || element.innerText || '';
-    
-    // Nettoyer le contenu d'abord
-    content = content.trim();
-    
-    // Parser Markdown complet et robuste
-    content = parseMarkdownToHTML(content);
-    
-    element.innerHTML = content;
-    
-    // Ajouter des classes spécifiques aux tableaux d'entraînement
-    const tables = element.querySelectorAll('table');
-    tables.forEach(table => {
-        table.classList.add('training-table');
-        
-        // Détecter si c'est un tableau d'entraînement (contient Jour, Séance, etc.)
-        const headers = table.querySelectorAll('th');
-        if (headers.length > 0) {
-            const headerText = Array.from(headers).map(h => h.textContent.toLowerCase()).join(' ');
-            if (headerText.includes('jour') || headerText.includes('séance') || headerText.includes('type') || 
-                headerText.includes('distance') || headerText.includes('durée') || headerText.includes('allure')) {
-                table.classList.add('schedule-table');
-            }
-        }
-        
-        // Améliorer l'affichage des cellules avec unités
-        const cells = table.querySelectorAll('td');
-        cells.forEach(cell => {
-            const text = cell.textContent.trim();
-            // Détecter les valeurs numériques avec unités
-            if (text.match(/\d+(\.\d+)?\s*(km|min|km\/h|bpm)/i)) {
-                cell.classList.add('numeric-value');
-            }
-            // Détecter les types d'entraînement pour les couleurs
-            if (text.toLowerCase().includes('endurance')) {
-                cell.classList.add('training-endurance');
-            } else if (text.toLowerCase().includes('fractionne') || text.toLowerCase().includes('fractionné') || text.toLowerCase().includes('interval')) {
-                cell.classList.add('training-interval');
-            } else if (text.toLowerCase().includes('récupération') || text.toLowerCase().includes('recovery')) {
-                cell.classList.add('training-recovery');
-            } else if (text.toLowerCase().includes('repos')) {
-                cell.classList.add('training-rest');
-            }
-        });
+        if (txt.includes('endurance')) td.classList.add('training-endurance');
+        else if (txt.includes('fractionné') || txt.includes('fractionne') || txt.includes('interval'))
+          td.classList.add('training-interval');
+        else if (txt.includes('récupération') || txt.includes('recovery'))
+          td.classList.add('training-recovery');
+        else if (txt.includes('repos'))
+          td.classList.add('training-rest');
+      });
     });
+  });
 }
 </script>
 {% endblock %}

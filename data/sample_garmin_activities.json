@@ -1,0 +1,80 @@
+[
+    {
+        "activityId": 12345678901,
+        "activityName": "Course matinale",
+        "activityType": {
+            "typeKey": "running"
+        },
+        "startTimeLocal": "2025-08-01T07:30:00",
+        "distance": 5200,
+        "duration": 1800,
+        "averageSpeed": 2.89,
+        "maxSpeed": 4.5,
+        "calories": 320,
+        "averageHR": 155,
+        "maxHR": 178,
+        "elevationGain": 45,
+        "elevationLoss": 52,
+        "startLatitude": 48.8566,
+        "startLongitude": 2.3522,
+        "deviceName": "Garmin Forerunner 945",
+        "steps": 6890,
+        "averageRunningCadenceInStepsPerMinute": 180,
+        "vO2MaxValue": 48.5,
+        "activityTrainingLoad": 125,
+        "aerobicTrainingEffect": 3.2,
+        "anaerobicTrainingEffect": 1.8
+    },
+    {
+        "activityId": 12345678902,
+        "activityName": "Séance fractionné",
+        "activityType": {
+            "typeKey": "running"
+        },
+        "startTimeLocal": "2025-08-03T18:00:00",
+        "distance": 8000,
+        "duration": 2400,
+        "averageSpeed": 3.33,
+        "maxSpeed": 5.2,
+        "calories": 450,
+        "averageHR": 165,
+        "maxHR": 189,
+        "elevationGain": 12,
+        "elevationLoss": 15,
+        "startLatitude": 48.8580,
+        "startLongitude": 2.3540,
+        "deviceName": "Garmin Forerunner 945",
+        "steps": 10200,
+        "averageRunningCadenceInStepsPerMinute": 185,
+        "vO2MaxValue": 49.1,
+        "activityTrainingLoad": 185,
+        "aerobicTrainingEffect": 2.8,
+        "anaerobicTrainingEffect": 3.5
+    },
+    {
+        "activityId": 12345678903,
+        "activityName": "Sortie longue",
+        "activityType": {
+            "typeKey": "running"
+        },
+        "startTimeLocal": "2025-08-05T09:00:00",
+        "distance": 15000,
+        "duration": 4800,
+        "averageSpeed": 3.125,
+        "maxSpeed": 4.1,
+        "calories": 820,
+        "averageHR": 145,
+        "maxHR": 168,
+        "elevationGain": 120,
+        "elevationLoss": 115,
+        "startLatitude": 48.8750,
+        "startLongitude": 2.2945,
+        "deviceName": "Garmin Forerunner 945",
+        "steps": 19500,
+        "averageRunningCadenceInStepsPerMinute": 175,
+        "vO2MaxValue": 48.8,
+        "activityTrainingLoad": 295,
+        "aerobicTrainingEffect": 4.1,
+        "anaerobicTrainingEffect": 0.8
+    }
+]

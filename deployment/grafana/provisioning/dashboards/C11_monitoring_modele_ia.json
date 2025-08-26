@@ -1,0 +1,254 @@
+{
+  "id": null,
+  "title": "Coach AI - Métriques IA (C11)",
+  "description": "Monitoring complet du modèle d'intelligence artificielle Coach AI selon critère C11",
+  "tags": ["coach-ai", "c11", "modele-ia", "monitoring"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {
+    "from": "now-2h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "🤖 État des Services IA",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 24, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "up{job=\"coach-api-fastapi\"}",
+          "legendFormat": "FastAPI IA",
+          "refId": "A"
+        },
+        {
+          "expr": "up{job=\"coach-django\"}",
+          "legendFormat": "Django Backend",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [
+            {"options": {"0": {"text": "🔴 OFFLINE", "color": "red"}}, "type": "value"},
+            {"options": {"1": {"text": "🟢 ONLINE", "color": "green"}}, "type": "value"}
+          ],
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "green", "value": 1}
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"]
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "⏱️ Temps de Réponse Agent IA (Seuil: 5s)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(ai_request_duration_seconds_bucket[5m]))",
+          "legendFormat": "P95 Agent IA",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.50, rate(ai_request_duration_seconds_bucket[5m]))",
+          "legendFormat": "P50 Agent IA",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "s",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 3},
+              {"color": "red", "value": 5}
+            ]
+          }
+        }
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "none"}
+      }
+    },
+    {
+      "id": 3,
+      "title": "📊 Volume Requêtes IA",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+      "targets": [
+        {
+          "expr": "rate(ai_requests_total[5m]) * 60",
+          "legendFormat": "Requêtes/min",
+          "refId": "A"
+        },
+        {
+          "expr": "ai_requests_total",
+          "legendFormat": "Total requêtes",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "💰 Coûts OpenAI (Budget Mensuel)",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 14},
+      "targets": [
+        {
+          "expr": "ai_cost_usd_total",
+          "legendFormat": "Coût estimé $/h",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "unit": "currencyUSD",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 50},
+              {"color": "red", "value": 100}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "⚡ Latence API FastAPI (Seuil: 2s)",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 14},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(django_request_duration_seconds_bucket{job=\"coach-django\"}[5m]))",
+          "legendFormat": "Latence P95 API",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "unit": "s",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 1},
+              {"color": "red", "value": 2}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "📋 Plans d'Entraînement Générés",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 14},
+      "targets": [
+        {
+          "expr": "training_plans_generated_total",
+          "legendFormat": "Plans générés total",
+          "refId": "A"
+        },
+        {
+          "expr": "increase(training_plans_generated_total[1h])",
+          "legendFormat": "Plans/heure",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "🖥️ Ressources Système (Corrélation Infrastructure)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 26},
+      "targets": [
+        {
+          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+          "legendFormat": "Mémoire %",
+          "refId": "A"
+        },
+        {
+          "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "CPU %",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "percent",
+          "max": 100,
+          "min": 0
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "📈 Tendance Performance IA (Dernière Heure)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+      "targets": [
+        {
+          "expr": "rate(training_plans_generated_total[10m]) * 60",
+          "legendFormat": "Plans générés/h",
+          "refId": "A"
+        },
+        {
+          "expr": "avg_over_time(histogram_quantile(0.95, rate(openai_response_time_seconds_bucket[5m]))[10m:])",
+          "legendFormat": "Temps réponse moyen P95",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "short"
+        }
+      },
+      "yAxes": [
+        {"unit": "short", "label": "Plans/h"},
+        {"unit": "s", "label": "Temps (s)"}
+      ]
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "name": "Seuils Critiques",
+        "enable": true,
+        "iconColor": "red",
+        "tags": ["alert", "seuil"]
+      }
+    ]
+  }
+}

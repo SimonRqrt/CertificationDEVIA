@@ -1,0 +1,52 @@
+=== TEST AGENT DURATION_WEEKS ===
+Paramètres: 10k, intermédiaire, 3 séances/semaine, 12 semaines
+Semaines générées: 2
+Succès: False
+
+=== RÉPONSE COMPLÈTE ===
+Je vais générer un plan d'entraînement pour vous basé sur les données disponibles et des principes génériques d'entraînement pour la course à pied.
+
+### Plan d'entraînement personnalisé
+
+**Analyse de votre profil :**
+Vous avez réalisé en moyenne 3 séances par semaine, avec une distance moyenne de 3.19 km par séance et une durée moyenne de 36.3 minutes. Votre fréquence cardiaque moyenne est de 142 bpm.
+
+**Programme hebdomadaire :**
+- Le volume hebdomadaire sera adapté à votre niveau intermédiaire et à votre disponibilité.
+
+## Semaine 1
+| Jour | Type Séance | Durée | Description | Intensité |
+|------|-------------|-------|-------------|-----------|
+| Lundi | Repos | - | Récupération complète | Repos |
+| Mardi | Endurance | 45min | Footing léger en endurance fondamentale | Faible |
+| Mercredi | Fractionné | 60min | 2x(8x30/30) à 100% VMA + échauffement | Élevée |
+| Jeudi | Repos | - | Récupération active ou étirements | Repos |
+| Vendredi | Seuil | 60min | 3x8min à 85-90% FCM + échauffement | Modérée |
+| Samedi | Repos | - | Préparation sortie longue | Repos |
+| Dimanche | Sortie longue | 90min | Endurance fondamentale continue | Faible |
+
+## Semaine 2  
+| Jour | Type Séance | Durée | Description | Intensité |
+|------|-------------|-------|-------------|-----------|
+| Lundi | Repos | - | Récupération complète | Repos |
+| Mardi | Endurance | 50min | Footing léger en endurance fondamentale | Faible |
+| Mercredi | Fractionné | 65min | 3x(8x30/30) à 100% VMA + échauffement | Élevée |
+| Jeudi | Repos | - | Récupération active ou étirements | Repos |
+| Vendredi | Seuil | 65min | 4x8min à 85-90% FCM + échauffement | Modérée |
+| Samedi | Repos | - | Préparation sortie longue | Repos |
+| Dimanche | Sortie longue | 100min | Endurance fondamentale continue | Faible |
+
+**Objectif estimé :**
+Courir un 10 km en améliorant votre endurance et vos performances.
+
+**Conseils personnalisés :**
+- Assurez-vous de bien vous hydrater pendant les séances.
+- Écoutez votre corps et adaptez l'intensité si nécessaire.
+- Pensez à inclure des étirements réguliers pour prévenir les blessures.
+
+**⚠️ Recommandations importantes :**
+- Écoutez votre corps et adaptez l'intensité si nécessaire
+- Hydratez-vous régulièrement pendant les séances
+- En cas de douleur, consultez un professionnel de santé
+
+Le plan d'entraînement complet s'étendra sur 8 semaines. Si vous avez besoin d'un plan sur 12 semaines, je peux continuer à générer les semaines suivantes.

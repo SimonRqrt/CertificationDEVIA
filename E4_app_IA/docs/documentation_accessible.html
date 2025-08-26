@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation Technique Coach IA - Version Accessible</title>
+    
+    <!-- Métadonnées accessibilité -->
+    <meta name="description" content="Documentation technique complète du projet Coach IA - Installation, architecture, tests et déploiement">
+    <meta name="author" content="Équipe Coach IA">
+    
+    <!-- CSS accessible conforme WCAG 2.1 AA -->
+    <style>
+        /* Reset et base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            font-size: 16px; /* Base 16px pour rem */
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: Arial, sans-serif; /* Police système accessible */
+            line-height: 1.6; /* Interlignage minimum 1.5 */
+            color: #212529; /* Contraste 4.5:1 minimum */
+            background-color: #ffffff;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        
+        /* Navigation accessible */
+        .skip-links {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            z-index: 1000;
+            background: #000;
+            color: #fff;
+            padding: 8px;
+            text-decoration: none;
+        }
+        
+        .skip-links:focus {
+            top: 0;
+        }
+        
+        /* Titres hiérarchiques */
+        h1, h2, h3, h4, h5, h6 {
+            margin: 1.5rem 0 1rem 0;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            color: #1a1a1a;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 0.5rem;
+        }
+        
+        h2 {
+            font-size: 2rem;
+            color: #2c2c2c;
+            margin-top: 2rem;
+        }
+        
+        h3 {
+            font-size: 1.5rem;
+            color: #3e3e3e;
+        }
+        
+        h4 {
+            font-size: 1.25rem;
+            color: #505050;
+        }
+        
+        /* Contenu */
+        p {
+            margin: 1rem 0;
+            max-width: 65ch; /* Largeur lecture optimale */
+        }
+        
+        /* Liens accessibles */
+        a {
+            color: #0066cc; /* Contraste 4.5:1 */
+            text-decoration: underline;
+            transition: none; /* Pas d'animation pour accessibilité */
+        }
+        
+        a:hover, a:focus {
+            color: #004499;
+            background-color: #f0f8ff;
+            outline: 2px solid #0066cc;
+            outline-offset: 2px;
+        }
+        
+        /* Navigation au clavier visible */
+        *:focus {
+            outline: 2px solid #0066cc;
+            outline-offset: 2px;
+        }
+        
+        /* Listes accessibles */
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+        
+        li {
+            margin: 0.5rem 0;
+        }
+        
+        /* Code accessible */
+        code {
+            background-color: #f8f9fa;
+            color: #e83e8c;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        pre {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        pre code {
+            background: none;
+            color: #212529;
+            padding: 0;
+        }
+        
+        /* Tableaux accessibles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background-color: #fff;
+        }
+        
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        /* Alertes et callouts */
+        .callout {
+            border-left: 4px solid #0066cc;
+            background-color: #f0f8ff;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .callout-warning {
+            border-left-color: #ffc107;
+            background-color: #fff9e6;
+        }
+        
+        .callout-success {
+            border-left-color: #28a745;
+            background-color: #f0fff4;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+            }
+            
+            table {
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* Mode sombre (préférence utilisateur) */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #1a1a1a;
+                color: #e0e0e0;
+            }
+            
+            h1, h2, h3, h4 {
+                color: #ffffff;
+            }
+            
+            a {
+                color: #66b3ff;
+            }
+            
+            a:hover, a:focus {
+                color: #99ccff;
+                background-color: #2a2a2a;
+            }
+            
+            code {
+                background-color: #2a2a2a;
+                color: #ff9999;
+            }
+            
+            pre {
+                background-color: #2a2a2a;
+                border-color: #404040;
+            }
+            
+            th {
+                background-color: #2a2a2a;
+                color: #e0e0e0;
+            }
+            
+            td {
+                border-color: #404040;
+            }
+        }
+        
+        /* Impression */
+        @media print {
+            body {
+                font-size: 12pt;
+                line-height: 1.4;
+                color: #000;
+                background: #fff;
+            }
+            
+            a {
+                color: #000;
+                text-decoration: underline;
+            }
+            
+            h1, h2, h3 {
+                page-break-after: avoid;
+            }
+            
+            pre, table {
+                page-break-inside: avoid;
+            }
+        }
+        
+        /* Animation réduite pour accessibilité */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Liens d'évitement -->
+    <a href="#main-content" class="skip-links">Aller au contenu principal</a>
+    <a href="#table-of-contents" class="skip-links">Aller à la table des matières</a>
+    
+    <!-- En-tête -->
+    <header role="banner">
+        <h1 id="main-title">Documentation Technique Coach IA</h1>
+        <p><strong>Version accessible conforme WCAG 2.1 AA</strong></p>
+        <p>Dernière mise à jour : <time datetime="2025-01-19">19 janvier 2025</time></p>
+    </header>
+    
+    <!-- Table des matières -->
+    <nav role="navigation" aria-labelledby="toc-heading">
+        <h2 id="table-of-contents">Table des Matières</h2>
+        <ol>
+            <li><a href="#installation">Installation Environnement</a></li>
+            <li><a href="#architecture">Architecture Applicative</a></li>
+            <li><a href="#dependances">Gestion des Dépendances</a></li>
+            <li><a href="#tests">Exécution des Tests</a></li>
+            <li><a href="#deploiement">Procédures de Déploiement</a></li>
+            <li><a href="#monitoring">Monitoring et Logs</a></li>
+            <li><a href="#accessibilite">Conformité Accessibilité</a></li>
+        </ol>
+    </nav>
+    
+    <!-- Contenu principal -->
+    <main id="main-content" role="main">
+        
+        <!-- Section 1 -->
+        <section id="installation" aria-labelledby="installation-heading">
+            <h2 id="installation-heading">1. Installation Environnement de Développement</h2>
+            
+            <div class="callout">
+                <p><strong>Prérequis :</strong> Python 3.11+, Docker, PostgreSQL, Git</p>
+            </div>
+            
+            <h3>1.1 Clone du Repository</h3>
+            <pre><code>git clone https://github.com/votre-repo/coach-ia.git
+cd coach-ia</code></pre>
+            
+            <h3>1.2 Configuration Environnement</h3>
+            <ol>
+                <li>Créer l'environnement virtuel Python</li>
+                <li>Installer les dépendances</li>
+                <li>Configurer les variables d'environnement</li>
+            </ol>
+            
+            <pre><code># Création environnement virtuel
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# ou
+venv\Scripts\activate     # Windows
+
+# Installation dépendances
+pip install -r requirements.txt
+pip install -r E3_model_IA/backend/django_app/requirements-django.txt
+pip install -r E3_model_IA/backend/fastapi_app/requirements-fastapi.txt</code></pre>
+        </section>
+        
+        <!-- Section 2 -->
+        <section id="architecture" aria-labelledby="architecture-heading">
+            <h2 id="architecture-heading">2. Architecture Applicative</h2>
+            
+            <h3>2.1 Vue d'Ensemble</h3>
+            <p>L'application Coach IA suit une architecture microservices avec les composants suivants :</p>
+            
+            <table role="table" aria-label="Composants de l'architecture">
+                <caption>Composants et technologies de l'architecture Coach IA</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Composant</th>
+                        <th scope="col">Technologie</th>
+                        <th scope="col">Port</th>
+                        <th scope="col">Rôle</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Interface Web</td>
+                        <td>Django 4.2.7</td>
+                        <td>8000</td>
+                        <td>Interface utilisateur principale</td>
+                    </tr>
+                    <tr>
+                        <td>Interface Chat</td>
+                        <td>Streamlit</td>
+                        <td>8501</td>
+                        <td>Interface conversationnelle IA</td>
+                    </tr>
+                    <tr>
+                        <td>API Backend</td>
+                        <td>FastAPI</td>
+                        <td>8080</td>
+                        <td>Services métier et IA</td>
+                    </tr>
+                    <tr>
+                        <td>Base de Données</td>
+                        <td>PostgreSQL 15</td>
+                        <td>5432</td>
+                        <td>Stockage données principales</td>
+                    </tr>
+                    <tr>
+                        <td>Cache</td>
+                        <td>Redis 7</td>
+                        <td>6379</td>
+                        <td>Cache et sessions</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h3>2.2 Flux de Données</h3>
+            <p>Les données transitent selon le schéma suivant :</p>
+            <ol>
+                <li><strong>Récupération</strong> : APIs Garmin/Strava → Pipeline ETL → Base PostgreSQL</li>
+                <li><strong>Traitement</strong> : Agent IA → LLM → Génération conseils</li>
+                <li><strong>Affichage</strong> : API FastAPI → Interfaces Django/Streamlit → Utilisateur</li>
+            </ol>
+        </section>
+        
+        <!-- Section 3 -->
+        <section id="dependances" aria-labelledby="dependances-heading">
+            <h2 id="dependances-heading">3. Gestion des Dépendances</h2>
+            
+            <h3>3.1 Dépendances Python</h3>
+            <p>Le projet utilise plusieurs fichiers de requirements :</p>
+            
+            <ul>
+                <li><code>requirements.txt</code> : Dépendances globales du projet</li>
+                <li><code>requirements-django.txt</code> : Spécifiques à l'interface Django</li>
+                <li><code>requirements-fastapi.txt</code> : Spécifiques à l'API FastAPI</li>
+                <li><code>requirements-streamlit.txt</code> : Spécifiques à l'interface Streamlit</li>
+            </ul>
+            
+            <div class="callout-warning">
+                <p><strong>Attention :</strong> Installer les dépendances dans l'ordre pour éviter les conflits de versions.</p>
+            </div>
+            
+            <h3>3.2 Dépendances Système</h3>
+            <ul>
+                <li><strong>Docker</strong> : Conteneurisation des services</li>
+                <li><strong>PostgreSQL</strong> : Base de données principale</li>
+                <li><strong>Redis</strong> : Cache et gestion des sessions</li>
+                <li><strong>Nginx</strong> : Reverse proxy (production)</li>
+            </ul>
+        </section>
+        
+        <!-- Section 4 -->
+        <section id="tests" aria-labelledby="tests-heading">
+            <h2 id="tests-heading">4. Exécution des Tests</h2>
+            
+            <h3>4.1 Tests Unitaires et d'Intégration</h3>
+            <p>La suite de tests couvre l'ensemble des composants :</p>
+            
+            <pre><code># Tests complets
+python -m pytest tests/ -v --cov=src --cov-report=html
+
+# Tests spécifiques par module
+python -m pytest tests/test_e1_api_rest.py     # Tests API REST
+python -m pytest tests/test_e3_api_ia.py       # Tests API IA
+python -m pytest tests/test_e4_interfaces.py   # Tests interfaces
+python -m pytest tests/test_e5_monitoring.py   # Tests monitoring</code></pre>
+            
+            <h3>4.2 Tests de Sécurité</h3>
+            <p>Les tests incluent la validation des aspects sécuritaires :</p>
+            <ul>
+                <li>Authentification API Key</li>
+                <li>Rate limiting OWASP</li>
+                <li>Validation des entrées</li>
+                <li>Gestion des erreurs</li>
+            </ul>
+            
+            <div class="callout-success">
+                <p><strong>Couverture cible :</strong> Minimum 85% de couverture de code pour la validation C17.</p>
+            </div>
+        </section>
+        
+        <!-- Section 5 -->
+        <section id="deploiement" aria-labelledby="deploiement-heading">
+            <h2 id="deploiement-heading">5. Procédures de Déploiement</h2>
+            
+            <h3>5.1 Déploiement Local (Développement)</h3>
+            <pre><code># Démarrage avec Docker Compose
+cd deployment/
+docker-compose -f docker-compose-local.yml up -d
+
+# Vérification des services
+docker-compose ps
+docker-compose logs</code></pre>
+            
+            <h3>5.2 Déploiement Production</h3>
+            <ol>
+                <li>Configuration des variables d'environnement production</li>
+                <li>Build et push des images Docker</li>
+                <li>Déploiement via orchestrateur (Kubernetes/Docker Swarm)</li>
+                <li>Mise à jour des configurations monitoring</li>
+            </ol>
+            
+            <h3>5.3 Rollback</h3>
+            <p>En cas de problème, procédure de rollback automatique :</p>
+            <pre><code># Rollback version précédente
+kubectl rollout undo deployment/coach-ai-web
+kubectl rollout undo deployment/coach-ai-api</code></pre>
+        </section>
+        
+        <!-- Section 6 -->
+        <section id="monitoring" aria-labelledby="monitoring-heading">
+            <h2 id="monitoring-heading">6. Monitoring et Logs</h2>
+            
+            <h3>6.1 Stack de Monitoring</h3>
+            <ul>
+                <li><strong>Prometheus</strong> : Collecte de métriques</li>
+                <li><strong>Grafana</strong> : Visualisation et dashboards</li>
+                <li><strong>Loki</strong> : Agrégation de logs</li>
+                <li><strong>Alertmanager</strong> : Gestion des alertes</li>
+            </ul>
+            
+            <h3>6.2 Métriques Surveillées</h3>
+            <table role="table" aria-label="Métriques de monitoring">
+                <caption>Métriques de performance et seuils d'alerte</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Métrique</th>
+                        <th scope="col">Seuil Warning</th>
+                        <th scope="col">Seuil Critical</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Temps de réponse API</td>
+                        <td>&gt; 500ms</td>
+                        <td>&gt; 2s</td>
+                        <td>Investigation performance</td>
+                    </tr>
+                    <tr>
+                        <td>Taux d'erreur</td>
+                        <td>&gt; 2%</td>
+                        <td>&gt; 5%</td>
+                        <td>Vérification logs d'erreur</td>
+                    </tr>
+                    <tr>
+                        <td>Utilisation CPU</td>
+                        <td>&gt; 70%</td>
+                        <td>&gt; 90%</td>
+                        <td>Scaling horizontal</td>
+                    </tr>
+                    <tr>
+                        <td>Utilisation RAM</td>
+                        <td>&gt; 80%</td>
+                        <td>&gt; 95%</td>
+                        <td>Optimisation mémoire</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <!-- Section 7 -->
+        <section id="accessibilite" aria-labelledby="accessibilite-heading">
+            <h2 id="accessibilite-heading">7. Conformité Accessibilité</h2>
+            
+            <h3>7.1 Standards Appliqués</h3>
+            <p>Cette documentation respecte les standards d'accessibilité :</p>
+            <ul>
+                <li><strong>WCAG 2.1 AA</strong> : Web Content Accessibility Guidelines</li>
+                <li><strong>Section 508</strong> : Standards US d'accessibilité</li>
+                <li><strong>RGAA 4.1</strong> : Référentiel Général d'Amélioration de l'Accessibilité</li>
+            </ul>
+            
+            <h3>7.2 Fonctionnalités d'Accessibilité</h3>
+            <ul>
+                <li><strong>Navigation clavier</strong> : Tous les éléments sont accessibles au clavier</li>
+                <li><strong>Lecteurs d'écran</strong> : Structure sémantique HTML appropriée</li>
+                <li><strong>Contrastes</strong> : Rapport de contraste minimum 4.5:1</li>
+                <li><strong>Textes</strong> : Taille de police adaptable, interlignage suffisant</li>
+                <li><strong>Mode sombre</strong> : Support automatique selon préférences utilisateur</li>
+            </ul>
+            
+            <h3>7.3 Tests d'Accessibilité</h3>
+            <p>Outils de validation utilisés :</p>
+            <ul>
+                <li><strong>axe-core</strong> : Tests automatisés d'accessibilité</li>
+                <li><strong>WAVE</strong> : Web Accessibility Evaluation Tool</li>
+                <li><strong>Color Contrast Analyser</strong> : Validation des contrastes</li>
+                <li><strong>Screen Reader</strong> : Tests avec NVDA/JAWS</li>
+            </ul>
+            
+            <div class="callout">
+                <p><strong>Note :</strong> Cette documentation est également disponible en PDF accessible avec signets et structure appropriée.</p>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Pied de page -->
+    <footer role="contentinfo">
+        <hr>
+        <p>
+            <small>
+                Documentation technique Coach IA | Version accessible WCAG 2.1 AA | 
+                <a href="mailto:support@coach-ia.fr">Contact support</a> | 
+                <a href="#main-title">Retour en haut</a>
+            </small>
+        </p>
+    </footer>
+</body>
+</html>

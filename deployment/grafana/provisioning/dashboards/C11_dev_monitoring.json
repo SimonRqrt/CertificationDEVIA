@@ -1,0 +1,351 @@
+{
+  "id": null,
+  "title": "Coach AI - Monitoring Modèle IA (C11) - Dev",
+  "description": "Monitoring du modèle d'IA Coach AI avec données réalistes de développement - Critère C11",
+  "tags": ["coach-ai", "c11", "modele-ia", "development"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {
+    "from": "now-2h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "🤖 État des Services IA",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 24, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "up{job=\"coach-ai-mock\"}",
+          "legendFormat": "FastAPI IA",
+          "refId": "A"
+        },
+        {
+          "expr": "up{job=\"prometheus\"}",
+          "legendFormat": "Prometheus",
+          "refId": "B"
+        },
+        {
+          "expr": "up{job=\"node\"}",
+          "legendFormat": "Node Exporter",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [
+            {"options": {"0": {"text": "🔴 OFFLINE", "color": "red"}}, "type": "value"},
+            {"options": {"1": {"text": "🟢 ONLINE", "color": "green"}}, "type": "value"}
+          ],
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "green", "value": 1}
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "textMode": "value_and_name"
+      }
+    },
+    {
+      "id": 2,
+      "title": "📊 Métriques IA - Vue d'Ensemble Dev",
+      "type": "stat",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 6},
+      "targets": [
+        {
+          "expr": "ai_requests_total{endpoint=\"/v1/coaching/chat\",status_code=\"200\"}",
+          "legendFormat": "Requêtes Chat IA",
+          "refId": "A"
+        },
+        {
+          "expr": "training_plans_generated_total",
+          "legendFormat": "Plans Générés",
+          "refId": "B"
+        },
+        {
+          "expr": "ai_cost_usd_total{endpoint=\"/v1/coaching/chat\"}",
+          "legendFormat": "Coût Total ($)",
+          "refId": "C"
+        },
+        {
+          "expr": "agent_response_time_p95_seconds",
+          "legendFormat": "P95 Temps Réponse (s)",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Coût Total ($)"},
+            "properties": [
+              {"id": "unit", "value": "currencyUSD"},
+              {"id": "decimals", "value": 2}
+            ]
+          },
+          {
+            "matcher": {"id": "byName", "options": "P95 Temps Réponse (s)"},
+            "properties": [
+              {"id": "unit", "value": "s"},
+              {"id": "decimals", "value": 1}
+            ]
+          }
+        ]
+      },
+      "options": {
+        "colorMode": "value",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "textMode": "value_and_name"
+      }
+    },
+    {
+      "id": 3,
+      "title": "📈 Évolution Requêtes IA (Développement)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+      "targets": [
+        {
+          "expr": "rate(ai_requests_total{endpoint=\"/v1/coaching/chat\",status_code=\"200\"}[5m]) * 60",
+          "legendFormat": "Requêtes Chat/min",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(training_plans_generated_total[5m]) * 60",
+          "legendFormat": "Plans/min",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "pointSize": 4,
+            "fillOpacity": 25
+          },
+          "unit": "reqps",
+          "min": 0
+        }
+      },
+      "options": {
+        "tooltip": {"mode": "multi"},
+        "legend": {"displayMode": "visible", "placement": "bottom"}
+      }
+    },
+    {
+      "id": 4,
+      "title": "⚡ Temps de Réponse IA",
+      "type": "timeseries", 
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+      "targets": [
+        {
+          "expr": "agent_response_time_p95_seconds",
+          "legendFormat": "P95 Temps Réponse",
+          "refId": "A"
+        },
+        {
+          "expr": "ai_response_time_seconds_sum / ai_response_time_seconds_count",
+          "legendFormat": "Temps Moyen",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "pointSize": 4,
+            "fillOpacity": 20
+          },
+          "unit": "s",
+          "min": 0,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 3},
+              {"color": "red", "value": 5}
+            ]
+          }
+        }
+      },
+      "options": {
+        "tooltip": {"mode": "multi"},
+        "legend": {"displayMode": "visible", "placement": "bottom"}
+      }
+    },
+    {
+      "id": 5,
+      "title": "💰 Analyse Coûts OpenAI (Dev)",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 22},
+      "targets": [
+        {
+          "expr": "ai_cost_usd_total{endpoint=\"/v1/coaching/chat\"}",
+          "legendFormat": "Coût Total",
+          "refId": "A"
+        },
+        {
+          "expr": "cost_hourly_usd",
+          "legendFormat": "Coût/Heure",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 3,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 0.5},
+              {"color": "red", "value": 1.0}
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "orientation": "vertical",
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "textMode": "value_and_name"
+      }
+    },
+    {
+      "id": 6,
+      "title": "🔢 Tokens Consommés",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 22},
+      "targets": [
+        {
+          "expr": "ai_tokens_total{endpoint=\"/v1/coaching/chat\",kind=\"prompt\"}",
+          "legendFormat": "Tokens Prompt",
+          "refId": "A"
+        },
+        {
+          "expr": "ai_tokens_total{endpoint=\"/v1/coaching/chat\",kind=\"completion\"}",
+          "legendFormat": "Tokens Completion",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "orientation": "vertical",
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "textMode": "value_and_name"
+      }
+    },
+    {
+      "id": 7,
+      "title": "📊 Métriques Système Dev",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 22},
+      "targets": [
+        {
+          "expr": "system_cpu_usage_percent",
+          "legendFormat": "CPU %",
+          "refId": "A"
+        },
+        {
+          "expr": "system_memory_usage_bytes / 1024 / 1024 / 1024",
+          "legendFormat": "RAM GB",
+          "refId": "B"
+        },
+        {
+          "expr": "user_activities_processed_total",
+          "legendFormat": "Activités",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 1
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "CPU %"},
+            "properties": [
+              {"id": "unit", "value": "percent"},
+              {"id": "max", "value": 100}
+            ]
+          },
+          {
+            "matcher": {"id": "byName", "options": "RAM GB"},
+            "properties": [
+              {"id": "unit", "value": "decgbytes"}
+            ]
+          }
+        ]
+      },
+      "options": {
+        "colorMode": "value",
+        "orientation": "vertical",
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "textMode": "value_and_name"
+      }
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "name": "Déploiements",
+        "enable": true,
+        "iconColor": "blue",
+        "tags": ["deployment"]
+      }
+    ]
+  },
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "API Documentation",
+      "tooltip": "Documentation FastAPI",
+      "type": "link",
+      "url": "http://localhost:8000/docs"
+    }
+  ]
+}

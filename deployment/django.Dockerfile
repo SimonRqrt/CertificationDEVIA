@@ -15,6 +15,7 @@ RUN apt-get update \
         curl \
         libpq-dev \
         postgresql-client \
+        libmagic1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copier les requirements Django
@@ -24,15 +25,21 @@ COPY E3_model_IA/backend/django_app/requirements-django.txt /app/requirements.tx
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
-# Copier le code Django
+# Copier le code Django ET les modules nécessaires
 COPY E3_model_IA/backend/django_app/ /app/
+COPY E3_model_IA/ /app/E3_model_IA/
+COPY E1_gestion_donnees/ /app/E1_gestion_donnees/
+COPY src/ /app/src/
 COPY data/ /app/data/
 
+# Créer le lien symbolique pour knowledge_base
+RUN ln -sf /app/E3_model_IA/knowledge_base /app/knowledge_base
+
 # Créer les répertoires nécessaires
-RUN mkdir -p /app/logs /app/static /app/media
+RUN mkdir -p /app/logs /app/static /app/media /app/staticfiles
 
 # Collecter les fichiers statiques et créer les migrations
-RUN python manage.py collectstatic --noinput \
+RUN DJANGO_SETTINGS_MODULE=coach_ai_web.settings python manage.py collectstatic --noinput \
     && python manage.py makemigrations
 
 # Exposer le port

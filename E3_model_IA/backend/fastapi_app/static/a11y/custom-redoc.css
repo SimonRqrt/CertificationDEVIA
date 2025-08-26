@@ -1,0 +1,12 @@
+/* ReDoc : contraste + focus + lisibilité */
+body, .redoc-wrap, .redoc-wrap * { color: #1b1b1b; }
+a { color: #0b5fff; }
+:focus { outline: 3px solid #ffab00 !important; outline-offset: 2px !important; }
+
+.redoc-wrap .menu-content { background: #ffffff; }
+.redoc-wrap .api-content h1, 
+.redoc-wrap .api-content h2, 
+.redoc-wrap .api-content h3 { color: #0b0b0b; }
+
+table thead th { background: #f5f5f5; border-bottom: 2px solid #c7c7c7; }
+table tbody tr:nth-child(even) { background: #fafafa; }

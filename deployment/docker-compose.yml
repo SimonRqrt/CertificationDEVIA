@@ -1,0 +1,219 @@
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: coach_ia_postgres
+    environment:
+      POSTGRES_DB: coach_ia_db
+      POSTGRES_USER: coach_user
+      POSTGRES_PASSWORD: coach_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/pgdata
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coach_user -d coach_ia_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - coach_ia_network
+
+  # Service Django (Web + API)
+  django:
+    build:
+      context: ..
+      dockerfile: deployment/django.Dockerfile
+    container_name: coach_ia_django
+    environment:
+      - DB_TYPE=postgresql
+      - DB_NAME=coach_ia_db
+      - DB_USER=coach_user
+      - DB_PASSWORD=coach_password
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_SSLMODE=disable
+      - DEBUG=False
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GARMIN_EMAIL=${GARMIN_EMAIL}
+      - GARMIN_PASSWORD=${GARMIN_PASSWORD}
+      - DOCKER_ENV=true
+      - FASTAPI_URL=http://fastapi:8000
+      - STREAMLIT_URL=http://streamlit:8501
+      - PYTHONPATH=/app:/app/E1_gestion_donnees:/app/src
+    volumes:
+      - ../data:/app/data
+      - ../media:/app/media
+    ports:
+      - "8002:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - coach_ia_network
+    command: >
+      sh -c "
+        python manage.py migrate &&
+        python manage.py collectstatic --noinput &&
+        python manage.py runserver 0.0.0.0:8002
+      "
+
+  # Service E1 API REST
+  e1-api:
+    build:
+      context: ..
+      dockerfile: deployment/e1-api.Dockerfile
+    container_name: coach_ia_e1_api
+    environment:
+      - DB_TYPE=postgresql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=coach_ia_db
+      - DB_USER=coach_user
+      - DB_PASSWORD=coach_password
+      - JWT_SECRET=coach-e1-jwt-secret-2025
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - coach_ia_network
+
+  # Service FastAPI (IA + API REST)
+  fastapi:
+    build:
+      context: ..
+      dockerfile: deployment/fastapi.Dockerfile
+    container_name: coach_ia_fastapi
+    environment:
+      - DATABASE_URL=postgresql://coach_user:coach_password@postgres:5432/coach_ia_db?sslmode=disable
+      - DB_TYPE=postgresql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=coach_ia_db
+      - DB_USER=coach_user
+      - DB_PASSWORD=coach_password
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DOCKER_ENV=true
+      - API_KEY=coach_ai_secure_key_2025
+    volumes:
+      - ../data:/app/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - coach_ia_network
+
+  # Streamlit Frontend
+  streamlit:
+    build:
+      context: ..
+      dockerfile: deployment/streamlit.Dockerfile
+    container_name: coach_ia_streamlit
+    environment:
+      - DOCKER_ENV=true
+      - FASTAPI_URL=http://fastapi:8000
+      - DJANGO_URL=http://django:8002
+      - API_KEY=coach_ai_secure_key_2025
+    ports:
+      - "8501:8501"
+    depends_on:
+      - fastapi
+      - django
+    restart: unless-stopped
+    networks:
+      - coach_ia_network
+
+  # Prometheus pour le monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: coach_ia_prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./prometheus/prometheus-docker.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/rules:/etc/prometheus/rules
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    networks:
+      - coach_ia_network
+
+  # Grafana pour la visualisation
+  grafana:
+    image: grafana/grafana:latest
+    container_name: coach_ia_grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    networks:
+      - coach_ia_network
+    depends_on:
+      - prometheus
+
+  # Node Exporter pour les métriques système
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: coach_ia_node_exporter
+    ports:
+      - "9100:9100"
+    restart: unless-stopped
+    networks:
+      - coach_ia_network
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/host/root'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro
+
+  # Alertmanager pour les alertes
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: coach_ia_alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager_data:/alertmanager
+    ports:
+      - "9093:9093"
+    restart: unless-stopped
+    networks:
+      - coach_ia_network
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
+  alertmanager_data:
+
+networks:
+  coach_ia_network:
+    driver: bridge

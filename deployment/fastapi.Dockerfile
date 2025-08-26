@@ -43,7 +43,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 COPY E3_model_IA/ /app/E3_model_IA/
 COPY E1_gestion_donnees/ /app/E1_gestion_donnees/
 COPY src/ /app/src/
-COPY knowledge_base/ /app/knowledge_base/
+COPY E3_model_IA/knowledge_base/ /app/knowledge_base/
 COPY data/ /app/data/
 
 # Définir le PYTHONPATH (éviter le conflit avec Django)
@@ -52,6 +52,9 @@ ENV PYTHONPATH="/app:/app/E3_model_IA/backend/fastapi_app:/app/E1_gestion_donnee
 # Exposer le port
 EXPOSE 8000
 
+# Créer répertoires nécessaires
+RUN mkdir -p /app/static /app/logs
+
 # Commande de démarrage
 WORKDIR /app/E3_model_IA/backend/fastapi_app
-CMD ["uvicorn", "api_service:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

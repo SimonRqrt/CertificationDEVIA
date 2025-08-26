@@ -1,0 +1,299 @@
+{
+  "id": null,
+  "title": "Coach AI - Surveillance & Seuils d'Alerte (C20)",
+  "description": "Surveillance applicative avec seuils d'alerte définis pour métriques à risque",
+  "tags": ["coach-ai", "c20", "surveillance", "alertes", "seuils"],
+  "timezone": "browser",
+  "refresh": "15s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "🚨 Dashboard Alertes - Vue d'Ensemble",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "up{job=\"coach-api-fastapi\"} == 0",
+          "legendFormat": "FastAPI DOWN",
+          "refId": "A"
+        },
+        {
+          "expr": "up{job=\"coach-django\"} == 0",
+          "legendFormat": "Django DOWN",
+          "refId": "B"
+        },
+        {
+          "expr": "(process_resident_memory_bytes{job=\"coach-api-fastapi\"} / 1024 / 1024 > 500) * 1",
+          "legendFormat": "Mémoire Critique",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [
+            {"options": {"0": {"text": "✅ OK", "color": "green"}}, "type": "value"},
+            {"options": {"1": {"text": "🚨 ALERTE", "color": "red"}}, "type": "value"}
+          ],
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "red", "value": 1}
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "orientation": "horizontal"
+      }
+    },
+    {
+      "id": 2,
+      "title": "📊 Surveillance Mémoire (Seuils: 300MB Warning, 500MB Critical)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=\"coach-api-fastapi\"} / 1024 / 1024",
+          "legendFormat": "Mémoire FastAPI (MB)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "MB",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 300},
+              {"color": "red", "value": 500}
+            ]
+          }
+        }
+      },
+      "options": {
+        "tooltip": {"mode": "single"}
+      },
+      "alert": {
+        "conditions": [
+          {
+            "evaluator": {"params": [10], "type": "gt"},
+            "operator": {"type": "and"},
+            "query": {"params": ["A", "5m", "now"]},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ],
+        "executionErrorState": "alerting",
+        "frequency": "10s",
+        "handler": 1,
+        "name": "Agent IA Lent",
+        "noDataState": "no_data"
+      }
+    },
+    {
+      "id": 3,
+      "title": "💰 Coûts OpenAI (Seuils: 5$/h Warning, 10$/h Critical)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "targets": [
+        {
+          "expr": "increase(openai_requests_total[1h]) * 0.005",
+          "legendFormat": "Coût estimé $/h",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "currencyUSD",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 5},
+              {"color": "red", "value": 10}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "📊 Plans Générés/Jour (Seuil Métier: < 10/jour)",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 12},
+      "targets": [
+        {
+          "expr": "increase(training_plans_generated_total[24h])",
+          "legendFormat": "Plans/jour",
+          "refId": "A"
+        },
+        {
+          "expr": "increase(training_plans_generated_total[1h])",
+          "legendFormat": "Plans/heure",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "yellow", "value": 5},
+              {"color": "green", "value": 10}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "🔄 Taux d'Erreur Global (Seuil: 2% Warning, 5% Critical)",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 12},
+      "targets": [
+        {
+          "expr": "(rate(openai_errors_total[5m]) / rate(openai_requests_total[5m])) * 100",
+          "legendFormat": "Taux erreur %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 2},
+              {"color": "red", "value": 5}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "🖥️ Utilisation Ressources (Seuils: 70% Warning, 80% Critical)",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 12},
+      "targets": [
+        {
+          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+          "legendFormat": "Mémoire %",
+          "refId": "A"
+        },
+        {
+          "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "CPU %", 
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 70},
+              {"color": "red", "value": 80}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "📈 Variables OpenAI à Risque",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 18},
+      "targets": [
+        {
+          "expr": "rate(openai_requests_total[5m]) * 60",
+          "legendFormat": "Requêtes OpenAI/min",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(openai_errors_total[5m]) * 60",
+          "legendFormat": "Erreurs OpenAI/min",
+          "refId": "B"
+        },
+        {
+          "expr": "increase(openai_requests_total[1h]) * 0.0001",
+          "legendFormat": "Tokens estimés (x10k)",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "⚠️ Historique Dépassements Seuils",
+      "type": "table",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 18},
+      "targets": [
+        {
+          "expr": "changes(up{job=~\"coach-.*\"}[1h])",
+          "legendFormat": "",
+          "refId": "A",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [
+            {"options": {"pattern": "0", "result": {"text": "Stable", "color": "green"}}, "type": "regex"},
+            {"options": {"pattern": "[1-9]", "result": {"text": "Instable", "color": "red"}}, "type": "regex"}
+          ]
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "Time": true
+            },
+            "renameByName": {
+              "job": "Service",
+              "instance": "Instance",
+              "Value": "Nb Changements"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "alerting_enabled",
+        "type": "constant",
+        "current": {
+          "value": "true",
+          "text": "true"
+        },
+        "hide": 2
+      }
+    ]
+  }
+}

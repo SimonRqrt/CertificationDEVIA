@@ -1,0 +1,38 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "rules/*.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus lui-même
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # FastAPI - API IA
+  - job_name: 'coach-api-fastapi'
+    static_configs:
+      - targets: ['fastapi:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Django - Interface  
+  - job_name: 'coach-django'
+    static_configs:
+      - targets: ['django:8002']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # PostgreSQL
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    scrape_interval: 30s

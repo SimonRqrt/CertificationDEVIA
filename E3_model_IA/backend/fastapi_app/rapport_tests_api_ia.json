@@ -1,0 +1,25 @@
+{
+  "date_execution": "2025-08-14 10:44:33",
+  "endpoints_testes": [
+    "/v1/coaching/chat",
+    "/v1/coaching/chat-legacy",
+    "/docs",
+    "/redoc",
+    "/openapi.json",
+    "/metrics"
+  ],
+  "criteres_c9_testes": {
+    "authentification": "✅ Testée",
+    "validation_entrees": "✅ Testée",
+    "rate_limiting": "✅ Testée",
+    "fonctionnalites_ia": "✅ Testée",
+    "documentation_openapi": "✅ Testée",
+    "logging_securite": "✅ Testée"
+  },
+  "recommandations_owasp": {
+    "injection": "✅ Protection anti-injection testée",
+    "authentification": "✅ Authentification obligatoire testée",
+    "donnees_sensibles": "✅ Validation entrées testée",
+    "controle_acces": "✅ Rate limiting testé"
+  }
+}

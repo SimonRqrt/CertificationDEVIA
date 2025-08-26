@@ -1,0 +1,99 @@
+groups:
+- name: coach_ai_specific_alerts
+  rules:
+  
+  # === AGENT IA PERFORMANCES ===
+  - alert: CoachAISlowResponse
+    expr: histogram_quantile(0.95, rate(ai_request_duration_seconds_bucket[5m])) > 15.0
+    for: 2m
+    labels:
+      severity: warning
+      service: coach-ai
+    annotations:
+      summary: "Coach IA très lent (> 15s)"
+      description: "L'agent IA met {{ $value }}s à répondre (P95)"
+      
+  - alert: TrainingPlanGenerationFailure
+    expr: rate(training_plans_generated_total[5m]) == 0 and rate(ai_requests_total[5m]) > 0
+    for: 5m
+    labels:
+      severity: critical
+      service: coach-ai
+    annotations:
+      summary: "Échec génération plans d'entraînement"
+      description: "Aucun plan généré depuis 5 minutes malgré des requêtes"
+
+  # === BASE CONNAISSANCES RAG === (Désactivées pour démo - Docker intermittent)
+  # - alert: RAGKnowledgeBaseUnavailable
+  #   expr: absent(up{job="coach-api-fastapi"})
+  #   for: 2m
+  #   labels:
+  #     severity: critical
+  #     service: rag
+  #   annotations:
+  #     summary: "Base de connaissances RAG inaccessible"
+  #     description: "Le système RAG ne répond plus"
+
+  # === POSTGRESQL SPECIFIQUE === (Désactivées pour démo - Docker intermittent)
+  # - alert: PostgreSQLConnectionFailure
+  #   expr: absent(up{job="coach-postgresql"})
+  #   for: 1m
+  #   labels:
+  #     severity: critical
+  #     service: postgresql
+  #   annotations:
+  #     summary: "PostgreSQL Coach AI inaccessible"
+  #     description: "Perte de connexion à la base de données centrale"
+      
+  - alert: HighUserActivityLoad  
+    expr: rate(user_activities_processed_total[5m]) > 100
+    for: 3m
+    labels:
+      severity: warning
+      service: data-processing
+    annotations:
+      summary: "Charge élevée traitement activités (> 100/min)"
+      description: "{{ $value }} activités traitées par minute"
+
+  # === STREAMLIT SPECIFIQUE === (Désactivée pour démo - Docker intermittent)
+  # - alert: StreamlitDown
+  #   expr: absent(up{job="coach-streamlit"})
+  #   for: 2m
+  #   labels:
+  #     severity: warning
+  #     service: streamlit
+  #   annotations:
+  #     summary: "Interface utilisateur Streamlit indisponible"
+  #     description: "L'interface utilisateur principale ne répond plus"
+
+  # === INTÉGRATION DJANGO-FASTAPI ===
+  - alert: DjangoFastAPIIntegrationFailure
+    expr: rate(django_http_requests_total{status=~"50.", endpoint=~".*coaching.*"}[5m]) > rate(django_http_requests_total{endpoint=~".*coaching.*"}[5m]) * 0.1
+    for: 2m
+    labels:
+      severity: critical
+      service: integration
+    annotations:
+      summary: "Échecs intégration Django-FastAPI (> 10%)"
+      description: "{{ $value | humanizePercentage }} d'erreurs sur les endpoints coaching"
+      
+  # === SEUILS MÉTIER ===
+  - alert: LowTrainingPlanGeneration
+    expr: rate(training_plans_generated_total[1h]) < 1
+    for: 30m
+    labels:
+      severity: warning
+      service: business
+    annotations:
+      summary: "Faible génération de plans d'entraînement"
+      description: "Moins d'1 plan/heure généré depuis 30 minutes"
+      
+  - alert: DatabaseQueryPerformanceDegradation
+    expr: histogram_quantile(0.95, rate(database_queries_total_bucket[5m])) > 2.0
+    for: 3m
+    labels:
+      severity: warning
+      service: database
+    annotations:
+      summary: "Dégradation performances requêtes DB (> 2s)"
+      description: "Les requêtes PostgreSQL prennent {{ $value }}s (P95)"

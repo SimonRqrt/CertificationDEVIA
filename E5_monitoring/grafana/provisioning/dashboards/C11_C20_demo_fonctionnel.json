@@ -1,0 +1,250 @@
+{
+  "id": null,
+  "title": "Coach AI - Demo Dashboards C11 & C20 Fonctionnels",
+  "description": "Dashboard combiné C11/C20 avec métriques réellement disponibles et fonctionnelles",
+  "tags": ["coach-ai", "c11", "c20", "demo", "fonctionnel"],
+  "timezone": "browser", 
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "🎯 C11 - État Services Coach AI",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 24, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "up{job=\"coach-api-fastapi\"}",
+          "legendFormat": "FastAPI (IA)",
+          "refId": "A"
+        },
+        {
+          "expr": "up{job=\"coach-django\"}",
+          "legendFormat": "Django (Interface)",
+          "refId": "B"
+        },
+        {
+          "expr": "up{job=\"prometheus\"}",
+          "legendFormat": "Prometheus",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [
+            {"options": {"0": {"text": "🔴 OFFLINE", "color": "red"}}, "type": "value"},
+            {"options": {"1": {"text": "🟢 ONLINE", "color": "green"}}, "type": "value"}
+          ],
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "green", "value": 1}
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "orientation": "horizontal",
+        "reduceOptions": {"values": false, "calcs": ["lastNotNull"]}
+      }
+    },
+    {
+      "id": 2,
+      "title": "🤖 C11 - Métriques Performance FastAPI",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"coach-api-fastapi\"}[5m]) * 100",
+          "legendFormat": "CPU Usage %",
+          "refId": "A"
+        },
+        {
+          "expr": "process_resident_memory_bytes{job=\"coach-api-fastapi\"} / 1024 / 1024",
+          "legendFormat": "Memory MB",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "short"
+        }
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "none"}
+      }
+    },
+    {
+      "id": 3,
+      "title": "📊 C11 - Activité Réseau & Threads",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+      "targets": [
+        {
+          "expr": "process_open_fds{job=\"coach-api-fastapi\"}",
+          "legendFormat": "File Descriptors",
+          "refId": "A"
+        },
+        {
+          "expr": "python_gc_collections_total{job=\"coach-api-fastapi\",generation=\"0\"}",
+          "legendFormat": "GC Collections",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "🚨 C20 - Surveillance Seuils Critiques",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 24, "x": 0, "y": 14},
+      "targets": [
+        {
+          "expr": "up{job=\"coach-api-fastapi\"} == 0",
+          "legendFormat": "FastAPI DOWN",
+          "refId": "A"
+        },
+        {
+          "expr": "up{job=\"coach-django\"} == 0", 
+          "legendFormat": "Django DOWN",
+          "refId": "B"
+        },
+        {
+          "expr": "(process_resident_memory_bytes{job=\"coach-api-fastapi\"} / 1024 / 1024 > 500) * 1",
+          "legendFormat": "High Memory",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [
+            {"options": {"0": {"text": "✅ NORMAL", "color": "green"}}, "type": "value"},
+            {"options": {"1": {"text": "🚨 ALERT", "color": "red"}}, "type": "value"}
+          ],
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "red", "value": 1}
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "orientation": "horizontal"
+      }
+    },
+    {
+      "id": 5,
+      "title": "⚡ C20 - Gauge Mémoire FastAPI (Seuil: 200MB)",
+      "type": "gauge",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 20},
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=\"coach-api-fastapi\"} / 1024 / 1024",
+          "legendFormat": "Memory MB",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "unit": "MB",
+          "min": 0,
+          "max": 500,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 150},
+              {"color": "orange", "value": 200},
+              {"color": "red", "value": 300}
+            ]
+          }
+        }
+      },
+      "options": {
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 6,
+      "title": "🔄 C20 - Gauge CPU FastAPI (%)",
+      "type": "gauge",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 20},
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"coach-api-fastapi\"}[5m]) * 100",
+          "legendFormat": "CPU %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 50},
+              {"color": "orange", "value": 70},
+              {"color": "red", "value": 85}
+            ]
+          }
+        }
+      },
+      "options": {
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 7,
+      "title": "📈 C20 - Historique Surveillance",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 20},
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=\"coach-api-fastapi\"} / 1024 / 1024",
+          "legendFormat": "Memory MB",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"coach-api-fastapi\"}[5m]) * 100",
+          "legendFormat": "CPU %",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              {"color": "transparent"},
+              {"color": "red", "value": 200}
+            ]
+          }
+        }
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "none"}
+      }
+    }
+  ],
+  "version": 1
+}

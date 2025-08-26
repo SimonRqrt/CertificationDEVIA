@@ -1,0 +1,219 @@
+{
+  "id": null,
+  "title": "Coach AI - War Room Debugging (C21)",
+  "description": "Dashboard de debugging pour simulation incident et résolution - Critère C21",
+  "tags": ["coach-ai", "c21", "debugging", "incident", "war-room"],
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "🆘 Simulation Incident: Timeout Agent IA",
+      "type": "text",
+      "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
+      "options": {
+        "content": "**📋 SCÉNARIO INCIDENT SIMULÉ:**\n\n**Problème:** L'Agent IA prend plus de 15 secondes à répondre depuis 10:30 AM\n\n**Impact:** Utilisateurs ne peuvent plus générer de plans d'entraînement\n\n**Cheminement de résolution:**\n1. ✅ **Détection** - Alerte Grafana \"Agent IA Lent\" déclenchée\n2. 🔍 **Investigation** - Vérifier métriques temps réponse ci-dessous\n3. 🔎 **Analyse** - Corréler avec logs et erreurs OpenAI\n4. 🛠️ **Action** - Redémarrer service ou ajuster configuration\n5. ✅ **Validation** - Confirmer retour à la normale\n\n**Utilisez les panels ci-dessous pour investiguer l'incident**",
+        "mode": "markdown"
+      }
+    },
+    {
+      "id": 2,
+      "title": "🔍 Investigation - Temps Réponse Agent IA",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(ai_request_duration_seconds_bucket[2m]))",
+          "legendFormat": "P95 Temps réponse",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.50, rate(ai_request_duration_seconds_bucket[2m]))", 
+          "legendFormat": "P50 Temps réponse",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 10},
+              {"color": "red", "value": 15}
+            ]
+          }
+        }
+      },
+      "options": {
+        "tooltip": {"mode": "multi"}
+      }
+    },
+    {
+      "id": 3,
+      "title": "📊 Corrélation - Volume vs Performance",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "targets": [
+        {
+          "expr": "rate(ai_requests_total[2m]) * 60",
+          "legendFormat": "Requêtes/min",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(ai_requests_total{status=\"500\"}[2m]) * 60",
+          "legendFormat": "Erreurs/min",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "🚨 Diagnostic Rapide - Santé Services",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 12},
+      "targets": [
+        {
+          "expr": "up{job=\"coach-api-fastapi\"}",
+          "legendFormat": "FastAPI",
+          "refId": "A"
+        },
+        {
+          "expr": "up{job=\"coach-django\"}",
+          "legendFormat": "Django Backend",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [
+            {"options": {"0": {"text": "❌ DOWN", "color": "red"}}, "type": "value"},
+            {"options": {"1": {"text": "✅ UP", "color": "green"}}, "type": "value"}
+          ],
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "green", "value": 1}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "🖥️ Ressources Système - Impact Infrastructure",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 12},
+      "targets": [
+        {
+          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+          "legendFormat": "Mémoire %",
+          "refId": "A"
+        },
+        {
+          "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "CPU %",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 70},
+              {"color": "red", "value": 90}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "⚡ Actions de Résolution",
+      "type": "text",
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 12},
+      "options": {
+        "content": "**🛠️ ACTIONS CORRECTIVES:**\n\n**Si Timeout > 15s:**\n```bash\n# Redémarrer FastAPI\npkill -f python3.*main.py\ncd fastapi_app && python3 main.py\n```\n\n**Si Erreurs OpenAI:**\n```bash\n# Vérifier clé API\ncurl -H \"Authorization: Bearer $OPENAI_API_KEY\" \\\n  https://api.openai.com/v1/models\n```\n\n**Si CPU > 90%:**\n```bash\n# Identifier processus gourmands\ntop -o cpu\n```",
+        "mode": "markdown"
+      }
+    },
+    {
+      "id": 7,
+      "title": "📋 Timeline Incident - Logs Investigation",
+      "type": "logs",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 18},
+      "targets": [
+        {
+          "expr": "{job=\"coach-api-fastapi\"} |= \"ERROR\" or \"TIMEOUT\" or \"SLOW\"",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      }
+    },
+    {
+      "id": 8,
+      "title": "📊 Métriques Business Impact",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 18},
+      "targets": [
+        {
+          "expr": "rate(training_plans_generated_total[5m]) * 60",
+          "legendFormat": "Plans générés/min",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(user_activities_processed_total[5m]) * 60",
+          "legendFormat": "Activités traitées/min",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "✅ Post-Mortem Checklist",
+      "type": "text",
+      "gridPos": {"h": 6, "w": 24, "x": 0, "y": 26},
+      "options": {
+        "content": "**📝 POST-MORTEM ACTIONS:**\n\n- [ ] **Documentation incident** - Créer rapport dans `/E5_monitoring/incidents/`\n- [ ] **Cause racine identifiée** - Timeout lié à surcharge OpenAI API\n- [ ] **Temps résolution** - MTTR: __ minutes\n- [ ] **Actions préventives** - Implémenter circuit breaker, augmenter timeout\n- [ ] **Monitoring amélioré** - Ajouter alerte proactive sur latence P90\n- [ ] **Tests de régression** - Valider que la correction fonctionne\n\n**Prochain incident simulé:** Surcharge base de données PostgreSQL",
+        "mode": "markdown"
+      }
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "name": "Incident Markers",
+        "enable": true,
+        "iconColor": "red",
+        "tags": ["incident", "timeout", "resolution"]
+      }
+    ]
+  }
+}

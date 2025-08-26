@@ -1,0 +1,1004 @@
+{
+  "generated_at": "2025-08-20T21:34:30.596428",
+  "ai_metrics": {
+    "ai_requests_total": {
+      "chat": 1247,
+      "training_plans": 89,
+      "analysis": 156,
+      "data_access": 334
+    },
+    "ai_response_times": {
+      "chat_avg": 2.3,
+      "training_plan_avg": 4.7,
+      "analysis_avg": 1.8,
+      "p95_response_time": 8.2
+    },
+    "ai_costs": {
+      "total_usd": 23.45,
+      "hourly_usd": 2.87,
+      "cost_per_request": 0.012
+    },
+    "ai_tokens": {
+      "prompt_tokens": 156780,
+      "completion_tokens": 89432,
+      "total_tokens": 246212
+    },
+    "error_rates": {
+      "chat_errors": 2.1,
+      "api_errors": 1.3,
+      "openai_errors": 4.7
+    }
+  },
+  "business_metrics": {
+    "user_activities": {
+      "total_processed": 1456,
+      "last_24h": 234,
+      "avg_per_hour": 9.8
+    },
+    "training_plans": {
+      "generated_today": 12,
+      "total_week": 67,
+      "success_rate": 94.2
+    },
+    "database_queries": {
+      "select_queries": 2345,
+      "insert_queries": 123,
+      "update_queries": 67,
+      "avg_query_time": 45.6
+    },
+    "api_usage": {
+      "requests_per_minute": 23.4,
+      "peak_rpm": 67.8,
+      "unique_users": 89
+    }
+  },
+  "system_metrics": {
+    "memory": {
+      "used_gb": 3.2,
+      "total_gb": 8.0,
+      "usage_percent": 40.0
+    },
+    "cpu": {
+      "usage_percent": 45.7,
+      "load_average": 1.23,
+      "cores": 4
+    },
+    "storage": {
+      "used_gb": 15.6,
+      "total_gb": 50.0,
+      "usage_percent": 31.2
+    },
+    "network": {
+      "requests_per_sec": 12.4,
+      "bandwidth_mbps": 45.6,
+      "connections": 156
+    }
+  },
+  "alert_metrics": {
+    "active_alerts": [
+      {
+        "name": "High AI Response Time",
+        "severity": "warning",
+        "value": "6.2s",
+        "threshold": "5s",
+        "started": "2025-08-20 19:15:00"
+      },
+      {
+        "name": "OpenAI Error Rate High",
+        "severity": "critical",
+        "value": "12.3%",
+        "threshold": "10%",
+        "started": "2025-08-20 19:45:00"
+      }
+    ],
+    "resolved_alerts_24h": 7,
+    "mttr_minutes": 23.4,
+    "availability_percent": 99.2
+  },
+  "time_series": [
+    {
+      "timestamp": "2025-08-19T21:49:30.596438",
+      "requests_per_minute": 21.5,
+      "response_time_ms": 2264.0,
+      "error_rate_percent": 6.16,
+      "cpu_usage_percent": 55.8,
+      "memory_usage_percent": 46.7,
+      "cost_usd_hourly": 1.64
+    },
+    {
+      "timestamp": "2025-08-19T22:04:30.596438",
+      "requests_per_minute": 15.6,
+      "response_time_ms": 1818.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 49.1,
+      "memory_usage_percent": 47.8,
+      "cost_usd_hourly": 0.95
+    },
+    {
+      "timestamp": "2025-08-19T22:19:30.596438",
+      "requests_per_minute": 19.3,
+      "response_time_ms": 1484.0,
+      "error_rate_percent": 2.86,
+      "cpu_usage_percent": 60.7,
+      "memory_usage_percent": 50.5,
+      "cost_usd_hourly": 1.61
+    },
+    {
+      "timestamp": "2025-08-19T22:34:30.596438",
+      "requests_per_minute": 19.4,
+      "response_time_ms": 2046.0,
+      "error_rate_percent": 1.94,
+      "cpu_usage_percent": 57.8,
+      "memory_usage_percent": 44.8,
+      "cost_usd_hourly": 1.59
+    },
+    {
+      "timestamp": "2025-08-19T22:49:30.596438",
+      "requests_per_minute": 13.6,
+      "response_time_ms": 2461.0,
+      "error_rate_percent": 6.38,
+      "cpu_usage_percent": 52.4,
+      "memory_usage_percent": 44.9,
+      "cost_usd_hourly": 1.58
+    },
+    {
+      "timestamp": "2025-08-19T23:04:30.596438",
+      "requests_per_minute": 16.2,
+      "response_time_ms": 2321.0,
+      "error_rate_percent": 11.28,
+      "cpu_usage_percent": 55.5,
+      "memory_usage_percent": 51.4,
+      "cost_usd_hourly": 1.98
+    },
+    {
+      "timestamp": "2025-08-19T23:19:30.596438",
+      "requests_per_minute": 14.6,
+      "response_time_ms": 2625.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 55.4,
+      "memory_usage_percent": 43.3,
+      "cost_usd_hourly": 1.05
+    },
+    {
+      "timestamp": "2025-08-19T23:34:30.596438",
+      "requests_per_minute": 14.2,
+      "response_time_ms": 2635.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 56.6,
+      "memory_usage_percent": 46.7,
+      "cost_usd_hourly": 1.85
+    },
+    {
+      "timestamp": "2025-08-19T23:49:30.596438",
+      "requests_per_minute": 15.5,
+      "response_time_ms": 3018.0,
+      "error_rate_percent": 1.65,
+      "cpu_usage_percent": 50.4,
+      "memory_usage_percent": 40.3,
+      "cost_usd_hourly": 1.82
+    },
+    {
+      "timestamp": "2025-08-20T00:04:30.596438",
+      "requests_per_minute": -0.5,
+      "response_time_ms": 2489.0,
+      "error_rate_percent": 1.22,
+      "cpu_usage_percent": 47.8,
+      "memory_usage_percent": 40.6,
+      "cost_usd_hourly": -0.09
+    },
+    {
+      "timestamp": "2025-08-20T00:19:30.596438",
+      "requests_per_minute": 8.7,
+      "response_time_ms": 3153.0,
+      "error_rate_percent": 2.73,
+      "cpu_usage_percent": 54.1,
+      "memory_usage_percent": 35.4,
+      "cost_usd_hourly": 0.59
+    },
+    {
+      "timestamp": "2025-08-20T00:34:30.596438",
+      "requests_per_minute": 8.8,
+      "response_time_ms": 2899.0,
+      "error_rate_percent": 3.74,
+      "cpu_usage_percent": 43.4,
+      "memory_usage_percent": 43.2,
+      "cost_usd_hourly": 0.71
+    },
+    {
+      "timestamp": "2025-08-20T00:49:30.596438",
+      "requests_per_minute": 4.7,
+      "response_time_ms": 2087.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 47.4,
+      "memory_usage_percent": 42.9,
+      "cost_usd_hourly": 0.6
+    },
+    {
+      "timestamp": "2025-08-20T01:04:30.596438",
+      "requests_per_minute": 6.7,
+      "response_time_ms": 2575.0,
+      "error_rate_percent": 0.65,
+      "cpu_usage_percent": 43.1,
+      "memory_usage_percent": 37.9,
+      "cost_usd_hourly": 0.49
+    },
+    {
+      "timestamp": "2025-08-20T01:19:30.596438",
+      "requests_per_minute": 4.3,
+      "response_time_ms": 2939.0,
+      "error_rate_percent": 1.66,
+      "cpu_usage_percent": 43.3,
+      "memory_usage_percent": 41.2,
+      "cost_usd_hourly": 0.27
+    },
+    {
+      "timestamp": "2025-08-20T01:34:30.596438",
+      "requests_per_minute": 4.2,
+      "response_time_ms": 2664.0,
+      "error_rate_percent": 3.09,
+      "cpu_usage_percent": 48.4,
+      "memory_usage_percent": 42.5,
+      "cost_usd_hourly": 0.37
+    },
+    {
+      "timestamp": "2025-08-20T01:49:30.596438",
+      "requests_per_minute": 11.2,
+      "response_time_ms": 1961.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 55.6,
+      "memory_usage_percent": 42.3,
+      "cost_usd_hourly": 0.72
+    },
+    {
+      "timestamp": "2025-08-20T02:04:30.596438",
+      "requests_per_minute": 7.9,
+      "response_time_ms": 3558.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 47.7,
+      "memory_usage_percent": 44.3,
+      "cost_usd_hourly": 0.94
+    },
+    {
+      "timestamp": "2025-08-20T02:19:30.596438",
+      "requests_per_minute": 7.6,
+      "response_time_ms": 3063.0,
+      "error_rate_percent": 6.67,
+      "cpu_usage_percent": 46.7,
+      "memory_usage_percent": 41.1,
+      "cost_usd_hourly": 0.58
+    },
+    {
+      "timestamp": "2025-08-20T02:34:30.596438",
+      "requests_per_minute": 3.9,
+      "response_time_ms": 1989.0,
+      "error_rate_percent": 2.52,
+      "cpu_usage_percent": 58.8,
+      "memory_usage_percent": 39.3,
+      "cost_usd_hourly": 0.84
+    },
+    {
+      "timestamp": "2025-08-20T02:49:30.596438",
+      "requests_per_minute": 4.7,
+      "response_time_ms": 2878.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 48.8,
+      "memory_usage_percent": 47.6,
+      "cost_usd_hourly": 0.42
+    },
+    {
+      "timestamp": "2025-08-20T03:04:30.596438",
+      "requests_per_minute": 7.6,
+      "response_time_ms": 2092.0,
+      "error_rate_percent": 0.98,
+      "cpu_usage_percent": 50.6,
+      "memory_usage_percent": 39.7,
+      "cost_usd_hourly": 1.08
+    },
+    {
+      "timestamp": "2025-08-20T03:19:30.596438",
+      "requests_per_minute": 6.9,
+      "response_time_ms": 2193.0,
+      "error_rate_percent": 5.86,
+      "cpu_usage_percent": 53.1,
+      "memory_usage_percent": 39.6,
+      "cost_usd_hourly": 1.03
+    },
+    {
+      "timestamp": "2025-08-20T03:34:30.596438",
+      "requests_per_minute": 5.1,
+      "response_time_ms": 3743.0,
+      "error_rate_percent": 2.55,
+      "cpu_usage_percent": 42.8,
+      "memory_usage_percent": 43.2,
+      "cost_usd_hourly": 0.08
+    },
+    {
+      "timestamp": "2025-08-20T03:49:30.596438",
+      "requests_per_minute": 4.2,
+      "response_time_ms": 2178.0,
+      "error_rate_percent": 4.55,
+      "cpu_usage_percent": 51.7,
+      "memory_usage_percent": 46.3,
+      "cost_usd_hourly": 0.67
+    },
+    {
+      "timestamp": "2025-08-20T04:04:30.596438",
+      "requests_per_minute": 5.8,
+      "response_time_ms": 2133.0,
+      "error_rate_percent": 2.55,
+      "cpu_usage_percent": 46.7,
+      "memory_usage_percent": 37.7,
+      "cost_usd_hourly": 0.61
+    },
+    {
+      "timestamp": "2025-08-20T04:19:30.596438",
+      "requests_per_minute": 2.3,
+      "response_time_ms": 2835.0,
+      "error_rate_percent": 5.07,
+      "cpu_usage_percent": 42.7,
+      "memory_usage_percent": 42.6,
+      "cost_usd_hourly": 0.4
+    },
+    {
+      "timestamp": "2025-08-20T04:34:30.596438",
+      "requests_per_minute": 5.5,
+      "response_time_ms": 2158.0,
+      "error_rate_percent": 4.34,
+      "cpu_usage_percent": 51.2,
+      "memory_usage_percent": 35.9,
+      "cost_usd_hourly": 0.89
+    },
+    {
+      "timestamp": "2025-08-20T04:49:30.596438",
+      "requests_per_minute": 9.1,
+      "response_time_ms": 2070.0,
+      "error_rate_percent": 0.64,
+      "cpu_usage_percent": 44.6,
+      "memory_usage_percent": 42.5,
+      "cost_usd_hourly": 0.44
+    },
+    {
+      "timestamp": "2025-08-20T05:04:30.596438",
+      "requests_per_minute": 6.2,
+      "response_time_ms": 1911.0,
+      "error_rate_percent": 4.93,
+      "cpu_usage_percent": 52.2,
+      "memory_usage_percent": 40.6,
+      "cost_usd_hourly": 0.73
+    },
+    {
+      "timestamp": "2025-08-20T05:19:30.596438",
+      "requests_per_minute": -0.3,
+      "response_time_ms": 2973.0,
+      "error_rate_percent": 3.2,
+      "cpu_usage_percent": 52.3,
+      "memory_usage_percent": 47.1,
+      "cost_usd_hourly": 0.39
+    },
+    {
+      "timestamp": "2025-08-20T05:34:30.596438",
+      "requests_per_minute": 3.6,
+      "response_time_ms": 1535.0,
+      "error_rate_percent": 2.14,
+      "cpu_usage_percent": 52.4,
+      "memory_usage_percent": 40.4,
+      "cost_usd_hourly": 0.22
+    },
+    {
+      "timestamp": "2025-08-20T05:49:30.596438",
+      "requests_per_minute": 6.8,
+      "response_time_ms": 3256.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 43.6,
+      "memory_usage_percent": 43.6,
+      "cost_usd_hourly": 0.11
+    },
+    {
+      "timestamp": "2025-08-20T06:04:30.596438",
+      "requests_per_minute": 14.7,
+      "response_time_ms": 1939.0,
+      "error_rate_percent": 1.98,
+      "cpu_usage_percent": 66.2,
+      "memory_usage_percent": 45.1,
+      "cost_usd_hourly": 1.17
+    },
+    {
+      "timestamp": "2025-08-20T06:19:30.596438",
+      "requests_per_minute": 16.0,
+      "response_time_ms": 2548.0,
+      "error_rate_percent": 6.72,
+      "cpu_usage_percent": 57.1,
+      "memory_usage_percent": 51.0,
+      "cost_usd_hourly": 1.83
+    },
+    {
+      "timestamp": "2025-08-20T06:34:30.596438",
+      "requests_per_minute": 11.9,
+      "response_time_ms": 2788.0,
+      "error_rate_percent": 0.02,
+      "cpu_usage_percent": 59.3,
+      "memory_usage_percent": 40.7,
+      "cost_usd_hourly": 1.69
+    },
+    {
+      "timestamp": "2025-08-20T06:49:30.596438",
+      "requests_per_minute": 18.7,
+      "response_time_ms": 3181.0,
+      "error_rate_percent": 0.41,
+      "cpu_usage_percent": 60.1,
+      "memory_usage_percent": 49.1,
+      "cost_usd_hourly": 1.31
+    },
+    {
+      "timestamp": "2025-08-20T07:04:30.596438",
+      "requests_per_minute": 11.3,
+      "response_time_ms": 2438.0,
+      "error_rate_percent": 4.15,
+      "cpu_usage_percent": 53.3,
+      "memory_usage_percent": 44.9,
+      "cost_usd_hourly": 1.62
+    },
+    {
+      "timestamp": "2025-08-20T07:19:30.596438",
+      "requests_per_minute": 22.4,
+      "response_time_ms": 2703.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 55.1,
+      "memory_usage_percent": 43.7,
+      "cost_usd_hourly": 0.97
+    },
+    {
+      "timestamp": "2025-08-20T07:34:30.596438",
+      "requests_per_minute": 17.6,
+      "response_time_ms": 2363.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 51.9,
+      "memory_usage_percent": 50.8,
+      "cost_usd_hourly": 1.45
+    },
+    {
+      "timestamp": "2025-08-20T07:49:30.596438",
+      "requests_per_minute": 10.3,
+      "response_time_ms": 1758.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 53.0,
+      "memory_usage_percent": 47.2,
+      "cost_usd_hourly": 1.98
+    },
+    {
+      "timestamp": "2025-08-20T08:04:30.596438",
+      "requests_per_minute": 33.9,
+      "response_time_ms": 2595.0,
+      "error_rate_percent": 2.24,
+      "cpu_usage_percent": 60.2,
+      "memory_usage_percent": 53.9,
+      "cost_usd_hourly": 3.16
+    },
+    {
+      "timestamp": "2025-08-20T08:19:30.596438",
+      "requests_per_minute": 20.4,
+      "response_time_ms": 2171.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 62.1,
+      "memory_usage_percent": 53.2,
+      "cost_usd_hourly": 2.16
+    },
+    {
+      "timestamp": "2025-08-20T08:34:30.596438",
+      "requests_per_minute": 28.3,
+      "response_time_ms": 1564.0,
+      "error_rate_percent": 4.29,
+      "cpu_usage_percent": 66.4,
+      "memory_usage_percent": 52.1,
+      "cost_usd_hourly": 2.7
+    },
+    {
+      "timestamp": "2025-08-20T08:49:30.596438",
+      "requests_per_minute": 20.0,
+      "response_time_ms": 2937.0,
+      "error_rate_percent": 5.82,
+      "cpu_usage_percent": 62.7,
+      "memory_usage_percent": 53.0,
+      "cost_usd_hourly": 2.45
+    },
+    {
+      "timestamp": "2025-08-20T09:04:30.596438",
+      "requests_per_minute": 22.1,
+      "response_time_ms": 1658.0,
+      "error_rate_percent": 2.68,
+      "cpu_usage_percent": 57.8,
+      "memory_usage_percent": 49.6,
+      "cost_usd_hourly": 2.51
+    },
+    {
+      "timestamp": "2025-08-20T09:19:30.596438",
+      "requests_per_minute": 28.7,
+      "response_time_ms": 2498.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 65.1,
+      "memory_usage_percent": 51.2,
+      "cost_usd_hourly": 3.07
+    },
+    {
+      "timestamp": "2025-08-20T09:34:30.596438",
+      "requests_per_minute": 22.8,
+      "response_time_ms": 2835.0,
+      "error_rate_percent": 5.49,
+      "cpu_usage_percent": 58.1,
+      "memory_usage_percent": 47.1,
+      "cost_usd_hourly": 2.69
+    },
+    {
+      "timestamp": "2025-08-20T09:49:30.596438",
+      "requests_per_minute": 28.7,
+      "response_time_ms": 2710.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 61.9,
+      "memory_usage_percent": 51.0,
+      "cost_usd_hourly": 2.54
+    },
+    {
+      "timestamp": "2025-08-20T10:04:30.596438",
+      "requests_per_minute": 29.3,
+      "response_time_ms": 2790.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 60.3,
+      "memory_usage_percent": 50.5,
+      "cost_usd_hourly": 2.36
+    },
+    {
+      "timestamp": "2025-08-20T10:19:30.596438",
+      "requests_per_minute": 28.6,
+      "response_time_ms": 1947.0,
+      "error_rate_percent": 2.52,
+      "cpu_usage_percent": 68.4,
+      "memory_usage_percent": 46.6,
+      "cost_usd_hourly": 2.24
+    },
+    {
+      "timestamp": "2025-08-20T10:34:30.596438",
+      "requests_per_minute": 18.3,
+      "response_time_ms": 2433.0,
+      "error_rate_percent": 5.27,
+      "cpu_usage_percent": 56.2,
+      "memory_usage_percent": 55.3,
+      "cost_usd_hourly": 2.03
+    },
+    {
+      "timestamp": "2025-08-20T10:49:30.596438",
+      "requests_per_minute": 20.6,
+      "response_time_ms": 2091.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 58.6,
+      "memory_usage_percent": 52.0,
+      "cost_usd_hourly": 1.59
+    },
+    {
+      "timestamp": "2025-08-20T11:04:30.596438",
+      "requests_per_minute": 28.9,
+      "response_time_ms": 2470.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 63.0,
+      "memory_usage_percent": 54.1,
+      "cost_usd_hourly": 2.97
+    },
+    {
+      "timestamp": "2025-08-20T11:19:30.596438",
+      "requests_per_minute": 32.2,
+      "response_time_ms": 1967.0,
+      "error_rate_percent": 1.68,
+      "cpu_usage_percent": 61.9,
+      "memory_usage_percent": 51.2,
+      "cost_usd_hourly": 2.72
+    },
+    {
+      "timestamp": "2025-08-20T11:34:30.596438",
+      "requests_per_minute": 14.1,
+      "response_time_ms": 2522.0,
+      "error_rate_percent": 0.99,
+      "cpu_usage_percent": 54.3,
+      "memory_usage_percent": 46.4,
+      "cost_usd_hourly": 1.51
+    },
+    {
+      "timestamp": "2025-08-20T11:49:30.596438",
+      "requests_per_minute": 29.0,
+      "response_time_ms": 2510.0,
+      "error_rate_percent": 2.45,
+      "cpu_usage_percent": 60.8,
+      "memory_usage_percent": 57.8,
+      "cost_usd_hourly": 3.22
+    },
+    {
+      "timestamp": "2025-08-20T12:04:30.596438",
+      "requests_per_minute": 21.5,
+      "response_time_ms": 2920.0,
+      "error_rate_percent": 3.99,
+      "cpu_usage_percent": 69.8,
+      "memory_usage_percent": 44.5,
+      "cost_usd_hourly": 2.02
+    },
+    {
+      "timestamp": "2025-08-20T12:19:30.596438",
+      "requests_per_minute": 27.3,
+      "response_time_ms": 3259.0,
+      "error_rate_percent": 1.17,
+      "cpu_usage_percent": 67.3,
+      "memory_usage_percent": 51.1,
+      "cost_usd_hourly": 2.64
+    },
+    {
+      "timestamp": "2025-08-20T12:34:30.596438",
+      "requests_per_minute": 28.2,
+      "response_time_ms": 2743.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 62.9,
+      "memory_usage_percent": 47.7,
+      "cost_usd_hourly": 2.95
+    },
+    {
+      "timestamp": "2025-08-20T12:49:30.596438",
+      "requests_per_minute": 24.8,
+      "response_time_ms": 1886.0,
+      "error_rate_percent": 0.83,
+      "cpu_usage_percent": 62.2,
+      "memory_usage_percent": 54.4,
+      "cost_usd_hourly": 2.37
+    },
+    {
+      "timestamp": "2025-08-20T13:04:30.596438",
+      "requests_per_minute": 28.0,
+      "response_time_ms": 3299.0,
+      "error_rate_percent": 6.53,
+      "cpu_usage_percent": 51.5,
+      "memory_usage_percent": 58.1,
+      "cost_usd_hourly": 2.51
+    },
+    {
+      "timestamp": "2025-08-20T13:19:30.596438",
+      "requests_per_minute": 28.2,
+      "response_time_ms": 3259.0,
+      "error_rate_percent": 3.6,
+      "cpu_usage_percent": 56.6,
+      "memory_usage_percent": 43.6,
+      "cost_usd_hourly": 2.12
+    },
+    {
+      "timestamp": "2025-08-20T13:34:30.596438",
+      "requests_per_minute": 19.2,
+      "response_time_ms": 2967.0,
+      "error_rate_percent": 1.93,
+      "cpu_usage_percent": 62.1,
+      "memory_usage_percent": 46.3,
+      "cost_usd_hourly": 2.42
+    },
+    {
+      "timestamp": "2025-08-20T13:49:30.596438",
+      "requests_per_minute": 17.3,
+      "response_time_ms": 2557.0,
+      "error_rate_percent": 2.08,
+      "cpu_usage_percent": 49.8,
+      "memory_usage_percent": 46.4,
+      "cost_usd_hourly": 2.51
+    },
+    {
+      "timestamp": "2025-08-20T14:04:30.596438",
+      "requests_per_minute": 21.3,
+      "response_time_ms": 2870.0,
+      "error_rate_percent": 3.03,
+      "cpu_usage_percent": 52.9,
+      "memory_usage_percent": 50.8,
+      "cost_usd_hourly": 2.69
+    },
+    {
+      "timestamp": "2025-08-20T14:19:30.596438",
+      "requests_per_minute": 29.1,
+      "response_time_ms": 3254.0,
+      "error_rate_percent": 2.83,
+      "cpu_usage_percent": 69.9,
+      "memory_usage_percent": 49.9,
+      "cost_usd_hourly": 3.34
+    },
+    {
+      "timestamp": "2025-08-20T14:34:30.596438",
+      "requests_per_minute": 22.3,
+      "response_time_ms": 3616.0,
+      "error_rate_percent": 5.54,
+      "cpu_usage_percent": 57.8,
+      "memory_usage_percent": 53.4,
+      "cost_usd_hourly": 3.17
+    },
+    {
+      "timestamp": "2025-08-20T14:49:30.596438",
+      "requests_per_minute": 28.8,
+      "response_time_ms": 3454.0,
+      "error_rate_percent": 2.97,
+      "cpu_usage_percent": 60.8,
+      "memory_usage_percent": 54.9,
+      "cost_usd_hourly": 2.64
+    },
+    {
+      "timestamp": "2025-08-20T15:04:30.596438",
+      "requests_per_minute": 23.5,
+      "response_time_ms": 2619.0,
+      "error_rate_percent": 2.63,
+      "cpu_usage_percent": 65.1,
+      "memory_usage_percent": 46.9,
+      "cost_usd_hourly": 1.76
+    },
+    {
+      "timestamp": "2025-08-20T15:19:30.596438",
+      "requests_per_minute": 28.4,
+      "response_time_ms": 2208.0,
+      "error_rate_percent": 0.01,
+      "cpu_usage_percent": 60.8,
+      "memory_usage_percent": 56.5,
+      "cost_usd_hourly": 2.81
+    },
+    {
+      "timestamp": "2025-08-20T15:34:30.596438",
+      "requests_per_minute": 22.8,
+      "response_time_ms": 1305.0,
+      "error_rate_percent": 2.46,
+      "cpu_usage_percent": 56.4,
+      "memory_usage_percent": 52.0,
+      "cost_usd_hourly": 2.41
+    },
+    {
+      "timestamp": "2025-08-20T15:49:30.596438",
+      "requests_per_minute": 26.0,
+      "response_time_ms": 2464.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 59.5,
+      "memory_usage_percent": 49.7,
+      "cost_usd_hourly": 2.46
+    },
+    {
+      "timestamp": "2025-08-20T16:04:30.596438",
+      "requests_per_minute": 25.4,
+      "response_time_ms": 3019.0,
+      "error_rate_percent": 1.87,
+      "cpu_usage_percent": 56.9,
+      "memory_usage_percent": 48.9,
+      "cost_usd_hourly": 2.82
+    },
+    {
+      "timestamp": "2025-08-20T16:19:30.596438",
+      "requests_per_minute": 28.4,
+      "response_time_ms": 2564.0,
+      "error_rate_percent": 3.23,
+      "cpu_usage_percent": 58.2,
+      "memory_usage_percent": 52.1,
+      "cost_usd_hourly": 3.2
+    },
+    {
+      "timestamp": "2025-08-20T16:34:30.596438",
+      "requests_per_minute": 27.9,
+      "response_time_ms": 2950.0,
+      "error_rate_percent": 2.7,
+      "cpu_usage_percent": 72.6,
+      "memory_usage_percent": 47.5,
+      "cost_usd_hourly": 2.39
+    },
+    {
+      "timestamp": "2025-08-20T16:49:30.596438",
+      "requests_per_minute": 31.1,
+      "response_time_ms": 2018.0,
+      "error_rate_percent": 0.88,
+      "cpu_usage_percent": 68.6,
+      "memory_usage_percent": 52.4,
+      "cost_usd_hourly": 2.57
+    },
+    {
+      "timestamp": "2025-08-20T17:04:30.596438",
+      "requests_per_minute": 20.1,
+      "response_time_ms": 2660.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 60.7,
+      "memory_usage_percent": 49.8,
+      "cost_usd_hourly": 2.41
+    },
+    {
+      "timestamp": "2025-08-20T17:19:30.596438",
+      "requests_per_minute": 27.9,
+      "response_time_ms": 2667.0,
+      "error_rate_percent": 2.32,
+      "cpu_usage_percent": 61.2,
+      "memory_usage_percent": 49.7,
+      "cost_usd_hourly": 2.59
+    },
+    {
+      "timestamp": "2025-08-20T17:34:30.596438",
+      "requests_per_minute": 23.1,
+      "response_time_ms": 1700.0,
+      "error_rate_percent": 2.66,
+      "cpu_usage_percent": 52.9,
+      "memory_usage_percent": 47.2,
+      "cost_usd_hourly": 2.56
+    },
+    {
+      "timestamp": "2025-08-20T17:49:30.596438",
+      "requests_per_minute": 23.0,
+      "response_time_ms": 2170.0,
+      "error_rate_percent": 1.63,
+      "cpu_usage_percent": 60.8,
+      "memory_usage_percent": 52.7,
+      "cost_usd_hourly": 2.44
+    },
+    {
+      "timestamp": "2025-08-20T18:04:30.596438",
+      "requests_per_minute": 26.9,
+      "response_time_ms": 2540.0,
+      "error_rate_percent": 5.5,
+      "cpu_usage_percent": 62.6,
+      "memory_usage_percent": 52.3,
+      "cost_usd_hourly": 2.71
+    },
+    {
+      "timestamp": "2025-08-20T18:19:30.596438",
+      "requests_per_minute": 23.4,
+      "response_time_ms": 2767.0,
+      "error_rate_percent": 0.9,
+      "cpu_usage_percent": 55.5,
+      "memory_usage_percent": 50.7,
+      "cost_usd_hourly": 2.65
+    },
+    {
+      "timestamp": "2025-08-20T18:34:30.596438",
+      "requests_per_minute": 19.9,
+      "response_time_ms": 3119.0,
+      "error_rate_percent": 2.16,
+      "cpu_usage_percent": 60.0,
+      "memory_usage_percent": 46.0,
+      "cost_usd_hourly": 2.28
+    },
+    {
+      "timestamp": "2025-08-20T18:49:30.596438",
+      "requests_per_minute": 24.2,
+      "response_time_ms": 2898.0,
+      "error_rate_percent": 5.49,
+      "cpu_usage_percent": 59.0,
+      "memory_usage_percent": 48.6,
+      "cost_usd_hourly": 3.07
+    },
+    {
+      "timestamp": "2025-08-20T19:04:30.596438",
+      "requests_per_minute": 25.3,
+      "response_time_ms": 2515.0,
+      "error_rate_percent": 1.0,
+      "cpu_usage_percent": 65.6,
+      "memory_usage_percent": 53.6,
+      "cost_usd_hourly": 2.9
+    },
+    {
+      "timestamp": "2025-08-20T19:19:30.596438",
+      "requests_per_minute": 23.0,
+      "response_time_ms": 3052.0,
+      "error_rate_percent": 4.69,
+      "cpu_usage_percent": 63.4,
+      "memory_usage_percent": 52.3,
+      "cost_usd_hourly": 1.99
+    },
+    {
+      "timestamp": "2025-08-20T19:34:30.596438",
+      "requests_per_minute": 23.1,
+      "response_time_ms": 2293.0,
+      "error_rate_percent": 4.97,
+      "cpu_usage_percent": 58.3,
+      "memory_usage_percent": 50.0,
+      "cost_usd_hourly": 2.38
+    },
+    {
+      "timestamp": "2025-08-20T19:49:30.596438",
+      "requests_per_minute": 32.3,
+      "response_time_ms": 3316.0,
+      "error_rate_percent": 6.52,
+      "cpu_usage_percent": 62.3,
+      "memory_usage_percent": 48.2,
+      "cost_usd_hourly": 2.82
+    },
+    {
+      "timestamp": "2025-08-20T20:04:30.596438",
+      "requests_per_minute": 24.3,
+      "response_time_ms": 2934.0,
+      "error_rate_percent": 2.43,
+      "cpu_usage_percent": 58.3,
+      "memory_usage_percent": 51.8,
+      "cost_usd_hourly": 2.61
+    },
+    {
+      "timestamp": "2025-08-20T20:19:30.596438",
+      "requests_per_minute": 22.9,
+      "response_time_ms": 2862.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 59.6,
+      "memory_usage_percent": 53.2,
+      "cost_usd_hourly": 2.05
+    },
+    {
+      "timestamp": "2025-08-20T20:34:30.596438",
+      "requests_per_minute": 17.6,
+      "response_time_ms": 2174.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 58.6,
+      "memory_usage_percent": 49.6,
+      "cost_usd_hourly": 2.33
+    },
+    {
+      "timestamp": "2025-08-20T20:49:30.596438",
+      "requests_per_minute": 17.7,
+      "response_time_ms": 1925.0,
+      "error_rate_percent": 0,
+      "cpu_usage_percent": 59.6,
+      "memory_usage_percent": 47.0,
+      "cost_usd_hourly": 1.99
+    },
+    {
+      "timestamp": "2025-08-20T21:04:30.596438",
+      "requests_per_minute": 10.3,
+      "response_time_ms": 2266.0,
+      "error_rate_percent": 3.23,
+      "cpu_usage_percent": 53.7,
+      "memory_usage_percent": 43.0,
+      "cost_usd_hourly": 1.07
+    },
+    {
+      "timestamp": "2025-08-20T21:19:30.596438",
+      "requests_per_minute": 18.2,
+      "response_time_ms": 2756.0,
+      "error_rate_percent": 0.63,
+      "cpu_usage_percent": 56.7,
+      "memory_usage_percent": 49.5,
+      "cost_usd_hourly": 1.27
+    },
+    {
+      "timestamp": "2025-08-20T21:34:30.596438",
+      "requests_per_minute": 13.0,
+      "response_time_ms": 2393.0,
+      "error_rate_percent": 3.52,
+      "cpu_usage_percent": 46.4,
+      "memory_usage_percent": 50.1,
+      "cost_usd_hourly": 1.82
+    }
+  ],
+  "training_scenarios": {
+    "scenarios": [
+      {
+        "name": "Normal Operations",
+        "duration": "18h/jour",
+        "requests_per_minute": "15-35",
+        "response_time": "2-4s",
+        "error_rate": "<3%",
+        "cost_hourly": "$2-3",
+        "description": "Fonctionnement normal avec charge standard"
+      },
+      {
+        "name": "Peak Hours",
+        "duration": "2-3h/jour",
+        "requests_per_minute": "40-70",
+        "response_time": "3-6s",
+        "error_rate": "3-5%",
+        "cost_hourly": "$4-6",
+        "description": "Heures de pointe avec charge élevée"
+      },
+      {
+        "name": "Incident Simulation",
+        "duration": "30-60min",
+        "requests_per_minute": "5-15",
+        "response_time": "8-15s",
+        "error_rate": "10-20%",
+        "cost_hourly": "$7-10",
+        "description": "Simulation d'incident avec dégradation"
+      },
+      {
+        "name": "Maintenance Window",
+        "duration": "1-2h/semaine",
+        "requests_per_minute": "0-5",
+        "response_time": "1-2s",
+        "error_rate": "<1%",
+        "cost_hourly": "$0-1",
+        "description": "Fenêtre de maintenance avec trafic minimal"
+      }
+    ]
+  }
+}

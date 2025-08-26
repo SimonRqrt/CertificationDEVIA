@@ -1,0 +1,52 @@
+/* 1) Contraste : texte, liens, badges (AA) */
+body, .swagger-ui, .swagger-ui * {
+    color: #1b1b1b;
+  }
+  .swagger-ui .opblock .opblock-summary-method,
+  .swagger-ui .opblock-tag,
+  .swagger-ui .response-col_status {
+    color: #0b0b0b;
+  }
+  a, .swagger-ui .link, .swagger-ui .opblock-tag {
+    color: #0b5fff;
+  }
+  
+  /* 2) Focus visible partout */
+  :focus,
+  .swagger-ui .btn:focus,
+  .swagger-ui input:focus,
+  .swagger-ui select:focus,
+  .swagger-ui textarea:focus,
+  .swagger-ui .opblock-summary:focus {
+    outline: 3px solid #ffab00 !important; 
+    outline-offset: 2px !important;
+  }
+  
+  /* 3) Boutons "Try it out", "Execute" : taille et repères */
+  .swagger-ui .btn, .swagger-ui .execute-wrapper .btn {
+    font-size: 16px;
+    min-height: 40px;
+  }
+  
+  /* 4) Tables : en-têtes visibles et zébrage */
+  .swagger-ui table thead th {
+    background: #f5f5f5;
+    border-bottom: 2px solid #c7c7c7;
+  }
+  .swagger-ui table tbody tr:nth-child(even) {
+    background: #fafafa;
+  }
+  
+  /* 5) Badges de verbe HTTP : lisibles (contraste AA) */
+  .swagger-ui .opblock.opblock-post .opblock-summary-method { background: #0b5fff; }
+  .swagger-ui .opblock.opblock-get  .opblock-summary-method { background: #00695c; }
+  .swagger-ui .opblock.opblock-put  .opblock-summary-method { background: #5d35b1; }
+  .swagger-ui .opblock.opblock-del  .opblock-summary-method { background: #b00020; }
+  .swagger-ui .opblock .opblock-summary-method {
+    color: #ffffff !important;
+  }
+  
+  /* 6) Lisibilité générale */
+  html { font-size: 16px; }
+  .swagger-ui .model-title, .swagger-ui .prop-type { font-weight: 600; }
+  
