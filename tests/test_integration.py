@@ -69,7 +69,6 @@ def test_django_auth():
 
 def test_django_login():
     """Tester la connexion Django"""
-    global test_timestamp
     try:
         login_data = {
             "email": f"test{test_timestamp}@example.com",
