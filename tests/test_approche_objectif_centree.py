@@ -35,7 +35,8 @@ except ImportError as e:
 class TestApprocheeObjectifCentree:
     """Tests pour valider l'approche objectif-centrée"""
     
-    def __init__(self):
+    def setup_method(self):
+        """Initialisation commune à tous les tests"""
         self.results = {
             "test_timestamp": datetime.now().isoformat(),
             "scenarios": {},

@@ -9,8 +9,8 @@ import os
 
 project_root = os.path.join(os.path.dirname(__file__), '..')
 fastapi_root = os.path.join(project_root, 'E3_model_IA/backend/fastapi_app')
+sys.path.insert(0, fastapi_root)  # Insert at beginning to prioritize this path
 sys.path.append(project_root)
-sys.path.append(fastapi_root)
 
 with patch('E3_model_IA.scripts.advanced_agent.get_coaching_graph', new_callable=AsyncMock) as mock_agent:
     mock_agent.return_value = Mock()
