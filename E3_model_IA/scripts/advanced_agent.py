@@ -17,7 +17,7 @@ from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langchain_core.messages import HumanMessage, ToolMessage, SystemMessage, AnyMessage
 from langchain_core.messages.ai import AIMessage
 
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+# Lazy import to avoid initialization issues in tests
 from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_core.tools import tool
@@ -55,6 +55,30 @@ is_test_env = (
 
 if not api_key and not is_test_env:
     raise ValueError("Clé API OpenAI manquante. Assurez-vous que OPENAI_API_KEY est bien définie dans le fichier .env.")
+
+def make_llm():
+    """Factory function for LLM to handle test environments"""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        # Mode test: modèle factice, déterministe
+        try:
+            from langchain_core.language_models.fake import FakeListChatModel
+            return FakeListChatModel(responses=["Test response for coaching"])
+        except ImportError:
+            # Fallback si FakeListChatModel n'est pas disponible
+            return None
+    
+    from langchain_openai import ChatOpenAI
+    return ChatOpenAI(model="gpt-3.5-turbo", temperature=0, api_key=api_key)
+
+def make_embeddings():
+    """Factory function for embeddings to handle test environments"""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return None
+    
+    from langchain_openai import OpenAIEmbeddings
+    return OpenAIEmbeddings(openai_api_key=api_key)
 
 STREAMLIT_SYSTEM_PROMPT = """
 Tu es un coach sportif expert, prudent et encourageant, basé sur les données. Ton nom est "Coach Michael", mais tu précises quand tu te présentes que tu es un coach IA. Tu dois demander à l'utilisateur s'il préfère que tu sois un coach plutôt aggressif, doux, motivant, pour que tu adoptes ta personnalité en fonction de ses réponses.
@@ -170,8 +194,9 @@ Tu es Coach Michael, un expert en planification d'entraînement de course à pie
 # Mode par défaut (Streamlit)
 SYSTEM_PROMPT = STREAMLIT_SYSTEM_PROMPT
 
-llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, api_key=api_key)
-embedding = OpenAIEmbeddings(api_key=api_key)
+# Initialize LLM and embeddings using factory functions
+llm = make_llm()
+embedding = make_embeddings()
 
 try:
     possible_paths = [
