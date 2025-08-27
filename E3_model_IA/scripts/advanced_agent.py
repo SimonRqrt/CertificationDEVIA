@@ -44,7 +44,8 @@ except ImportError:
 load_dotenv()
 api_key = OPENAI_API_KEY
 
-if not api_key:
+# Allow running without API key in test environments
+if not api_key and not os.getenv("PYTEST_CURRENT_TEST"):
     raise ValueError("Clé API OpenAI manquante. Assurez-vous que OPENAI_API_KEY est bien définie dans le fichier .env.")
 
 STREAMLIT_SYSTEM_PROMPT = """
