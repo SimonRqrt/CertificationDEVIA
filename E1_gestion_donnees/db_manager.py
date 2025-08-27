@@ -1,5 +1,5 @@
 import logging
-from typing import List,Dict, Any
+from typing import List, Dict, Any
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import insert as pg_insert

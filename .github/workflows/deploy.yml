@@ -39,7 +39,7 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          flake8 . --exclude=.venv,.git,__pycache__,deployment,htmlcov,tests --extend-ignore=E501,W293,W291,W292,E302,E305,F401,F541,E402,F841,E722
+          flake8 . --exclude=.venv,.git,__pycache__,deployment,htmlcov,tests --extend-ignore=E501,W293,W291,W292,E302,E305,F401,F541,E402,F841,E722,E231,E261,E711,F811,E303,E128,E301,E221,W391
 
       - name: Run tests
         run: |

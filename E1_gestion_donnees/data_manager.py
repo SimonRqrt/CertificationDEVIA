@@ -70,15 +70,15 @@ def process_garmin_activities(activities: List[Dict[str, Any]], user_id: int) ->
             "activity_name": activity.get("activityName"),
             "activity_type": activity.get("activityType", {}).get("typeKey"),
             "start_time": pd.to_datetime(activity.get("startTimeLocal")) if activity.get("startTimeLocal") else None,
-            "distance_meters": activity.get("distance",0.0),
-            "duration_seconds": activity.get("duration",0.0),
+            "distance_meters": activity.get("distance", 0.0),
+            "duration_seconds": activity.get("duration", 0.0),
             "average_speed": activity.get("averageSpeed"),
             "max_speed": activity.get("maxSpeed"),
-            "calories": activity.get("calories",0.0),
+            "calories": activity.get("calories", 0.0),
             "average_hr": activity.get("averageHR"),
             "max_hr": activity.get("maxHR"),
-            "elevation_gain": activity.get("elevationGain",0.0),
-            "elevation_loss": activity.get("elevationLoss",0.0),
+            "elevation_gain": activity.get("elevationGain", 0.0),
+            "elevation_loss": activity.get("elevationLoss", 0.0),
             "start_latitude": activity.get("startLatitude"),
             "start_longitude": activity.get("startLongitude"),
             "device_name": activity.get("deviceName"),
@@ -213,7 +213,7 @@ def compute_performance_metrics(activities_df: pd.DataFrame, user_id: int) -> Di
         log.warning("Impossible d'estimer la prédiction 10k (pas de course suffisante)")
 
     reco = "Entraînement normal"
-    if forme > 0 and (fatigue / (forme / 4)) > 1.5: # On divise la forme par 4 pour avoir une charge hebdo moyenne
+    if forme > 0 and (fatigue / (forme / 4)) > 1.5:  # On divise la forme par 4 pour avoir une charge hebdo moyenne
         reco = "Repos ou récupération conseillée."
     elif fatigue == 0:
         reco = "Nouveau cycle d'entraînement possible."
