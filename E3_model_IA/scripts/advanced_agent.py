@@ -408,7 +408,7 @@ def call_openai_agent(messages):
 tools = [get_user_metrics_from_db, get_training_knowledge, get_weather_forecast]
 
 # Réinitialisation du LLM avec les outils
-llm_with_tools = llm.bind_tools(tools)
+llm_with_tools = llm.bind_tools(tools) if llm else None
 
 
 # === Structure d'état du graphe ===
@@ -430,6 +430,11 @@ def call_llm(state: AgentState) -> AgentState:
     full_history = [system_msg] + state["messages"]
     
     try:
+        if llm_with_tools is None:
+            # Mode test : retourner une réponse factice
+            error_msg = AIMessage(content="Test response: LLM not available in test mode")
+            return {"messages": [error_msg]}
+        
         response = llm_with_tools.invoke(full_history)
         return {"messages": [response]}
     except Exception as e:

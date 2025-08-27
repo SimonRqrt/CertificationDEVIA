@@ -1,3 +1,9 @@
+# FastAPI first for proper imports
+fastapi>=0.68.0
+uvicorn>=0.15.0
+python-multipart>=0.0.5
+prometheus_client>=0.14.0
+
 # Minimal requirements for CI/CD pipeline
 requests>=2.28.0
 httpx>=0.24.0
@@ -28,11 +34,7 @@ langgraph>=0.0.20
 faiss-cpu>=1.7.0
 typing-extensions>=4.5.0
 
-# FastAPI for API tests
-fastapi>=0.68.0
-uvicorn>=0.15.0
-python-multipart>=0.0.5
-prometheus_client>=0.14.0
+# FastAPI dependencies already installed above
 
 # Testing utilities
 schedule>=1.2.0
