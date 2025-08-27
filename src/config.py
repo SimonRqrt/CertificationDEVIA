@@ -18,10 +18,10 @@ GARMIN_EMAIL = os.environ.get("GARMIN_EMAIL")
 GARMIN_PASSWORD = os.environ.get("GARMIN_PASSWORD")
 
 # Configuration de la base de données
-DB_TYPE = os.getenv("DB_TYPE") 
+DB_TYPE = os.getenv("DB_TYPE", "sqlite")  # Default to sqlite for CI/test environments
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
-DB_NAME = os.getenv("DB_NAME")
+DB_NAME = os.getenv("DB_NAME", "test_db")  # Default name for tests
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
