@@ -17,6 +17,14 @@ test = [
     "fastapi>=0.111",
     "httpx>=0.27",
     "uvicorn>=0.15.0",
+    "langgraph>=0.2.0",
+    "langgraph-checkpoint>=1.0.0",
+    "langgraph-checkpoint-sqlite>=1.0.0",
+    "langchain>=0.0.350",
+    "langchain-openai>=0.0.5",
+    "langchain-community>=0.0.10",
+    "langchain-core>=0.1.0",
+    "aiosqlite>=0.17.0",
 ]
 
 [tool.flake8]
