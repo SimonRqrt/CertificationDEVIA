@@ -39,14 +39,7 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--verbose",
-    "--cov=src",
-    "--cov=E1_gestion_donnees",
-    "--cov=E3_model_IA",
-    "--cov=E5_monitoring",
-    "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-report=xml"
+    "--verbose"
 ]
 markers = [
     "slow: marks tests as slow",
