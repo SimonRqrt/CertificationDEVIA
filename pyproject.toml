@@ -25,6 +25,7 @@ test = [
     "langchain-community>=0.0.10",
     "langchain-core>=0.1.0",
     "aiosqlite>=0.17.0",
+    "django-prometheus>=2.2.0",
 ]
 
 [tool.flake8]
