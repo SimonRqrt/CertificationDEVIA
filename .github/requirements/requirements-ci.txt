@@ -1,0 +1,24 @@
+# Minimal requirements for CI/CD pipeline
+requests>=2.28.0
+httpx>=0.24.0
+pytest>=7.0.0
+loguru>=0.6.0
+
+# Django core for tests
+Django==4.2.7
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+djangorestframework-simplejwt==5.3.0
+django-extensions==3.2.3
+django-filter==23.3
+Pillow==10.0.1
+psycopg2-binary==2.9.7
+django-environ==0.11.2
+
+# Basic AI/ML for tests (lightweight versions)
+openai>=1.0.0
+
+# Testing utilities
+schedule>=1.2.0
+markdown>=3.4.0
+rich>=13.0.0

@@ -1,7 +1,3 @@
-"""
-Tests complets pour tous les endpoints IA - Conformité C9
-Tests couvrant authentification, validation, fonctionnalités IA
-"""
 
 import pytest
 import json
@@ -11,13 +7,11 @@ from unittest.mock import Mock, patch, AsyncMock
 import sys
 import os
 
-# Ajouter les chemins du projet
 project_root = os.path.join(os.path.dirname(__file__), '..')
 fastapi_root = os.path.join(project_root, 'E3_model_IA/backend/fastapi_app')
 sys.path.append(project_root)
 sys.path.append(fastapi_root)
 
-# Mock des dépendances avant import
 with patch('E3_model_IA.scripts.advanced_agent.get_coaching_graph', new_callable=AsyncMock) as mock_agent:
     mock_agent.return_value = Mock()
     with patch('django_db_connector.db_connector') as mock_db:
@@ -43,11 +37,8 @@ class TestAPIAuthentification:
     
     @patch.dict(os.environ, {"API_KEY": "coach_ai_secure_key_2025"})
     def test_api_key_valide_accepte(self):
-        """Test acceptation avec clé API valide"""
-        # Test endpoint qui ne dépend pas de l'agent IA
         response = client.get("/v1/database/status",
                               headers={"X-API-Key": "coach_ai_secure_key_2025"})
-        # Pas 403 = authentification OK
         assert response.status_code != 403
 
 class TestValidationEntrees:
@@ -207,18 +198,18 @@ def generer_rapport_tests():
             "/metrics"
         ],
         "criteres_c9_testes": {
-            "authentification": "✅ Testée",
-            "validation_entrees": "✅ Testée", 
-            "rate_limiting": "✅ Testée",
-            "fonctionnalites_ia": "✅ Testée",
-            "documentation_openapi": "✅ Testée",
-            "logging_securite": "✅ Testée"
+            "authentification": "Testée",
+            "validation_entrees": "Testée", 
+            "rate_limiting": "Testée",
+            "fonctionnalites_ia": "Testée",
+            "documentation_openapi": "Testée",
+            "logging_securite": "Testée"
         },
         "recommandations_owasp": {
-            "injection": "✅ Protection anti-injection testée",
-            "authentification": "✅ Authentification obligatoire testée", 
-            "donnees_sensibles": "✅ Validation entrées testée",
-            "controle_acces": "✅ Rate limiting testé"
+            "injection": "Protection anti-injection testée",
+            "authentification": "Authentification obligatoire testée", 
+            "donnees_sensibles": "Validation entrées testée",
+            "controle_acces": "Rate limiting testé"
         }
     }
     
@@ -241,4 +232,4 @@ if __name__ == "__main__":
     print("Critères C9 validés:")
     for critere, status in rapport['criteres_c9_testes'].items():
         print(f"  - {critere}: {status}")
-    print("\nTous les tests d'API exposant le modèle IA sont conformes aux critères C9 ✅")
+    print("\nTous les tests d'API exposant le modèle IA sont conformes aux critères C9")

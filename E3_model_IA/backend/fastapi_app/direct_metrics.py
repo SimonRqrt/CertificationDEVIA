@@ -48,7 +48,7 @@ def collect_openai_metrics(endpoint="/api/coaching", model="gpt-3.5-turbo",
     if status == "200":
         ai_cost_usd_total.labels(endpoint=endpoint, model=model).inc(estimated_cost)
     
-    print(f"✅ Métriques OpenAI: {model} - {duration:.2f}s - ${estimated_cost:.4f} - Status {status}")
+    print(f"Métriques OpenAI: {model} - {duration:.2f}s - ${estimated_cost:.4f} - Status {status}")
     return {
         "duration": duration,
         "cost": estimated_cost,
@@ -58,7 +58,7 @@ def collect_openai_metrics(endpoint="/api/coaching", model="gpt-3.5-turbo",
 # Fonction utilitaire pour simulation complète
 def simulate_openai_activity(num_requests=10):
     """Simule une activité OpenAI pour test rapide"""
-    print(f"🚀 Simulation {num_requests} requêtes OpenAI...")
+    print(f"Simulation {num_requests} requêtes OpenAI...")
     
     scenarios = [
         ("chat", 0.05, (2, 8)),      # Chat rapide  
@@ -80,9 +80,9 @@ def simulate_openai_activity(num_requests=10):
             estimated_tokens=random.randint(150, 1200)
         )
     
-    print(f"✅ {num_requests} métriques OpenAI générées")
+    print(f"{num_requests} métriques OpenAI générées")
 
 if __name__ == "__main__":
     # Test direct
     simulate_openai_activity(20)
-    print("📊 Vérifiez http://localhost:8000/metrics pour les métriques ai_*")
+    print("Vérifiez http://localhost:8000/metrics pour les métriques ai_*")

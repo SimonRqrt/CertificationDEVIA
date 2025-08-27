@@ -292,25 +292,25 @@ def generate_plan_with_fastapi_first(user, form_data, user_data):
     
     # 1. Essayer FastAPI optimisé
     try:
-        print("🚀 Tentative FastAPI...")
+        print("Tentative FastAPI...")
         result = generate_plan_with_fastapi(user, form_data, user_data)
         if result.get('success'):
-            print("✅ FastAPI a réussi !")
+            print("FastAPI a réussi !")
             return result
         else:
-            print(f"❌ FastAPI a échoué: {result.get('error')}")
+            print(f"FastAPI a échoué: {result.get('error')}")
     except Exception as e:
-        print(f"❌ Erreur FastAPI: {e}")
+        print(f"Erreur FastAPI: {e}")
     
     # 2. Fallback vers agent local  
     try:
-        print("🔄 Fallback vers agent local...")
+        print("Fallback vers agent local...")
         return generate_fallback_plan_with_agent(user, form_data, user_data)
     except Exception as e:
-        print(f"❌ Erreur agent local: {e}")
+        print(f"Erreur agent local: {e}")
     
     # 3. Fallback final vers logique simple
-    print("🔄 Fallback vers logique simple...")
+    print("Fallback vers logique simple...")
     return generate_plan_with_simple_logic(user, form_data, user_data)
 
 def generate_plan_with_fastapi(user, form_data, user_data):
@@ -430,7 +430,7 @@ J'aimerais que tu commences par analyser mes métriques avec tes outils, puis qu
 
 Utilise ton format de tableau habituel pour me présenter le plan hebdomadaire, et n'hésite pas à me donner tes conseils d'expert !
 
-Merci Coach ! 🏃‍♂️
+Merci Coach !
 """
     
     # Appeler l'endpoint FastAPI avec l'agent conversationnel
@@ -659,34 +659,34 @@ def generate_personalized_recommendations(user_data, goal, level):
     # Recommandations basées sur l'historique
     if total_activities == 0:
         recommendations.extend([
-            "🚀 Commencez par 3 sorties courtes par semaine",
-            "📱 Enregistrez vos activités pour un suivi personnalisé",
-            "👟 Investissez dans de bonnes chaussures de course"
+            "Commencez par 3 sorties courtes par semaine",
+            "Enregistrez vos activités pour un suivi personnalisé",
+            "Investissez dans de bonnes chaussures de course"
         ])
     elif total_activities < 20:
         recommendations.extend([
-            "📈 Augmentez progressivement votre fréquence d'entraînement",
-            "⏱️ Focalisez-vous sur la durée plutôt que la vitesse",
-            "🔄 Alternez les intensités pour éviter la monotonie"
+            "Augmentez progressivement votre fréquence d'entraînement",
+            "Focalisez-vous sur la durée plutôt que la vitesse",
+            "Alternez les intensités pour éviter la monotonie"
         ])
     
     # Recommandations basées sur la distance moyenne
     if avg_distance < 3:
-        recommendations.append("🎯 Travaillez l'extension de vos sorties jusqu'à 5km")
+        recommendations.append("Travaillez l'extension de vos sorties jusqu'à 5km")
     elif avg_distance > 8:
-        recommendations.append("💪 Excellent volume ! Intégrez du travail qualitatif")
+        recommendations.append("Excellent volume ! Intégrez du travail qualitatif")
     
     # Recommandations cardiaque
     if avg_hr == 0:
-        recommendations.append("❤️ Utilisez un capteur cardiaque pour optimiser vos zones")
+        recommendations.append("Utilisez un capteur cardiaque pour optimiser vos zones")
     elif avg_hr > 170:
-        recommendations.append("⚠️ Attention aux allures trop soutenues - privilégiez l'endurance")
+        recommendations.append("Attention aux allures trop soutenues - privilégiez l'endurance")
     
     # Recommandations par objectif
     goal_recommendations = {
-        '5k': ["🏃‍♂️ Intégrez 1 séance de fractionné court par semaine", "⏱️ Visez une progression de 10-15s par semaine"],
-        '10k': ["🏃‍♀️ Travaillez l'endurance avec des sorties de 45min+", "🎯 Pratiquez l'allure spécifique 10K en fractionné"],
-        'fitness': ["😊 Écoutez votre corps et privilégiez le plaisir", "🌟 Variez les parcours pour maintenir la motivation"]
+        '5k': ["Intégrez 1 séance de fractionné court par semaine", "Visez une progression de 10-15s par semaine"],
+        '10k': ["Travaillez l'endurance avec des sorties de 45min+", "Pratiquez l'allure spécifique 10K en fractionné"],
+        'fitness': ["Écoutez votre corps et privilégiez le plaisir", "Variez les parcours pour maintenir la motivation"]
     }
     
     if goal in goal_recommendations:
@@ -694,9 +694,9 @@ def generate_personalized_recommendations(user_data, goal, level):
     
     # Toujours ajouter les recommandations de base
     recommendations.extend([
-        "💧 Hydratez-vous avant, pendant et après l'effort",
-        "🛌 Respectez au moins 1 jour de repos complet par semaine",
-        "🏥 Consultez un médecin en cas de douleur persistante"
+        "Hydratez-vous avant, pendant et après l'effort",
+        "Respectez au moins 1 jour de repos complet par semaine",
+        "Consultez un médecin en cas de douleur persistante"
     ])
     
     return recommendations[:6]  # Limiter à 6 recommandations
@@ -966,10 +966,10 @@ class RunningGoalWizardView(LoginRequiredMixin, TemplateView):
                 # Rediriger vers le template de résultat avec les données du plan
                 return render(request, 'coaching/simple_plan_result.html', {
                     'plan': training_plan,
-                    'ai_response': generation_result.get('plan', {}) if generation_result.get('success') else None,
+                    'ai_response': plan_data.get('plan', {}) if plan_data.get('success') else None,
                     'success': True,
-                    'form_data': form.cleaned_data,
-                    'user_data': user_data
+                    'form_data': wizard_data,
+                    'user_data': {'user': request.user}
                 })
         
         except Exception as e:

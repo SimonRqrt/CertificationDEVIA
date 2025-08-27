@@ -328,7 +328,7 @@ Politique conservation:
 - Données historiques (2-5 ans): Anonymisation GPS + agrégation FC
 - Données anciennes (>5 ans): Suppression complète
 
-Conformité RGPD: ✅ Art. 5.1.e respecté
+Conformité RGPD: Art. 5.1.e respecté
 Traçabilité: /var/log/rgpd/audit_activities.jsonl
         """
         

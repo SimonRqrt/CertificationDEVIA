@@ -9,37 +9,30 @@ from src.config import DATABASE_URL
 log = logging.getLogger(__name__)
 
 def create_db_engine(db_url=DATABASE_URL):
-    """Crée une connexion à la base de données"""
     try:
-        # Configuration adaptée selon le type de base de données
         engine_kwargs = {
             'pool_timeout': 30,
             'pool_recycle': 3600,
             'pool_pre_ping': True
         }
         
-        # Paramètres spécifiques selon le type de BDD
         if 'postgresql' in db_url:
-            # Paramètres PostgreSQL compatibles
             engine_kwargs['connect_args'] = {
                 'application_name': 'coach_ai_fastapi'
             }
         elif 'mssql' in db_url or 'sqlserver' in db_url:
-            # Paramètres SQL Server
             engine_kwargs['connect_args'] = {
                 'timeout': 30,
                 'connect_timeout': 30,
                 'autocommit': True
             }
         elif 'sqlite' in db_url:
-            # Paramètres SQLite
             engine_kwargs['connect_args'] = {
                 'check_same_thread': False
             }
         
         engine = sa.create_engine(db_url, **engine_kwargs)
         
-        # Test de la connexion
         with engine.connect() as conn:
             conn.execute(sa.text("SELECT 1"))
         
@@ -48,7 +41,6 @@ def create_db_engine(db_url=DATABASE_URL):
     except Exception as e:
         log.error("Erreur lors de la création du moteur de base de données.", exc_info=True)
         
-        # Fallback vers SQLite si la connexion échoue (utile pour Supabase inaccessible)
         if 'postgresql' in db_url or 'mssql' in db_url:
             log.warning("Tentative de fallback vers SQLite Django...")
             fallback_url = "sqlite:///data/django_garmin_data.db"
@@ -64,10 +56,8 @@ def create_db_engine(db_url=DATABASE_URL):
         raise
 
 def create_tables(engine) -> Dict[str, sa.Table]:
-    """Crée les tables nécessaires si elles n'existent pas"""
     metadata = sa.MetaData()
 
-    # Table des utilisateurs
     users = sa.Table(
         "users", metadata,
         sa.Column("user_id", sa.Integer, primary_key=True, autoincrement=True),
@@ -86,7 +76,6 @@ def create_tables(engine) -> Dict[str, sa.Table]:
         sa.Column("frequence_semaine", sa.Integer)
     )
 
-    # Activités (déjà présentes)
     activities_table = sa.Table(
         "activities", metadata,
         sa.Column("id", sa.Integer, primary_key=True),
@@ -108,7 +97,6 @@ def create_tables(engine) -> Dict[str, sa.Table]:
         sa.Column("start_longitude", sa.Float),
         sa.Column("device_name", sa.String(100)),
         sa.Column("created_timestamp", sa.DateTime),
-        # Données complémentaires Garmin
         sa.Column("steps", sa.Integer),
         sa.Column("average_running_cadence", sa.Float),
         sa.Column("max_running_cadence", sa.Float),
@@ -128,7 +116,6 @@ def create_tables(engine) -> Dict[str, sa.Table]:
         sa.Column("hr_zone_5", sa.Float)
     )
 
-    # GPS (déjà présent)
     gps_data = sa.Table(
         "gps_data", metadata,
         sa.Column("id", sa.Integer, primary_key=True),
@@ -138,7 +125,6 @@ def create_tables(engine) -> Dict[str, sa.Table]:
         sa.Column("timestamp", sa.DateTime)
     )
 
-    # Table des métriques calculées
     metrics = sa.Table(
         "metrics", metadata,
         sa.Column("metrics_id", sa.Integer, primary_key=True, autoincrement=True),
@@ -157,7 +143,6 @@ def create_tables(engine) -> Dict[str, sa.Table]:
         sa.Column("recommandation_jour", sa.Text)
     )
 
-    # Table des splits Garmin
     splits = sa.Table(
         "splits", metadata,
         sa.Column("id", sa.Integer, primary_key=True),
@@ -182,7 +167,6 @@ def create_tables(engine) -> Dict[str, sa.Table]:
     return metadata.tables
 
 def insert_user(engine, tables, user_data):
-    """Insère un nouvel utilisateur dans la table users"""
     with engine.connect() as conn:
         try:
             insert_stmt = tables["users"].insert().values(**user_data)
@@ -193,7 +177,6 @@ def insert_user(engine, tables, user_data):
             print(f"Erreur lors de l'insertion de l'utilisateur : {e}")
 
 def ensure_user_exists(engine, tables, user_id, user_defaults=None):
-    """Vérifie que l'utilisateur existe, sinon l'insère avec des valeurs par défaut."""
     with engine.connect() as conn:
         result = conn.execute(
             tables["users"].select().where(tables["users"].c.user_id == user_id)
@@ -203,7 +186,6 @@ def ensure_user_exists(engine, tables, user_id, user_defaults=None):
             if user_defaults:
                 user_data.update(user_defaults)
             else:
-                # Valeurs par défaut minimalistes, à adapter selon ton modèle
                 user_data.update({
                     "nom": "Test",
                     "prenom": "User",
@@ -224,29 +206,22 @@ def ensure_user_exists(engine, tables, user_id, user_defaults=None):
             log.info(f"Utilisateur user_id={user_id} inséré automatiquement.")
 
 def store_activities_in_db(engine, tables: Dict, processed_data: List[Dict[str, Any]]):
-    """
-    Stocke une liste d'activités en base de données de manière performante.
-    Vérifie les doublons et n'insère que les nouvelles activités.
-    """
     if not processed_data:
         log.info("Aucune activité à stocker.")
         return
 
     activities_table = tables["activities"]
-    # --- AJOUT : Vérifier que l'utilisateur existe avant insertion ---
     if processed_data:
         user_id = processed_data[0].get("user_id")
         if user_id is not None:
             ensure_user_exists(engine, tables, user_id)
     
-    # 1. Récupérer tous les IDs existants en une seule requête
     with engine.connect() as conn:
         existing_ids_query = sa.select(activities_table.c.activity_id)
         result = conn.execute(existing_ids_query)
         existing_ids = {row[0] for row in result}
         log.info(f"{len(existing_ids)} activités déjà présentes dans la base de données.")
 
-    # 2. Filtrer pour ne garder que les nouvelles activités
     new_activities = [
         activity for activity in processed_data 
         if activity["activity_id"] not in existing_ids
@@ -260,7 +235,6 @@ def store_activities_in_db(engine, tables: Dict, processed_data: List[Dict[str, 
         log.info("Aucune nouvelle activité à insérer.")
         return
 
-    # 3. Insérer toutes les nouvelles activités en une seule transaction
     log.info(f"Début de l'insertion de {len(new_activities)} nouvelles activités...")
     try:
         with engine.begin() as conn:
@@ -271,10 +245,6 @@ def store_activities_in_db(engine, tables: Dict, processed_data: List[Dict[str, 
         raise
 
 def store_metrics_in_db(engine, tables: Dict, metrics_data: Dict[str, Any]):
-    """
-    Insère ou met à jour les métriques pour un utilisateur à une date donnée.
-    Compatible avec SQL Server (pas d'ON CONFLICT).
-    """
     if not metrics_data:
         log.warning("Aucune donnée de métrique à stocker.")
         return
@@ -284,7 +254,6 @@ def store_metrics_in_db(engine, tables: Dict, metrics_data: Dict[str, Any]):
     date_calcul = metrics_data["date_calcul"]
 
     with engine.connect() as conn:
-        # Vérifier si la métrique existe déjà
         select_stmt = metrics_table.select().where(
             (metrics_table.c.user_id == user_id) &
             (metrics_table.c.date_calcul == date_calcul)
@@ -292,7 +261,6 @@ def store_metrics_in_db(engine, tables: Dict, metrics_data: Dict[str, Any]):
         result = conn.execute(select_stmt).fetchone()
 
         if result:
-            # Faire un update
             update_stmt = metrics_table.update().where(
                 (metrics_table.c.user_id == user_id) &
                 (metrics_table.c.date_calcul == date_calcul)
@@ -300,18 +268,14 @@ def store_metrics_in_db(engine, tables: Dict, metrics_data: Dict[str, Any]):
             conn.execute(update_stmt)
             log.info(f"Métriques mises à jour pour user_id={user_id}, date={date_calcul}")
         else:
-            # Faire un insert
             insert_stmt = metrics_table.insert().values(**metrics_data)
             conn.execute(insert_stmt)
             log.info(f"Nouvelles métriques insérées pour user_id={user_id}, date={date_calcul}")
         conn.commit()
 
 def get_activities_from_db(engine, tables, limit=10, offset=0):
-    """Récupère les activités depuis la base de données"""
     with engine.connect() as conn:
-        # Vérifier si on utilise Django SQLite (tables Django) ou FastAPI (tables normales)
         try:
-            # Essayer d'abord avec les tables Django
             result = conn.execute(sa.text("""
                 SELECT id, activity_id, activity_name, activity_type, start_time, 
                        distance_meters, duration_seconds, average_hr, user_id
@@ -321,7 +285,6 @@ def get_activities_from_db(engine, tables, limit=10, offset=0):
             """), {"limit": limit, "offset": offset}).fetchall()
             return result
         except:
-            # Fallback vers les tables FastAPI normales
             select_stmt = sa.select(tables["activities"]) \
                 .order_by(sa.desc(tables["activities"].c.start_time)) \
                 .limit(limit) \
@@ -330,7 +293,6 @@ def get_activities_from_db(engine, tables, limit=10, offset=0):
             return result
 
 def get_activity_by_id(engine, tables, activity_id):
-    """Récupère une activité spécifique par son ID"""
     with engine.connect() as conn:
         select_stmt = sa.select(tables["activities"]).where(
             tables["activities"].c.activity_id == activity_id

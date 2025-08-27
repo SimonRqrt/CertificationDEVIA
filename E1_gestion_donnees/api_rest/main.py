@@ -47,12 +47,12 @@ app.include_router(activities_router)
 @app.on_event("startup")
 def startup_event():
     """Initialisation de l'application"""
-    log.info("🚀 Démarrage API REST Coach IA")
+    log.info("Démarrage API REST Coach IA")
     
     if init_database():
-        log.info("✅ Base de données initialisée")
+        log.info("Base de données initialisée")
     else:
-        log.error("❌ Erreur initialisation base de données")
+        log.error("Erreur initialisation base de données")
 
 @app.get("/health")
 def health_check():
@@ -68,7 +68,7 @@ def health_check():
 def root():
     """Page d'accueil de l'API"""
     return {
-        "message": "🏃‍♂️ Coach IA - API REST Simple",
+        "message": "Coach IA - API REST Simple",
         "version": "2.0.0",
         "docs": "/docs",
         "health": "/health"
@@ -76,5 +76,5 @@ def root():
 
 if __name__ == "__main__":
     import uvicorn
-    log.info("🏁 Lancement du serveur sur http://localhost:8001")
+    log.info("Lancement du serveur sur http://localhost:8001")
     uvicorn.run(app, host="0.0.0.0", port=8001)

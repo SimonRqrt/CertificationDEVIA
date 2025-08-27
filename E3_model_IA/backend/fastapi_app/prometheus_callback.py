@@ -8,7 +8,7 @@ from langchain.callbacks.base import BaseCallbackHandler
 from langchain.schema import LLMResult
 from typing import Dict, Any
 
-# 🔧 SOLUTION: Créer les métriques ici pour éviter import circulaire
+# SOLUTION: Créer les métriques ici pour éviter import circulaire
 from prometheus_client import Counter, Histogram
 
 # Métriques OpenAI redéfinies localement

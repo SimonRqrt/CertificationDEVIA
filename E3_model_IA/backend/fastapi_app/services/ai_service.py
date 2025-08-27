@@ -23,7 +23,7 @@ class AIService:
         full_input = f"Je suis l'utilisateur {user_id}. {chat_request.message}"
         thread_id = chat_request.thread_id or f"user-thread-{user_id}"
         
-        # 🔧 SOLUTION FINALE: CallbackHandler intégré 
+        # SOLUTION FINALE: CallbackHandler intégré 
         from prometheus_callback import prometheus_callback
         config = {
             "configurable": {"thread_id": thread_id},

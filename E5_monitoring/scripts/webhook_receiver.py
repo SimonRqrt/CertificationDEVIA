@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-🎯 E5 Monitoring - Webhook receiver pour alertes Alertmanager
+E5 Monitoring - Webhook receiver pour alertes Alertmanager
 Critère C20: Surveillance des seuils et alertes
 
 Usage: python3 E5_monitoring/scripts/webhook_receiver.py
@@ -25,7 +25,7 @@ def webhook_default():
     data = request.get_json()
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
-    logger.info(f"📧 ALERTE REÇUE ({timestamp})")
+    logger.info(f"ALERTE REÇUE ({timestamp})")
     
     if data and 'alerts' in data:
         for alert in data['alerts']:
@@ -41,14 +41,14 @@ def webhook_default():
             alerts_received.append(alert_info)
             
             print(f"""
-🚨 ============= ALERTE COACH AI =============
-⏰ Timestamp: {alert_info['timestamp']}
-🎯 Alerte: {alert_info['alertname']}
-🔧 Service: {alert_info['service']} 
-📊 Sévérité: {alert_info['severity']}
-📝 Description: {alert_info['description']}
-💡 Résumé: {alert_info['summary']}
-🔴 Status: {alert_info['status']}
+============= ALERTE COACH AI =============
+Timestamp: {alert_info['timestamp']}
+Alerte: {alert_info['alertname']}
+Service: {alert_info['service']} 
+Sévérité: {alert_info['severity']}
+Description: {alert_info['description']}
+Résumé: {alert_info['summary']}
+Status: {alert_info['status']}
 ============================================
             """)
     
@@ -60,7 +60,7 @@ def webhook_critical():
     data = request.get_json()
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
-    logger.info(f"🔥 ALERTE CRITIQUE REÇUE ({timestamp})")
+    logger.info(f"ALERTE CRITIQUE REÇUE ({timestamp})")
     
     if data and 'alerts' in data:
         for alert in data['alerts']:
@@ -75,13 +75,13 @@ def webhook_critical():
             alerts_received.append(alert_info)
             
             print(f"""
-🔥🔥🔥 ======== ALERTE CRITIQUE ======== 🔥🔥🔥
-⏰ {alert_info['timestamp']}
-🚨 {alert_info['alertname']} ({alert_info['severity']})
-🎯 Service: {alert_info['service']}
-📝 {alert_info['description']}
-🔴 Status: {alert_info['status']}
-🔥🔥🔥 ================================ 🔥🔥🔥
+======== ALERTE CRITIQUE ========
+{alert_info['timestamp']}
+{alert_info['alertname']} ({alert_info['severity']})
+Service: {alert_info['service']}
+{alert_info['description']}
+Status: {alert_info['status']}
+================================
             """)
     
     return jsonify({"status": "critical_received", "count": len(data.get('alerts', []))})
@@ -90,8 +90,8 @@ def webhook_critical():
 def webhook_openai():
     """Webhook spécialisé pour alertes OpenAI"""
     data = request.get_json()
-    logger.info("💰 Alerte OpenAI reçue")
-    print(f"💰 ALERTE OPENAI: {json.dumps(data, indent=2)}")
+    logger.info("Alerte OpenAI reçue")
+    print(f"ALERTE OPENAI: {json.dumps(data, indent=2)}")
     return jsonify({"status": "openai_received"})
 
 @app.route('/alerts', methods=['GET'])
@@ -107,16 +107,16 @@ def health():
     return jsonify({"status": "ok", "alerts_count": len(alerts_received)})
 
 if __name__ == '__main__':
-    print("🎯 Coach AI - Webhook Receiver")
+    print("Coach AI - Webhook Receiver")
     print("=" * 40)
-    print("📡 Écoute sur http://localhost:5001")
-    print("🔍 Endpoints disponibles:")
+    print("Écoute sur http://localhost:5001")
+    print("Endpoints disponibles:")
     print("  • /webhook         - Alertes générales")
     print("  • /webhook/critical - Alertes critiques")
     print("  • /webhook/openai  - Alertes OpenAI")
     print("  • /alerts          - Voir alertes reçues")
     print("=" * 40)
-    print("💡 Presse Ctrl+C pour arrêter")
+    print("Presse Ctrl+C pour arrêter")
     print()
     
     app.run(host='0.0.0.0', port=5001, debug=False)

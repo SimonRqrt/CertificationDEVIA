@@ -17,7 +17,6 @@ from prometheus_client import generate_latest
 import sys
 import os
 
-# Add project root to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../..'))
 
 from django_db_connector import db_connector
@@ -32,7 +31,6 @@ import pandas as pd
 try:
     from src.config import API_HOST, API_PORT, API_DEBUG, DATABASE_URL
 except ImportError:
-    # Fallback to environment variables if config file not available
     API_HOST = os.getenv('API_HOST', '0.0.0.0')
     API_PORT = int(os.getenv('API_PORT', '8000'))
     API_DEBUG = os.getenv('API_DEBUG', 'False').lower() == 'true'
@@ -42,27 +40,23 @@ except ImportError:
 async def lifespan(app: FastAPI):
 
     rprint("[yellow]Démarrage de l'application et des services...[/yellow]")
-
-    # Démarrage serveur métriques Prometheus
     start_metrics_server(8080)
-    rprint("[green]✅ Serveur métriques Prometheus démarré sur le port 8080[/green]")
+    rprint("[green]Serveur métriques Prometheus démarré sur le port 8080[/green]")
 
-    # Connexion à PostgreSQL Django
     app.state.db_connector = db_connector
     connection_test = db_connector.test_connection()
     if connection_test['status'] == 'connected':
-        rprint(f"[green]✅ PostgreSQL Django connectée: {connection_test['total_activities']} activités[/green]")
+        rprint(f"[green]PostgreSQL Django connectée: {connection_test['total_activities']} activités[/green]")
     else:
-        rprint(f"[red]❌ Erreur connexion PostgreSQL: {connection_test['error']}[/red]")
+        rprint(f"[red]Erreur connexion PostgreSQL: {connection_test['error']}[/red]")
 
     coaching_agent = await get_coaching_graph()
     app.state.coaching_agent = coaching_agent
     
-    # Service analytics utilise le connecteur PostgreSQL
     app.state.analytics_db = db_connector
-    rprint("[green]✅ Service Analytics PostgreSQL Django prêt.[/green]")
+    rprint("[green]Service Analytics PostgreSQL Django prêt.[/green]")
 
-    rprint("[bold green]✅ Application démarrée. L'agent et analytics sont prêts.[/bold green]")
+    rprint("[bold green]Application démarrée. L'agent et analytics sont prêts.[/bold green]")
 
     yield
 
@@ -70,7 +64,6 @@ async def lifespan(app: FastAPI):
 
 
 
-# On récupère la clé API attendue depuis les variables d'environnement
 app = FastAPI(
     title="Coach running AI API",
     description="API pour accéder aux données Garmin et interagir avec l'assistant de coaching IA.",
@@ -85,7 +78,6 @@ api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 
 
 async def get_api_key(key: str = Security(api_key_header)):
-    """Vérifie la clé API fournie dans les en-têtes."""
     if key == EXPECTED_API_KEY:
         return key
     else:
@@ -94,14 +86,9 @@ async def get_api_key(key: str = Security(api_key_header)):
 
 class ChatRequest(BaseModel):
     message: str
-    thread_id: Optional[str] = None # Pour suivre une conversation existante
-    user_id: Optional[int] = None # ID utilisateur pour personnalisation
+    thread_id: Optional[str] = None
+    user_id: Optional[int] = None
 
-# ==========================================
-# MODÈLES DE DONNÉES SUPPRIMÉS (Architecture E1/E3)
-# → Les données sont gérées par Django REST API
-# → FastAPI se concentre uniquement sur l'IA
-# =========================================
 
 
 @app.get("/")
@@ -111,17 +98,12 @@ def root():
 
 @app.get("/metrics")
 def metrics():
-    """Endpoint Prometheus pour les métriques"""
     try:
         return Response(generate_latest(), media_type="text/plain")
     except Exception as e:
-        # Fallback si prometheus_client n'est pas disponible
         return Response("# Prometheus metrics endpoint\n# Service is running but metrics are not yet configured\n", media_type="text/plain")
 
 
-# ==========================================
-# ENDPOINTS DONNÉES - PostgreSQL Django
-# ==========================================
 
 @app.get("/v1/activities/{user_id}", tags=["Données"])
 async def get_user_activities(
@@ -129,7 +111,6 @@ async def get_user_activities(
     limit: Optional[int] = 20,
     fastapi_request: Request = None
 ):
-    """Récupérer les activités d'un utilisateur depuis PostgreSQL Django"""
     try:
         db_connector = fastapi_request.app.state.db_connector
         activities = db_connector.get_user_activities(user_id, limit=limit)
@@ -147,7 +128,6 @@ async def get_user_stats(
     user_id: int,
     fastapi_request: Request = None
 ):
-    """Obtenir les statistiques d'un utilisateur depuis PostgreSQL Django"""
     try:
         db_connector = fastapi_request.app.state.db_connector
         stats = db_connector.get_user_stats(user_id)
@@ -161,7 +141,6 @@ async def get_user_stats(
 
 @app.get("/v1/database/status", tags=["Système"])
 async def database_status(fastapi_request: Request = None):
-    """Vérifier le statut de la connexion PostgreSQL Django"""
     try:
         db_connector = fastapi_request.app.state.db_connector
         status = db_connector.test_connection()
@@ -169,7 +148,6 @@ async def database_status(fastapi_request: Request = None):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur test connexion: {str(e)}")
 
-# \== Endpoint d'IA (Bloc E3) ==
 
 @app.post("/v1/coaching/chat", tags=["Coaching IA"])
 async def chat_with_coach(
@@ -178,14 +156,12 @@ async def chat_with_coach(
     current_user: UserInfo = get_current_user,
     user_context: Dict[str, Any] = get_user_context
 ):
-    """Chat avec le coach IA (authentification Django JWT)"""
     
     start_time = time.time()
     session_id = str(uuid.uuid4())
     
     coaching_agent = fastapi_request.app.state.coaching_agent
     
-    # Construire le message avec contexte utilisateur
     context_info = f"""
     Utilisateur: {current_user.first_name} {current_user.last_name} ({current_user.email})
     Activité préférée: {current_user.preferred_activity}
@@ -198,20 +174,18 @@ async def chat_with_coach(
     thread_id = chat_request.thread_id or f"user-thread-{current_user.id}"
     config = {"configurable": {"thread_id": thread_id}}
 
-    # Stocker la session de coaching
     session_data = {
         'session_id': session_id,
-        'title': chat_request.message[:100],  # Titre basé sur le message
+        'title': chat_request.message[:100],
         'user_message': chat_request.message,
-        'ai_response': '',  # Sera mis à jour
+        'ai_response': '',
         'context_data': user_context,
-        'response_time': None  # Sera calculé
+        'response_time': None
     }
 
     async def stream_response():
         ai_response_parts = []
         
-        # Déterminer le mode basé sur le thread_id
         mode = "plan_generator" if "plan-generation" in thread_id else "streamlit"
         
         async for event in coaching_agent.astream({
@@ -224,12 +198,10 @@ async def chat_with_coach(
                     ai_response_parts.append(message.content)
                     yield json.dumps({"type": "content", "data": message.content}) + "\n"
         
-        # Finaliser la session
         end_time = time.time()
         session_data['ai_response'] = ''.join(ai_response_parts)
         session_data['response_time'] = end_time - start_time
         
-        # Enregistrer dans Django
         auth_middleware.create_coaching_session(current_user.id, session_data)
         
         yield json.dumps({"type": "end", "data": "Stream finished."}) + "\n"
@@ -243,19 +215,16 @@ async def chat_with_coach_legacy(
     fastapi_request: Request,
     api_key: str = Depends(get_api_key)
 ):
-    """Chat avec le coach IA (méthode legacy avec clé API)"""
     
     coaching_agent = fastapi_request.app.state.coaching_agent
-    # Utiliser le user_id passé par Django, ou 1 par défaut pour compatibilité
     user_id = chat_request.user_id or 1
     full_input = f"Je suis l'utilisateur {user_id}. {chat_request.message}"
     thread_id = chat_request.thread_id or f"user-thread-{user_id}"
     config = {"configurable": {"thread_id": thread_id}}
 
     async def stream_response():
-        # Déterminer le mode basé sur le thread_id
         mode = "plan_generator" if "plan-generation" in thread_id else "streamlit"
-        print(f"🔍 DEBUG: thread_id={thread_id}, mode détecté={mode}")
+        print(f"DEBUG: thread_id={thread_id}, mode détecté={mode}")
         
         async for event in coaching_agent.astream({
             "messages": [HumanMessage(content=full_input)], 
@@ -270,10 +239,8 @@ async def chat_with_coach_legacy(
     return StreamingResponse(stream_response(), media_type="application/x-ndjson")
 
 
-# ===== GÉNÉRATION DE PLANS D'ENTRAÎNEMENT =====
 
 class SimpleTrainingPlanRequest(BaseModel):
-    """Modèle simplifié pour Django"""
     user_id: int
     user_email: str
     goal: str
@@ -285,7 +252,6 @@ class SimpleTrainingPlanRequest(BaseModel):
     use_advanced_agent: bool = True
 
 class TrainingPlanRequest(BaseModel):
-    """Modèle pour la demande de génération de plan d'entraînement"""
     user_id: int
     user_email: str
     personal_info: Dict[str, Any]
@@ -296,7 +262,6 @@ class TrainingPlanRequest(BaseModel):
 
 
 class TrainingPlanResponse(BaseModel):
-    """Modèle pour la réponse de plan d'entraînement généré"""
     name: str
     description: str
     duration_weeks: int
@@ -311,16 +276,13 @@ async def generate_training_plan_simple(
     fastapi_request: Request,
     api_key: str = Depends(get_api_key)
 ):
-    """Génération simplifiée de plan pour Django"""
     
     if not plan_request.use_advanced_agent:
         return {"error": "Agent avancé requis"}
     
     try:
-        # Utiliser l'agent IA avancé
         coaching_agent = fastapi_request.app.state.coaching_agent
         
-        # Construction du prompt optimisé (plus court et direct)
         full_input = f"""Je suis l'utilisateur {plan_request.user_id}.
 
 GÉNÈRE un plan d'entraînement personnalisé:
@@ -334,20 +296,17 @@ GÉNÈRE un plan d'entraînement personnalisé:
 
 Sois concis et efficace."""
 
-        # Utiliser le bon format pour l'agent (comme dans chat-legacy)
         thread_id = f"plan-generation-{plan_request.user_id}"
         config = {"configurable": {"thread_id": thread_id}}
         
-        print(f"🤖 Génération plan pour user {plan_request.user_id}...")
+        print(f"Génération plan pour user {plan_request.user_id}...")
         start_generation = time.time()
         
-        # Optimisation : utiliser invoke au lieu d'astream pour plus de vitesse
         result = coaching_agent.invoke({
             "messages": [HumanMessage(content=full_input)], 
             "mode": "plan_generator"
         }, config=config)
         
-        # Extraire la réponse de l'agent
         full_response = ""
         if "messages" in result and result["messages"]:
             last_message = result["messages"][-1]
@@ -355,12 +314,12 @@ Sois concis et efficace."""
                 full_response = last_message.content
         
         generation_time = time.time() - start_generation
-        print(f"⏱️ Plan généré en {generation_time:.2f}s")
+        print(f"Plan généré en {generation_time:.2f}s")
         
-        print(f"🤖 Plan généré (longueur: {len(full_response)} chars)")
+        print(f"Plan généré (longueur: {len(full_response)} chars)")
         
         if not full_response or len(full_response) < 50:
-            print(f"❌ Réponse trop courte: {full_response}")
+            print(f"Réponse trop courte: {full_response}")
             full_response = "Erreur: Plan non généré correctement"
         
         return {
@@ -373,7 +332,7 @@ Sois concis et efficace."""
         }
         
     except Exception as e:
-        print(f"❌ Exception dans génération plan: {str(e)}")
+        print(f"Exception dans génération plan: {str(e)}")
         return {"error": f"Erreur génération plan: {str(e)}"}
 
 @app.post("/v1/coaching/generate-training-plan-advanced", response_model=TrainingPlanResponse, tags=["Coaching IA"])
@@ -382,13 +341,11 @@ async def generate_training_plan_advanced(
     fastapi_request: Request,
     api_key: str = Depends(get_api_key)
 ):
-    """Génération automatique d'un plan d'entraînement personnalisé"""
     
     start_time = time.time()
     
     coaching_agent = fastapi_request.app.state.coaching_agent
     
-    # Construire le prompt pour l'agent IA
     prompt = f"""
     GÉNÉRATION DE PLAN D'ENTRAÎNEMENT PERSONNALISÉ
     
@@ -455,7 +412,6 @@ async def generate_training_plan_advanced(
     RÉPONDS UNIQUEMENT EN JSON VALIDE, sans texte additionnel.
     """
     
-    # Générer le plan via l'agent IA
     thread_id = f"plan-generation-{plan_request.user_id}-{int(start_time)}"
     config = {"configurable": {"thread_id": thread_id}}
     
@@ -470,8 +426,6 @@ async def generate_training_plan_advanced(
     ai_response = ''.join(ai_response_parts)
     
     try:
-        # Extraire le JSON de la réponse IA
-        # L'IA peut retourner du texte avec du JSON, on extrait juste la partie JSON
         json_start = ai_response.find('{')
         json_end = ai_response.rfind('}') + 1
         
@@ -481,7 +435,6 @@ async def generate_training_plan_advanced(
         json_response = ai_response[json_start:json_end]
         plan_data = json.loads(json_response)
         
-        # Validation et valeurs par défaut
         plan_data.setdefault('name', f"Plan {plan_request.running_goal.get('race_type', 'Running').title()}")
         plan_data.setdefault('description', 'Plan d\'entraînement personnalisé généré par IA')
         plan_data.setdefault('duration_weeks', 12)
@@ -490,7 +443,6 @@ async def generate_training_plan_advanced(
         
         generation_time = time.time() - start_time
         
-        # Incrémenter la métrique Prometheus
         training_plans_generated.inc()
         
         return TrainingPlanResponse(
@@ -503,20 +455,18 @@ async def generate_training_plan_advanced(
         )
         
     except (json.JSONDecodeError, ValueError, KeyError) as e:
-        # Fallback : plan de base si l'IA ne répond pas correctement
         rprint(f"[red]Erreur parsing JSON IA: {str(e)}[/red]")
         rprint(f"[yellow]Réponse IA brute: {ai_response}[/yellow]")
         
-        # Plan de base selon l'objectif
         race_type = plan_request.running_goal.get('race_type', 'general_fitness')
         sessions_per_week = plan_request.training_preferences.get('sessions_per_week', 3)
         
         fallback_sessions = []
-        for week in range(4):  # 4 premières semaines
+        for week in range(4):
             for session in range(sessions_per_week):
-                day_offset = week * 7 + (session * 2)  # Espacement des séances
+                day_offset = week * 7 + (session * 2)
                 
-                if session == 0:  # Séance facile
+                if session == 0:
                     fallback_sessions.append({
                         'name': f'Course facile - Semaine {week + 1}',
                         'description': 'Course à allure conversationnelle',
@@ -526,7 +476,7 @@ async def generate_training_plan_advanced(
                         'distance_km': 5 + week,
                         'hr_zone': 2
                     })
-                elif session == 1:  # Séance tempo
+                elif session == 1:
                     fallback_sessions.append({
                         'name': f'Tempo run - Semaine {week + 1}',
                         'description': 'Course à allure soutenue',
@@ -536,7 +486,7 @@ async def generate_training_plan_advanced(
                         'distance_km': 4 + week * 0.5,
                         'hr_zone': 4
                     })
-                else:  # Séance longue
+                else:
                     fallback_sessions.append({
                         'name': f'Sortie longue - Semaine {week + 1}',
                         'description': 'Course longue en endurance fondamentale',
@@ -564,10 +514,8 @@ async def generate_training_plan_advanced(
         )
 
 
-# ===== ENDPOINTS ANALYTICS AVANCÉS (SQLAlchemy E1) =====
 
 def get_performance_trends_data(engine, user_id: int, period_weeks: int = 12):
-    """Analyse des tendances de performance avec moyennes mobiles"""
     from sqlalchemy import text
     
     query = text("""
@@ -584,7 +532,7 @@ def get_performance_trends_data(engine, user_id: int, period_weeks: int = 12):
     FROM activities 
     WHERE user_id = :user_id 
       AND start_time >= datetime('now', '-' || :weeks || ' days')
-      AND duration_seconds > 600  -- Au moins 10 minutes
+      AND duration_seconds > 600
     ORDER BY start_time DESC
     LIMIT 50
     """)
@@ -601,10 +549,8 @@ def get_performance_trends_data(engine, user_id: int, period_weeks: int = 12):
     }
 
 def get_zones_analysis_data(engine, user_id: int):
-    """Analyse des zones d'entraînement basée sur la FC"""
     from sqlalchemy import text
     
-    # D'abord, récupérer la FC max
     max_hr_query = text("""
     SELECT MAX(max_hr) as max_hr_recorded,
            COUNT(*) as activities_with_hr
@@ -652,7 +598,6 @@ async def get_performance_trends(
     period_weeks: int = 12,
     api_key: str = Depends(get_api_key)
 ):
-    """Analyse des tendances de performance (SQLAlchemy E1)"""
     
     engine = fastapi_request.app.state.analytics_engine
     if not engine:
@@ -670,7 +615,6 @@ async def get_training_zones_analysis(
     fastapi_request: Request,
     api_key: str = Depends(get_api_key)
 ):
-    """Analyse des zones d'entraînement FC (SQLAlchemy E1)"""
     
     engine = fastapi_request.app.state.analytics_engine
     if not engine:
@@ -689,7 +633,6 @@ async def get_analytics_dashboard(
     period_weeks: int = 12,
     api_key: str = Depends(get_api_key)
 ):
-    """Dashboard complet analytics (SQLAlchemy E1)"""
     
     engine = fastapi_request.app.state.analytics_engine
     if not engine:
@@ -702,7 +645,6 @@ async def get_analytics_dashboard(
             'generated_at': datetime.now().isoformat(),
         }
         
-        # Récupérer les analyses
         try:
             dashboard_data['trends'] = get_performance_trends_data(engine, user_id, period_weeks)
         except Exception as e:
@@ -720,7 +662,6 @@ async def get_analytics_dashboard(
 
 
 def start_api():
-    """Démarrer le serveur API"""
     uvicorn.run(app, host=API_HOST, port=API_PORT)
 
 if __name__ == "__main__":

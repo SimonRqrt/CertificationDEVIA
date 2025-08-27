@@ -55,21 +55,21 @@ class Command(BaseCommand):
         )
         log = logging.getLogger(__name__)
 
-        log.info(f"🚀 Démarrage du pipeline Django pour l'utilisateur ID: {user_id}")
+        log.info(f"Démarrage du pipeline Django pour l'utilisateur ID: {user_id}")
 
         # Vérifier les imports Garmin
         if not GARMIN_IMPORTS_OK:
-            log.error(f"❌ Impossible d'importer les modules Garmin: {IMPORT_ERROR}")
-            log.info("💡 Pour les tests, vous pouvez créer des activités manuellement")
+            log.error(f"Impossible d'importer les modules Garmin: {IMPORT_ERROR}")
+            log.info("Pour les tests, vous pouvez créer des activités manuellement")
             return
 
         try:
             # Vérifier que l'utilisateur existe
             try:
                 django_user = User.objects.get(id=user_id)
-                log.info(f"✅ Utilisateur trouvé: {django_user.email}")
+                log.info(f"Utilisateur trouvé: {django_user.email}")
             except User.DoesNotExist:
-                log.error(f"❌ Utilisateur ID {user_id} non trouvé")
+                log.error(f"Utilisateur ID {user_id} non trouvé")
                 return
 
             # --- ÉTAPE 1: EXTRACTION DES DONNÉES GARMIN ---
@@ -77,11 +77,11 @@ class Command(BaseCommand):
             processed_result = fetch_and_process_garmin_data(user_id=user_id, save_raw=True)
             
             if processed_result is None:
-                log.error("❌ Aucune donnée récupérée depuis Garmin")
+                log.error("Aucune donnée récupérée depuis Garmin")
                 return
 
             activities_df, processed_activities = processed_result
-            log.info(f"✅ DataFrame créé: {len(activities_df)} activités")
+            log.info(f"DataFrame créé: {len(activities_df)} activités")
 
             # --- ÉTAPE 2: STOCKAGE AVEC DJANGO ORM ---
             log.info("💾 Étape 2/4: Stockage des activités avec Django ORM...")
@@ -151,31 +151,30 @@ class Command(BaseCommand):
                             updated_count += 1
 
                 except Exception as e:
-                    log.error(f"❌ Erreur traitement activité {garmin_id}: {e}")
+                    log.error(f"Erreur traitement activité {garmin_id}: {e}")
 
-            log.info(f"✅ Stockage terminé: {stored_count} créées, {updated_count} mises à jour")
+            log.info(f"Stockage terminé: {stored_count} créées, {updated_count} mises à jour")
 
             # --- ÉTAPE 3: CALCUL DES MÉTRIQUES ---
-            log.info("📊 Étape 3/4: Calcul des métriques de performance...")
+            log.info("Étape 3/4: Calcul des métriques de performance...")
             
             try:
                 metrics_data = compute_performance_metrics(activities_df=activities_df, user_id=user_id)
                 if metrics_data:
-                    log.info(f"✅ Métriques calculées: {len(metrics_data)} entrées")
-                    # TODO: Stocker les métriques dans UserProfile si nécessaire
+                    log.info(f"Métriques calculées: {len(metrics_data)} entrées")
                 else:
-                    log.warning("⚠️ Aucune métrique calculée")
+                    log.warning("Aucune métrique calculée")
             except Exception as e:
-                log.error(f"❌ Erreur calcul métriques: {e}")
+                log.error(f"Erreur calcul métriques: {e}")
 
             # --- ÉTAPE 4: RÉCAPITULATIF ---
             total_activities = Activity.objects.filter(user=django_user).count()
             latest_activity = Activity.objects.filter(user=django_user).order_by('-start_time').first()
             
-            log.info("🎉 Pipeline Django terminé avec succès!")
-            log.info(f"📊 Total activités en base: {total_activities}")
+            log.info("Pipeline Django terminé avec succès!")
+            log.info(f"Total activités en base: {total_activities}")
             if latest_activity:
-                log.info(f"🏃 Dernière activité: {latest_activity.activity_name} ({latest_activity.start_time})")
+                log.info(f"Dernière activité: {latest_activity.activity_name} ({latest_activity.start_time})")
 
         except Exception as e:
             log.error(f"💥 Erreur critique dans le pipeline: {e}")

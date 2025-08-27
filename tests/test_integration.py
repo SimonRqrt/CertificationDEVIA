@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-"""
-Script de test d'intégration Django + FastAPI
-"""
 
 import requests
 import json
@@ -9,12 +6,10 @@ import time
 import sys
 from typing import Dict, Any
 
-# Configuration
 DJANGO_URL = "http://localhost:8002"
 FASTAPI_URL = "http://localhost:8000"
 
 def test_django_health():
-    """Tester la santé de Django"""
     try:
         response = requests.get(f"{DJANGO_URL}/admin/", timeout=5)
         if response.status_code == 200:
@@ -28,7 +23,6 @@ def test_django_health():
         return False
 
 def test_fastapi_health():
-    """Tester la santé de FastAPI"""
     try:
         response = requests.get(f"{FASTAPI_URL}/docs", timeout=5)
         if response.status_code == 200:
@@ -42,12 +36,13 @@ def test_fastapi_health():
         return False
 
 def test_django_auth():
-    """Tester l'authentification Django"""
+    import time
+    global test_timestamp
+    test_timestamp = int(time.time())
     try:
-        # Test d'inscription
         register_data = {
-            "username": "testuser",
-            "email": "test@example.com",
+            "username": f"testuser{test_timestamp}",
+            "email": f"test{test_timestamp}@example.com",
             "password": "testpassword123",
             "password_confirm": "testpassword123",
             "first_name": "Test",
@@ -74,9 +69,10 @@ def test_django_auth():
 
 def test_django_login():
     """Tester la connexion Django"""
+    global test_timestamp
     try:
         login_data = {
-            "email": "test@example.com",
+            "email": f"test{test_timestamp}@example.com",
             "password": "testpassword123"
         }
         
@@ -135,7 +131,7 @@ def test_legacy_fastapi():
     """Tester l'endpoint legacy FastAPI"""
     try:
         headers = {
-            "X-API-Key": "test-api-key",
+            "X-API-Key": "coach_ai_secure_key_2025",
             "Content-Type": "application/json"
         }
         
@@ -207,11 +203,11 @@ def main():
     # Résumé
     print("\n" + "=" * 50)
     print("Résumé des tests:")
-    print(f"   Django: {'OK' if django_ok else 'ECHEC'}")
-    print(f"   FastAPI: {'OK' if fastapi_ok else 'ECHEC'}")
-    print(f"   Auth Django: {'OK' if auth_response else 'ECHEC'}")
-    print(f"   Intégration: {'OK' if integration_ok else 'ECHEC'}")
-    print(f"   Legacy: {'OK' if legacy_ok else 'ECHEC'}")
+    print(f"   Django: {'OK' if django_ok else 'ERREUR'}")
+    print(f"   FastAPI: {'OK' if fastapi_ok else 'ERREUR'}")
+    print(f"   Auth Django: {'OK' if auth_response else 'ERREUR'}")
+    print(f"   Intégration: {'OK' if integration_ok else 'ERREUR'}")
+    print(f"   Legacy: {'OK' if legacy_ok else 'ERREUR'}")
     
     if all([django_ok, fastapi_ok, auth_response, integration_ok, legacy_ok]):
         print("\nTous les tests sont passés avec succès!")

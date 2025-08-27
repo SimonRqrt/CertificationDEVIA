@@ -32,7 +32,7 @@ from routers import data, coaching, analytics
 from django_db_connector import db_connector
 from E3_model_IA.scripts.advanced_agent import get_coaching_graph
 
-# 🔧 SOLUTION DÉFINITIVE: Métriques AI intégrées dans FastAPI (registre séparé)
+# SOLUTION DÉFINITIVE: Métriques AI intégrées dans FastAPI (registre séparé)
 from prometheus_client import Counter, Histogram, CollectorRegistry
 
 # Registre séparé pour éviter les conflits avec l'agent IA

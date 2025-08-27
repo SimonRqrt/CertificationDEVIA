@@ -7,8 +7,6 @@ from rich import print as rprint
 from typing import Annotated, List, Any
 from dotenv import load_dotenv
 
-# Import des métriques (désactivé temporairement pour éviter les erreurs)
-# from src.metrics import openai_errors_total, openai_requests_total, openai_response_time
 
 import operator
 import openai
@@ -33,25 +31,22 @@ import aiosqlite
 try:
     from E1_gestion_donnees.db_manager import create_db_engine
 except ImportError:
-    print("⚠️ Impossible d'importer db_manager - mode sans base de données")
+    print("Impossible d'importer db_manager - mode sans base de données")
     create_db_engine = None
 
 try:
     from src.config import DATABASE_URL, OPENAI_API_KEY
 except ImportError:
-    # Fallback pour FastAPI standalone
     import os
     DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///data/garmin_data.db')
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-# Chargement des variables d'environnement
 load_dotenv()
 api_key = OPENAI_API_KEY
 
 if not api_key:
-    raise ValueError("❌ Clé API OpenAI manquante. Assurez-vous que OPENAI_API_KEY est bien définie dans le fichier .env.")
+    raise ValueError("Clé API OpenAI manquante. Assurez-vous que OPENAI_API_KEY est bien définie dans le fichier .env.")
 
-# DÉFINIT LES DEUX MODES DE L'AGENT
 STREAMLIT_SYSTEM_PROMPT = """
 Tu es un coach sportif expert, prudent et encourageant, basé sur les données. Ton nom est "Coach Michael", mais tu précises quand tu te présentes que tu es un coach IA. Tu dois demander à l'utilisateur s'il préfère que tu sois un coach plutôt aggressif, doux, motivant, pour que tu adoptes ta personnalité en fonction de ses réponses.
 
@@ -116,27 +111,27 @@ Tu es Coach Michael, un expert en planification d'entraînement de course à pie
 
 [Continue pour toutes les semaines demandées avec progression...]
 
-**🎯 Objectif estimé :**
+**Objectif estimé :**
 [Type d'objectif réaliste à atteindre dans la durée demandée]
 
-**💡 Conseils personnalisés :**
+**Conseils personnalisés :**
     - Si une erreur d’outil survient, continue avec les éléments disponibles et précise qu’une mise à jour sera nécessaire.
 2. **Recherche expertise :** Utilise l'outil `get_training_knowledge` pour adapter le plan aux principes scientifiques.
     - Lorsque tu utilises `get_training_knowledge`, cite la source ou le concept clé utilisé (ex : "Principe de surcharge progressive").
 3. **Génération directe :** Produis IMMÉDIATEMENT un plan structuré en tableau.
 
-**⚠️ Ne fais AUCUNE SUPPOSITION :** Utilise uniquement les résultats des outils fournis.  
-**⚠️ Ne change JAMAIS la structure du tableau hebdomadaire ni l'ordre des sections.**  
-**❌ NE POSE JAMAIS DE QUESTIONS.**
+**ATTENTION : Ne fais AUCUNE SUPPOSITION :** Utilise uniquement les résultats des outils fournis.  
+**ATTENTION : Ne change JAMAIS la structure du tableau hebdomadaire ni l'ordre des sections.**  
+**INTERDIT : NE POSE JAMAIS DE QUESTIONS.**
 
 **Format OBLIGATOIRE - Génère TOUJOURS cette structure exacte :**
 
-### 📋 Plan d'entraînement personnalisé
+### Plan d'entraînement personnalisé
 
-**🎯 Analyse de votre profil :**
+**Analyse de votre profil :**
 [Résumé des métriques utilisateur en 2-3 lignes]
 
-**📅 Programme hebdomadaire :**
+**Programme hebdomadaire :**
 - Le volume hebdomadaire (nombre de jours et durée totale) doit s’adapter à la disponibilité et au niveau de l’utilisateur.
 
 | Jour | Type Séance | Durée | Description | Intensité |
@@ -149,14 +144,14 @@ Tu es Coach Michael, un expert en planification d'entraînement de course à pie
 | Samedi | Repos | - | Préparation sortie longue | Repos |
 | Dimanche | Sortie longue | 90min | Endurance fondamentale continue | Faible |
 
-**🎯 Objectif estimé (optionnel) :**
+**Objectif estimé (optionnel) :**
 [Type d’objectif réaliste à atteindre dans 6 à 8 semaines (ex : courir 10 km en moins de 55 minutes)]
 
-**💡 Conseils personnalisés :**
+**Conseils personnalisés :**
 [2-3 conseils spécifiques basés sur les données utilisateur]
 - Les conseils doivent être basés sur les métriques individuelles (ex : fréquence cardiaque élevée, manque de récupération, faible régularité).
 
-**⚠️ Recommandations importantes :**
+**Recommandations importantes :**
 - Écoutez votre corps et adaptez l'intensité si nécessaire
 - Hydratez-vous régulièrement pendant les séances
 - En cas de douleur, consultez un professionnel de santé
@@ -166,13 +161,10 @@ Tu es Coach Michael, un expert en planification d'entraînement de course à pie
 # Mode par défaut (Streamlit)
 SYSTEM_PROMPT = STREAMLIT_SYSTEM_PROMPT
 
-# Initialisation du LLM et des embeddings
 llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, api_key=api_key)
 embedding = OpenAIEmbeddings(api_key=api_key)
 
-# Chargement des documents et initialisation de la base de connaissances
 try:
-    # Chercher knowledge_base dans plusieurs emplacements possibles
     possible_paths = [
         "knowledge_base/",
         "/app/knowledge_base/", 
@@ -192,14 +184,14 @@ try:
     loader = DirectoryLoader(knowledge_base_path, glob="**/*.md", show_progress=True)
     documents = loader.load()
     if not documents:
-        rprint("[bold red]⚠️ Dossier 'knowledge_base' vide ou manquant. L'outil RAG ne fonctionnera pas.[/bold red]")
+        rprint("[bold red]Dossier 'knowledge_base' vide ou manquant. L'outil RAG ne fonctionnera pas.[/bold red]")
         knowledge_retriever = None
     else:
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         splits = text_splitter.split_documents(documents)
         vectorstore = FAISS.from_documents(documents=splits, embedding=embedding)
         knowledge_retriever = vectorstore.as_retriever()
-        rprint("[bold green]✅ Base de connaissances initialisée avec succès.[/bold green]")
+        rprint("[bold green]Base de connaissances initialisée avec succès.[/bold green]")
 except Exception as e:
     rprint(f"[bold red]Erreur lors de l'initialisation du RAG : {e}[/bold red]")
     knowledge_retriever = None
@@ -209,9 +201,9 @@ except Exception as e:
 def get_weather_forecast(location: str) -> str:
     """Renvoie la météo simulée pour un lieu donné."""
     weather_data = {
-        "Paris": "☁️ 12°C, nuageux, vent modéré",
-        "Lille": "🌤️ 15°C, ensoleillé, vent léger",
-        "Marseille": "☀️ 20°C, grand soleil, pas de vent"
+        "Paris": "12°C, nuageux, vent modéré",
+        "Lille": "15°C, ensoleillé, vent léger",
+        "Marseille": "20°C, grand soleil, pas de vent"
     }
     return weather_data.get(location, f"Météo inconnue pour {location}")
 
@@ -240,24 +232,24 @@ def get_db_engine_with_fallback():
     """
     # FORCER LE SQLITE POUR CORRIGER LE PROBLÈME TEMPORAIREMENT
     docker_env = os.getenv('DOCKER_ENV')
-    print(f"🔍 DEBUG: DOCKER_ENV={docker_env}, type={type(docker_env)}")
+    print(f"DEBUG: DOCKER_ENV={docker_env}, type={type(docker_env)}")
     
     if docker_env == 'true':
-        print("🔄 Mode Docker - utilisation directe SQLite Django...")
-        rprint("[yellow]🔄 Mode Docker - utilisation directe SQLite Django...[/yellow]")
+        print("Mode Docker - utilisation directe SQLite Django...")
+        rprint("[yellow]Mode Docker - utilisation directe SQLite Django...[/yellow]")
     else:
-        print(f"🔄 Mode local (DOCKER_ENV={docker_env}) - tentative PostgreSQL d'abord...")
+        print(f"Mode local (DOCKER_ENV={docker_env}) - tentative PostgreSQL d'abord...")
         try:
             # Essayer d'abord la configuration par défaut (PostgreSQL/SQL Server)
             engine = create_db_engine()
             # Test rapide de connexion
             with engine.connect() as conn:
                 conn.execute(sa.text("SELECT 1"))
-            rprint("[green]✅ Connexion DB principale réussie[/green]")
+            rprint("[green]Connexion DB principale réussie[/green]")
             return engine
         except Exception as e:
-            rprint(f"[yellow]⚠️ DB principale inaccessible: {e}[/yellow]")
-            rprint("[yellow]🔄 Basculement vers SQLite Django...[/yellow]")
+            rprint(f"[yellow]DB principale inaccessible: {e}[/yellow]")
+            rprint("[yellow]Basculement vers SQLite Django...[/yellow]")
         
     # Fallback vers la base SQLite Django  
     django_db_path = "/app/data/django_garmin_data.db"
@@ -268,7 +260,7 @@ def get_db_engine_with_fallback():
     if os.path.exists(django_db_path):
         sqlite_url = f"sqlite:///{django_db_path}"
         engine = sa.create_engine(sqlite_url, connect_args={'check_same_thread': False})
-        rprint(f"[green]✅ SQLite activé: {django_db_path}[/green]")
+        rprint(f"[green]SQLite activé: {django_db_path}[/green]")
         
         # Test de connexion et vérification des tables
         try:
@@ -276,19 +268,19 @@ def get_db_engine_with_fallback():
                 result = conn.execute(sa.text("SELECT name FROM sqlite_master WHERE type='table' AND name='activities_activity'"))
                 table_exists = result.fetchone()
                 if table_exists:
-                    rprint(f"[green]✅ Table activities_activity trouvée[/green]")
+                    rprint(f"[green]Table activities_activity trouvée[/green]")
                 else:
-                    rprint(f"[red]❌ Table activities_activity manquante[/red]")
+                    rprint(f"[red]Table activities_activity manquante[/red]")
                     # Afficher toutes les tables disponibles
                     result = conn.execute(sa.text("SELECT name FROM sqlite_master WHERE type='table'"))
                     tables = [row[0] for row in result.fetchall()]
-                    rprint(f"[yellow]📋 Tables disponibles: {tables}[/yellow]")
+                    rprint(f"[yellow]Tables disponibles: {tables}[/yellow]")
         except Exception as e:
-            rprint(f"[red]❌ Erreur test connexion SQLite: {e}[/red]")
+            rprint(f"[red]Erreur test connexion SQLite: {e}[/red]")
         
         return engine
     else:
-        raise Exception(f"❌ Aucune base de données accessible (ni principale ni SQLite)")
+        raise Exception(f"Aucune base de données accessible (ni principale ni SQLite)")
 
 @tool
 def get_user_metrics_from_db(user_id: int) -> str:
@@ -298,7 +290,7 @@ def get_user_metrics_from_db(user_id: int) -> str:
     """
     try:
         engine = get_db_engine_with_fallback()
-        rprint(f"[cyan]🔍 DEBUG get_user_metrics_from_db: engine={engine.url}[/cyan]")
+        rprint(f"[cyan]DEBUG get_user_metrics_from_db: engine={engine.url}[/cyan]")
         with engine.connect() as conn:
             # Essayer d'abord avec la table metrics FastAPI
             try:
@@ -314,7 +306,6 @@ def get_user_metrics_from_db(user_id: int) -> str:
             except:
                 pass
             
-            # Fallback : calculer les métriques depuis activities_activity (Django)
             # Déterminer le type de base pour adapter la requête
             if 'sqlite' in str(engine.url):
                 date_filter = "date('now', '-90 days')"
@@ -431,7 +422,7 @@ def use_tool(state: AgentState) -> AgentState:
         tool_name = call["name"]
         if tool_name in available_tools:
             tool_to_use = available_tools[tool_name]
-            rprint(f"[bold cyan]🔧 Utilisation de l'outil : {tool_to_use.name}({call['args']})[/bold cyan]")
+            rprint(f"[bold cyan]Utilisation de l'outil : {tool_to_use.name}({call['args']})[/bold cyan]")
             
             try:
                 output = tool_to_use.invoke(call["args"])
@@ -497,7 +488,7 @@ async def get_coaching_graph():
         rprint("[bold yellow]Attention : L'agent fonctionnera sans mémoire persistante.[/bold yellow]")
 
     graph = graph_builder.compile(checkpointer=checkpointer)
-    rprint("[bold green]✅ Graphe de coaching IA compilé.[/bold green]")
+    rprint("[bold green]Graphe de coaching IA compilé.[/bold green]")
     return graph
 
 
@@ -512,7 +503,7 @@ def get_coaching_graph_sync():
 # === Boucle de test CLI améliorée ===
 async def main():
     """Fonction principale asynchrone pour les tests CLI."""
-    rprint("[bold yellow]🎽 Assistant sportif intelligent prêt ! (Tape 'quit' pour sortir)[/bold yellow]")
+    rprint("[bold yellow]Assistant sportif intelligent prêt ! (Tape 'quit' pour sortir)[/bold yellow]")
     
     try:
         graph = await get_coaching_graph()
@@ -524,7 +515,7 @@ async def main():
   
     while True:
         try:
-            user_input = input("🧠 Votre question : ")
+            user_input = input("Votre question : ")
             if user_input.lower() in ("quit", "exit", "q"):
                 rprint("[bold green]À bientôt ![/bold green]")
                 break
@@ -539,7 +530,7 @@ async def main():
                     if "messages" in step and step["messages"]:
                         message = step["messages"][-1]
                         if isinstance(message, AIMessage) and message.content:
-                            rprint(f"\n🤖 [green]{message.content}[/green]")
+                            rprint(f"\nCoach IA : [green]{message.content}[/green]")
                             
         except KeyboardInterrupt:
             rprint("\n[bold yellow]Interruption par l'utilisateur.[/bold yellow]")

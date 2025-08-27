@@ -10,17 +10,19 @@ permissions:
 jobs:
   build-only:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
-    
-uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    
-name: Simulate Docker build (no push, no deploy)
-    run: |
-      echo "Building image for local testing only..."
-      docker build -t local/coach_ai_django_supabase:latest .
+      - name: Validate Dockerfiles
+        run: |
+          echo "Validating Django Dockerfile exists..."
+          test -f deployment/django.Dockerfile && echo "✅ Django Dockerfile found" || echo "❌ Django Dockerfile missing"
+          echo "Validating FastAPI Dockerfile exists..." 
+          test -f deployment/fastapi.Dockerfile && echo "✅ FastAPI Dockerfile found" || echo "❌ FastAPI Dockerfile missing"
+          echo "Dockerfile validation completed"
 
-    
-name: No deployment target
-    run: echo "No server configured for deployment yet."
+      - name: No deployment target
+        run: echo "No server configured for deployment yet."

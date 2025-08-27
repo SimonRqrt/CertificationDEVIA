@@ -48,9 +48,9 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # --- AJOUTEZ CE BLOC DE DEBUG TEMPORAIRE ---
 if OPENAI_API_KEY:
     # On affiche uniquement les 4 derniers caractères pour la sécurité
-    print(f"🔑 Clé API trouvée et chargée, se terminant par : ...{OPENAI_API_KEY[-4:]}")
+    print(f"Clé API trouvée et chargée, se terminant par : ...{OPENAI_API_KEY[-4:]}")
 else:
-    print("❌ Aucune clé API (OPENAI_API_KEY) n'a été trouvée dans l'environnement.")
+    print("Aucune clé API (OPENAI_API_KEY) n'a été trouvée dans l'environnement.")
 # --- FIN DE L'AJOUT DE DEBUG ---
 
 # Planification

@@ -100,51 +100,51 @@ def create_activity(
     """Créer une nouvelle activité"""
     try:
         engine = get_db_connection()
-    
-    query = """
-    INSERT INTO activities (
-        user_id, activity_name, activity_type, start_time,
-        duration_seconds, distance_meters, average_hr, calories
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """
-    
-    values = (
-        activity.user_id,
-        activity.activity_name,
-        activity.activity_type,
-        activity.start_time,
-        activity.duration_seconds,
-        activity.distance_meters,
-        activity.average_hr,
-        activity.calories
-    )
-    
-    with engine.connect() as conn:
-        trans = conn.begin()
-        try:
-            result = conn.execute(query, values)
-            trans.commit()
-        except Exception:
-            trans.rollback()
-            raise
         
-        new_id = result.lastrowid
+        query = """
+        INSERT INTO activities (
+            user_id, activity_name, activity_type, start_time,
+            duration_seconds, distance_meters, average_hr, calories
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """
         
-        # Retourner l'activité créée
-        log.info(f"Activité créée avec ID {new_id} pour utilisateur {activity.user_id}")
-        return {
-            "id": new_id,
-            "user_id": activity.user_id,
-            "activity_name": activity.activity_name,
-            "activity_type": activity.activity_type,
-            "start_time": activity.start_time,
-            "duration_seconds": activity.duration_seconds,
-            "distance_meters": activity.distance_meters,
-            "average_hr": activity.average_hr,
-            "calories": activity.calories,
-            "distance_km": round(activity.distance_meters / 1000, 2),
-            "duration_formatted": f"{activity.duration_seconds // 3600:02d}:{(activity.duration_seconds % 3600) // 60:02d}:{activity.duration_seconds % 60:02d}"
-        }
+        values = (
+            activity.user_id,
+            activity.activity_name,
+            activity.activity_type,
+            activity.start_time,
+            activity.duration_seconds,
+            activity.distance_meters,
+            activity.average_hr,
+            activity.calories
+        )
+        
+        with engine.connect() as conn:
+            trans = conn.begin()
+            try:
+                result = conn.execute(query, values)
+                trans.commit()
+            except Exception:
+                trans.rollback()
+                raise
+            
+            new_id = result.lastrowid
+            
+            # Retourner l'activité créée
+            log.info(f"Activité créée avec ID {new_id} pour utilisateur {activity.user_id}")
+            return {
+                "id": new_id,
+                "user_id": activity.user_id,
+                "activity_name": activity.activity_name,
+                "activity_type": activity.activity_type,
+                "start_time": activity.start_time,
+                "duration_seconds": activity.duration_seconds,
+                "distance_meters": activity.distance_meters,
+                "average_hr": activity.average_hr,
+                "calories": activity.calories,
+                "distance_km": round(activity.distance_meters / 1000, 2),
+                "duration_formatted": f"{activity.duration_seconds // 3600:02d}:{(activity.duration_seconds % 3600) // 60:02d}:{activity.duration_seconds % 60:02d}"
+            }
         
     except Exception as e:
         log.error(f"Erreur création activité: {e}")

@@ -27,12 +27,12 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(ai_request_duration_seconds_bucket[2m]))",
+          "expr": "histogram_quantile(0.95, rate(openai_response_time_seconds_bucket[2m]))",
           "legendFormat": "P95 Temps réponse",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.50, rate(ai_request_duration_seconds_bucket[2m]))", 
+          "expr": "histogram_quantile(0.50, rate(openai_response_time_seconds_bucket[2m]))", 
           "legendFormat": "P50 Temps réponse",
           "refId": "B"
         }
@@ -62,12 +62,12 @@
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
       "targets": [
         {
-          "expr": "rate(ai_requests_total[2m]) * 60",
+          "expr": "rate(openai_requests_total[2m]) * 60",
           "legendFormat": "Requêtes/min",
           "refId": "A"
         },
         {
-          "expr": "rate(ai_requests_total{status=\"500\"}[2m]) * 60",
+          "expr": "rate(openai_errors_total[2m]) * 60",
           "legendFormat": "Erreurs/min",
           "refId": "B"
         }
@@ -91,8 +91,8 @@
           "refId": "A"
         },
         {
-          "expr": "up{job=\"coach-django\"}",
-          "legendFormat": "Django Backend",
+          "expr": "up{job=\"coach-ai-metrics\"}",
+          "legendFormat": "Metrics Server",
           "refId": "B"
         }
       ],

@@ -167,8 +167,8 @@ def simulate_user_activity():
 
 if __name__ == "__main__":
     import uvicorn
-    print("🚀 Démarrage Coach AI API avec monitoring complet...")
-    print("📊 Métriques disponibles sur: http://localhost:8000/metrics")
-    print("💬 Chat IA: POST http://localhost:8000/chat")
-    print("🏃 Plans: POST http://localhost:8000/generate-plan")
+    print("Démarrage Coach AI API avec monitoring complet...")
+    print("Métriques disponibles sur: http://localhost:8000/metrics")
+    print("Chat IA: POST http://localhost:8000/chat")
+    print("Plans: POST http://localhost:8000/generate-plan")
     uvicorn.run(app, host="0.0.0.0", port=8000)

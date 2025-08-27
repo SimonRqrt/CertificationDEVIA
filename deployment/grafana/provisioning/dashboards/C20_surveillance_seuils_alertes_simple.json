@@ -1,0 +1,239 @@
+{
+  "id": null,
+  "title": "Coach AI - Surveillance Seuils Simplifié (C20)",
+  "description": "Dashboard surveilleance avec seuils et alertes basé sur métriques disponibles",
+  "tags": ["coach-ai", "c20", "surveillance", "alertes", "seuils"],
+  "timezone": "browser",
+  "refresh": "15s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "🚨 État des Alertes - Vue d'Ensemble",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "up{job=\"coach-api-fastapi\"} == 0",
+          "legendFormat": "Service FastAPI Indisponible",
+          "refId": "A"
+        },
+        {
+          "expr": "up{job=\"coach-django\"} == 0",
+          "legendFormat": "Service Django Indisponible",
+          "refId": "B"
+        },
+        {
+          "expr": "(node_load1{job=\"node\"} > 2) * 1",
+          "legendFormat": "Charge Système Élevée",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [
+            {"options": {"0": {"text": "✅ OK", "color": "green"}}, "type": "value"},
+            {"options": {"1": {"text": "🚨 ALERTE", "color": "red"}}, "type": "value"}
+          ],
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "red", "value": 1}
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"]
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "🔥 Seuil Mémoire (85% critique)",
+      "type": "gauge",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 4},
+      "targets": [
+        {
+          "expr": "(1 - (node_memory_MemAvailable_bytes{job=\"node\"} / node_memory_MemTotal_bytes{job=\"node\"})) * 100",
+          "legendFormat": "Utilisation Mémoire %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 70},
+              {"color": "orange", "value": 85},
+              {"color": "red", "value": 95}
+            ]
+          }
+        }
+      },
+      "options": {
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 3,
+      "title": "⚡ Seuil CPU (80% critique)",
+      "type": "gauge", 
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 4},
+      "targets": [
+        {
+          "expr": "(1 - (avg(irate(node_cpu_seconds_total{job=\"node\",mode=\"idle\"}[5m])))) * 100",
+          "legendFormat": "Utilisation CPU %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 60},
+              {"color": "orange", "value": 80},
+              {"color": "red", "value": 90}
+            ]
+          }
+        }
+      },
+      "options": {
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 4,
+      "title": "🌐 Disponibilité Services (99% SLA)",
+      "type": "gauge",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 4},
+      "targets": [
+        {
+          "expr": "avg_over_time(up{job=\"coach-api-fastapi\"}[1h]) * 100",
+          "legendFormat": "FastAPI Uptime %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "unit": "percent",
+          "min": 95,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 95},
+              {"color": "yellow", "value": 98},
+              {"color": "green", "value": 99}
+            ]
+          }
+        }
+      },
+      "options": {
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 5,
+      "title": "📈 Historique des Alertes",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "targets": [
+        {
+          "expr": "(1 - (node_memory_MemAvailable_bytes{job=\"node\"} / node_memory_MemTotal_bytes{job=\"node\"})) * 100",
+          "legendFormat": "Mémoire %",
+          "refId": "A"
+        },
+        {
+          "expr": "(1 - (avg(irate(node_cpu_seconds_total{job=\"node\",mode=\"idle\"}[5m])))) * 100",
+          "legendFormat": "CPU %",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              {"color": "transparent"},
+              {"color": "yellow", "value": 70},
+              {"color": "red", "value": 85}
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Mémoire %"},
+            "properties": [
+              {"id": "thresholds", "value": {
+                "steps": [
+                  {"color": "transparent"},
+                  {"color": "yellow", "value": 70},
+                  {"color": "red", "value": 85}
+                ]
+              }}
+            ]
+          }
+        ]
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "none"}
+      }
+    },
+    {
+      "id": 6,
+      "title": "📊 Métriques IA avec Seuils",
+      "type": "timeseries", 
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "targets": [
+        {
+          "expr": "ai_requests_total",
+          "legendFormat": "Requêtes IA (Total)",
+          "refId": "A"
+        },
+        {
+          "expr": "ai_cost_usd_total",
+          "legendFormat": "Coût USD",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(http_requests_total{job=\"coach-api-fastapi\"}[5m]) * 60",
+          "legendFormat": "Requêtes HTTP/min",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "short"
+        }
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "none"}
+      }
+    }
+  ],
+  "version": 1
+}

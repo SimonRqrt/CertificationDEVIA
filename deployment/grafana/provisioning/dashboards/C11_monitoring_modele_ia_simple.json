@@ -1,0 +1,152 @@
+{
+  "id": null,
+  "title": "Coach AI - Monitoring IA Simplifié (C11)",
+  "description": "Dashboard simplifié pour monitoring IA avec métriques fonctionnelles",
+  "tags": ["coach-ai", "c11", "modele-ia", "monitoring"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "🤖 État des Services Coach AI",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 24, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "up{job=\"coach-api-fastapi\"}",
+          "legendFormat": "FastAPI IA",
+          "refId": "A"
+        },
+        {
+          "expr": "up{job=\"coach-django\"}",
+          "legendFormat": "Django Interface",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [
+            {"options": {"0": {"text": "🔴 OFFLINE", "color": "red"}}, "type": "value"},
+            {"options": {"1": {"text": "🟢 ONLINE", "color": "green"}}, "type": "value"}
+          ],
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "green", "value": 1}
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"]
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "📊 Activité HTTP FastAPI (Proxy métriques IA)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{job=\"coach-api-fastapi\"}[5m]) * 60",
+          "legendFormat": "Requêtes/min",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "reqps"
+        }
+      }
+    },
+    {
+      "id": 3, 
+      "title": "⚡ Performance Système FastAPI",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"coach-api-fastapi\"}[5m]) * 100",
+          "legendFormat": "CPU %",
+          "refId": "A"
+        },
+        {
+          "expr": "process_resident_memory_bytes{job=\"coach-api-fastapi\"} / 1024 / 1024",
+          "legendFormat": "RAM MB",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "percent"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "🔢 Métriques IA Disponibles",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 14},
+      "targets": [
+        {
+          "expr": "ai_requests_total",
+          "legendFormat": "Requêtes IA Total",
+          "refId": "A"
+        },
+        {
+          "expr": "ai_cost_usd_total",
+          "legendFormat": "Coût USD",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "short"
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "orientation": "horizontal"
+      }
+    },
+    {
+      "id": 5,
+      "title": "🎯 Status Services (Node Exporter)",
+      "type": "timeseries",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 14},
+      "targets": [
+        {
+          "expr": "node_load1{job=\"node\"}",
+          "legendFormat": "Load Average 1m",
+          "refId": "A"
+        },
+        {
+          "expr": "(1 - (node_memory_MemAvailable_bytes{job=\"node\"} / node_memory_MemTotal_bytes{job=\"node\"})) * 100",
+          "legendFormat": "Memory Usage %",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "percent"
+        }
+      }
+    }
+  ],
+  "version": 1
+}

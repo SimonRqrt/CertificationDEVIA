@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.responses import StreamingResponse
-# 🔧 SOLUTION DIRECTE: Métriques sans CallbackHandler 
+# SOLUTION DIRECTE: Métriques sans CallbackHandler 
 from prometheus_client import Counter
 from direct_metrics import collect_openai_metrics
 
@@ -199,7 +199,7 @@ async def generate_training_plan_advanced(
         # Incrémenter la métrique de plans générés + collecter métriques OpenAI
         training_plans_generated.inc()
         
-        # 🔧 SOLUTION DIRECTE: Collecter métriques OpenAI après génération
+        # SOLUTION DIRECTE: Collecter métriques OpenAI après génération
         collect_openai_metrics(
             endpoint="/api/plan-generation",
             duration=generation_time,

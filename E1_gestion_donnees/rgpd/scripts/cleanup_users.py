@@ -86,7 +86,7 @@ class UserCleanupService:
             sont automatiquement supprimés.
             
             Pour conserver votre compte et vos données d'entraînement :
-            👉 Connectez-vous avant le {(timezone.now() + timedelta(days=700)).strftime('%d/%m/%Y')}
+            Connectez-vous avant le {(timezone.now() + timedelta(days=700)).strftime('%d/%m/%Y')}
             
             Lien de connexion : https://coach-ia.app/login/
             
@@ -263,7 +263,7 @@ Seuils appliqués:
 - Alerte inactivité: >30 jours
 - Suppression compte: >365 jours
 
-Conformité RGPD: ✅ Respectée
+Conformité RGPD: Respectée
 Traçabilité: /var/log/rgpd/audit_users.jsonl
         """
         
