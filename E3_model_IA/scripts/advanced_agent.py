@@ -45,7 +45,15 @@ load_dotenv()
 api_key = OPENAI_API_KEY
 
 # Allow running without API key in test environments
-if not api_key and not os.getenv("PYTEST_CURRENT_TEST"):
+# Check for pytest or CI environment
+is_test_env = (
+    os.getenv("PYTEST_CURRENT_TEST") or 
+    "pytest" in sys.modules or 
+    os.getenv("CI") or 
+    os.getenv("GITHUB_ACTIONS")
+)
+
+if not api_key and not is_test_env:
     raise ValueError("Clé API OpenAI manquante. Assurez-vous que OPENAI_API_KEY est bien définie dans le fichier .env.")
 
 STREAMLIT_SYSTEM_PROMPT = """
