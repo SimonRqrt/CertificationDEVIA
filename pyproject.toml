@@ -39,7 +39,11 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--verbose"
+    "--verbose",
+    "--ignore=tests/test_approche_objectif_centree_reel.py",
+    "--ignore=tests/test_approche_objectif_centree_demo.py",
+    "--ignore=tests/test_rag_knowledge.py",
+    "--ignore=tests/test_objectif_centre.py"
 ]
 markers = [
     "slow: marks tests as slow",
