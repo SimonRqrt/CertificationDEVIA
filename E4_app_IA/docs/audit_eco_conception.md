@@ -1,16 +1,16 @@
 # Audit Éco-conception - Coach IA
 
-## 📊 Évaluation selon Référentiel Green IT
+## Évaluation selon Référentiel Green IT
 
 ### 1. **Optimisation des Ressources Serveur**
 
-#### ✅ Mesures Implémentées
+#### Mesures Implémentées
 - **Cache Redis** : Réduction 60% requêtes DB
 - **Pagination** : Limitée à 20 éléments/page
 - **Requêtes SQL optimisées** : Index sur user_id, date_created
 - **Connection pooling** : PostgreSQL avec max_connections=100
 
-#### 🔧 Améliorations Immédiates
+#### Améliorations Immédiates
 ```python
 # Configuration Django optimisée
 DATABASES = {
@@ -29,12 +29,12 @@ STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesSto
 
 ### 2. **Optimisation Frontend**
 
-#### ✅ Mesures Implémentées
+#### Mesures Implémentées
 - **CSS minifié** : style.css optimisé
 - **Fonts locales** : Inter font hébergée localement
 - **Images optimisées** : Format WebP quand supporté
 
-#### 🔧 Ajouts Éco-responsables
+#### Ajouts Éco-responsables
 ```css
 /* Réduction consommation GPU */
 .btn-primary {
@@ -50,11 +50,11 @@ STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesSto
 
 ### 3. **Optimisation IA et Calculs**
 
-#### ✅ Mesures Existantes
+#### Mesures Existantes
 - **Cache résultats IA** : 24h dans Redis
 - **Batch processing** : Analyse groupée des activités
 
-#### 🔧 Optimisations Supplémentaires
+#### Optimisations Supplémentaires
 ```python
 # Lazy loading pour modèles IA
 @lru_cache(maxsize=100)
@@ -71,7 +71,7 @@ MIDDLEWARE = [
 
 ### 4. **Monitoring Éco-responsable**
 
-#### 📊 Métriques Green IT Ajoutées
+#### Métriques Green IT Ajoutées
 ```python
 # metrics.py - Nouvelles métriques environnementales
 from prometheus_client import Counter, Histogram, Gauge
@@ -88,12 +88,12 @@ network_transfer_bytes = Counter('network_transfer_total_bytes', 'Octets transf�
 
 ### 5. **Audit Éco-Index**
 
-#### 📈 Score Éco-Index Cible
+#### Score Éco-Index Cible
 - **Objectif** : Grade A (score < 30)
 - **Actuel estimé** : Grade B (score ~45)
 - **Amélioration** : -33% consommation
 
-#### 🎯 Actions Prioritaires
+#### Actions Prioritaires
 1. **Réduction DOM** : <500 éléments par page
 2. **Compression images** : WebP + lazy loading
 3. **Minification JS/CSS** : Webpack optimization
@@ -101,7 +101,7 @@ network_transfer_bytes = Counter('network_transfer_total_bytes', 'Octets transf�
 
 ### 6. **Infrastructure Verte**
 
-#### 🌍 Choix Hébergement Éco-responsable
+#### Choix Hébergement Éco-responsable
 ```yaml
 # docker-compose.yml - Configuration éco-optimisée
 version: '3.8'
@@ -121,14 +121,14 @@ services:
       - COMPRESS_ENABLED=True
 ```
 
-#### ☁️ Cloud Provider Vert
+#### Cloud Provider Vert
 - **OVH Cloud** : 100% énergie renouvelable
 - **Scaleway** : Datacenters refroidissement naturel
 - **AWS Green** : Instances graviton (ARM) -20% consommation
 
 ### 7. **Développement Durable**
 
-#### 📝 Bonnes Pratiques Équipe
+#### Bonnes Pratiques Équipe
 ```markdown
 ## Guidelines Éco-développement
 
@@ -149,7 +149,7 @@ services:
 
 ### 8. **Mesure Impact Carbone**
 
-#### 📊 Calculateur Empreinte Carbone
+#### Calculateur Empreinte Carbone
 ```python
 # Estimation consommation CO2
 def calculate_carbon_footprint(requests_per_day):
@@ -175,12 +175,12 @@ def calculate_carbon_footprint(requests_per_day):
 
 ### 9. **Certification et Conformité**
 
-#### 🏆 Certifications Visées
+#### Certifications Visées
 - **GR491** : Référentiel numérique responsable
 - **ISO 14001** : Système management environnemental
 - **RGES** : Référentiel général éco-conception services numériques
 
-#### 📋 Plan d'Action 2025
+#### Plan d'Action 2025
 | Mois | Action | Impact CO2 |
 |------|--------|------------|
 | Fév  | Migration CDN vert | -15% |
@@ -191,13 +191,13 @@ def calculate_carbon_footprint(requests_per_day):
 
 ### 10. **ROI Éco-conception**
 
-#### 💰 Bénéfices Économiques
+#### Bénéfices Économiques
 - **Réduction coûts serveur** : -40% facture cloud
 - **Amélioration performance** : +60% satisfaction utilisateur
 - **SEO vert** : +25% ranking Google (Core Web Vitals)
 - **Image de marque** : Différenciation concurrentielle
 
-#### 📈 Métriques de Succès
+#### Métriques de Succès
 - Score Éco-Index : **< 30 (Grade A)**
 - Temps de chargement : **< 2 secondes**
 - Empreinte carbone : **< 50g CO2/utilisateur/mois**
