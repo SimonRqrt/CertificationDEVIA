@@ -14,7 +14,12 @@ project_root = Path(__file__).resolve().parent.parent
 
 # --- Imports de votre logique métier ---
 # MODIFICATION: On importe les nouvelles fonctions et dépendances
-from E1_gestion_donnees.data_manager import fetch_and_process_garmin_data, compute_performance_metrics, fetch_and_store_splits
+from E1_gestion_donnees.data_manager import (
+    fetch_and_process_garmin_data,
+    compute_performance_metrics,
+    fetch_and_store_splits,
+)
+from src.config import GARMIN_EMAIL, GARMIN_PASSWORD
 from E1_gestion_donnees.db_manager import (
     create_db_engine, 
     create_tables, 
@@ -66,14 +71,19 @@ def run_garmin_data_pipeline(user: int):
         log.info("Étape 1B: Récupération et stockage des splits pour chaque activité.")
         engine = create_db_engine()
         tables = create_tables(engine)
-        # On doit récupérer le client Garmin et la liste d'activités brutes
-        from garminconnect import Garmin
-        garmin_client = Garmin(GARMIN_EMAIL, GARMIN_PASSWORD)
-        garmin_client.login()
-        # Récupère toutes les activités brutes (non processées)
-        from E1_gestion_donnees.data_manager import get_all_garmin_activities
-        activities_raw = get_all_garmin_activities(garmin_client)
-        fetch_and_store_splits(garmin_client, engine, tables, activities_raw)
+        # Tente uniquement si connexion Garmin possible; sinon on ignore proprement
+        try:
+            from garminconnect import Garmin
+            if GARMIN_EMAIL and GARMIN_PASSWORD:
+                garmin_client = Garmin(GARMIN_EMAIL, GARMIN_PASSWORD)
+                garmin_client.login()
+                from E1_gestion_donnees.data_manager import get_all_garmin_activities
+                activities_raw = get_all_garmin_activities(garmin_client)
+                fetch_and_store_splits(garmin_client, engine, tables, activities_raw)
+            else:
+                log.warning("Identifiants Garmin absents; Étape splits ignorée.")
+        except Exception:
+            log.warning("Impossible de récupérer les splits (connexion Garmin échouée). Étape 1B ignorée.")
 
         # --- ÉTAPE 2: STOCKAGE DES ACTIVITÉS TRAITÉES ---
         log.info("Étape 2/4: Connexion à la base de données et stockage des activités.")

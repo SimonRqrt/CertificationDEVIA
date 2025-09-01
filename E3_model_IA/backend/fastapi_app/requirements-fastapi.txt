@@ -5,6 +5,7 @@ pydantic
 
 # Monitoring
 prometheus_client
+slowapi
 
 # Django pour l'authentification
 Django==4.2.7

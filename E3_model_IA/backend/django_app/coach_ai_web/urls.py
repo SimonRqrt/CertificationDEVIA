@@ -110,7 +110,7 @@ urlpatterns = [
     path('api/v1/core/', include('core.urls')),
 
     path("metrics/", metrics_views),
-    path('', include('django_prometheus.urls')),
+    # path('', include('django_prometheus.urls')),
     
     # Route directe de test pour dashboard
     path('dashboard-test/', lambda r: HttpResponse('<h1>Test Dashboard</h1><a href="/admin/">Admin</a>')),

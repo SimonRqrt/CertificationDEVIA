@@ -63,7 +63,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'django_extensions',
-    'django_prometheus',
+    # 'django_prometheus',  # désactivé: package non présent dans l'image actuelle
     'drf_yasg',
     
     # Local apps

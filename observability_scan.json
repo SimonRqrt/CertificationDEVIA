@@ -1,0 +1,231 @@
+{
+  "endpoints": [
+    {
+      "path": "/v1/coaching/chat",
+      "method": "POST",
+      "file": "E3_model_IA/backend/fastapi_app/routers/coaching.py",
+      "lines": [25, 39],
+      "streaming": true,
+      "calls": [
+        {
+          "type": "langgraph",
+          "symbol": "AIService.chat_stream",
+          "file": "E3_model_IA/backend/fastapi_app/services/ai_service.py",
+          "line": 17
+        }
+      ],
+      "labels": ["endpoint", "model", "mode", "status"]
+    },
+    {
+      "path": "/v1/coaching/chat-legacy",
+      "method": "POST",
+      "file": "E3_model_IA/backend/fastapi_app/routers/coaching.py",
+      "lines": [41, 56],
+      "streaming": true,
+      "calls": [
+        {
+          "type": "langgraph",
+          "symbol": "AIService.chat_legacy_stream",
+          "file": "E3_model_IA/backend/fastapi_app/services/ai_service.py",
+          "line": 68
+        }
+      ],
+      "labels": ["endpoint", "model", "mode", "status"]
+    },
+    {
+      "path": "/v1/coaching/generate-training-plan",
+      "method": "POST",
+      "file": "E3_model_IA/backend/fastapi_app/routers/coaching.py",
+      "lines": [58, 81],
+      "streaming": false,
+      "calls": [
+        {
+          "type": "langgraph",
+          "symbol": "AIService.generate_training_plan",
+          "file": "E3_model_IA/backend/fastapi_app/services/ai_service.py",
+          "line": 91
+        }
+      ],
+      "labels": ["endpoint", "model", "mode", "status"]
+    },
+    {
+      "path": "/v1/coaching/generate-training-plan-advanced",
+      "method": "POST",
+      "file": "E3_model_IA/backend/fastapi_app/routers/coaching.py",
+      "lines": [82, 278],
+      "streaming": false,
+      "calls": [
+        {
+          "type": "langgraph",
+          "symbol": "coaching_agent.astream",
+          "file": "E3_model_IA/backend/fastapi_app/routers/coaching.py",
+          "line": 171
+        }
+      ],
+      "labels": ["endpoint", "model", "mode", "status"]
+    },
+    {
+      "path": "/v1/coaching/chat",
+      "method": "POST",
+      "file": "E3_model_IA/backend/fastapi_app/api_service.py",
+      "lines": [152, 209],
+      "streaming": true,
+      "calls": [
+        {
+          "type": "langgraph",
+          "symbol": "coaching_agent.astream",
+          "file": "E3_model_IA/backend/fastapi_app/api_service.py",
+          "line": 191
+        }
+      ],
+      "labels": ["endpoint", "model", "mode", "status"]
+    },
+    {
+      "path": "/v1/coaching/chat-legacy",
+      "method": "POST",
+      "file": "E3_model_IA/backend/fastapi_app/api_service.py",
+      "lines": [212, 239],
+      "streaming": true,
+      "calls": [
+        {
+          "type": "langgraph",
+          "symbol": "coaching_agent.astream",
+          "file": "E3_model_IA/backend/fastapi_app/api_service.py",
+          "line": 229
+        }
+      ],
+      "labels": ["endpoint", "model", "mode", "status"]
+    },
+    {
+      "path": "/v1/coaching/generate-training-plan",
+      "method": "POST",
+      "file": "E3_model_IA/backend/fastapi_app/api_service.py",
+      "lines": [273, 332],
+      "streaming": false,
+      "calls": [
+        {
+          "type": "langgraph",
+          "symbol": "coaching_agent.invoke",
+          "file": "E3_model_IA/backend/fastapi_app/api_service.py",
+          "line": 305
+        }
+      ],
+      "labels": ["endpoint", "model", "mode", "status"]
+    },
+    {
+      "path": "/v1/coaching/generate-training-plan-advanced",
+      "method": "POST",
+      "file": "E3_model_IA/backend/fastapi_app/api_service.py",
+      "lines": [338, 514],
+      "streaming": false,
+      "calls": [
+        {
+          "type": "langgraph",
+          "symbol": "coaching_agent.astream",
+          "file": "E3_model_IA/backend/fastapi_app/api_service.py",
+          "line": 420
+        }
+      ],
+      "labels": ["endpoint", "model", "mode", "status"]
+    }
+  ],
+  "stream_points": [
+    {
+      "file": "E3_model_IA/backend/fastapi_app/services/ai_service.py",
+      "function": "chat_stream",
+      "yield_lines": [56, 66],
+      "abort_catch_lines": []
+    },
+    {
+      "file": "E3_model_IA/backend/fastapi_app/services/ai_service.py",
+      "function": "chat_legacy_stream",
+      "yield_lines": [88, 89],
+      "abort_catch_lines": []
+    },
+    {
+      "file": "E3_model_IA/backend/fastapi_app/routers/coaching.py",
+      "function": "chat_with_coach.stream_response",
+      "yield_lines": [36],
+      "abort_catch_lines": []
+    },
+    {
+      "file": "E3_model_IA/backend/fastapi_app/routers/coaching.py",
+      "function": "chat_with_coach_legacy.stream_response",
+      "yield_lines": [54],
+      "abort_catch_lines": []
+    },
+    {
+      "file": "E3_model_IA/backend/fastapi_app/api_service.py",
+      "function": "chat_with_coach.stream_response",
+      "yield_lines": [199, 207],
+      "abort_catch_lines": []
+    },
+    {
+      "file": "E3_model_IA/backend/fastapi_app/api_service.py",
+      "function": "chat_with_coach_legacy.stream_response",
+      "yield_lines": [236, 237],
+      "abort_catch_lines": []
+    }
+  ],
+  "callbacks": [
+    {
+      "file": "E3_model_IA/backend/fastapi_app/prometheus_callback.py",
+      "class": "FastAPIPrometheusCallback",
+      "hooks": ["on_llm_start", "on_llm_end", "on_llm_error"],
+      "registered_in": "E3_model_IA/backend/fastapi_app/services/ai_service.py:26-31"
+    }
+  ],
+  "provider": {
+    "file": "E3_model_IA/scripts/advanced_agent.py",
+    "factory_function": "make_llm",
+    "timeout_s": null,
+    "retry_policy": "none",
+    "cost_computation": "usage-based",
+    "token_usage_source": "response.llm_output.token_usage"
+  },
+  "rate_limit": {
+    "file": "E3_model_IA/backend/fastapi_app/middleware/rate_limit.py",
+    "returns_429": true,
+    "lines": [18, 22]
+  },
+  "auth": {
+    "file": "E3_model_IA/backend/fastapi_app/fastapi_auth_middleware.py",
+    "jwt_library": "other",
+    "error_paths": [
+      {"status": 401, "lines": [27, 41]},
+      {"status": 403, "lines": [65, 67]}
+    ]
+  },
+  "dependencies": [
+    {"name": "postgres_django", "file": "E3_model_IA/backend/fastapi_app/django_db_connector.py", "ping_fn": "test_connection", "lines": [212, 235]}
+  ],
+  "cache": [],
+  "workers": [],
+  "metrics_export": {
+    "file": "E3_model_IA/backend/fastapi_app/main.py",
+    "registry_var": "app_registry",
+    "exposed_at": "E3_model_IA/backend/fastapi_app/main.py:/metrics",
+    "uses_generate_latest_app_registry": false
+  },
+  "config_env": {
+    "files": [
+      "src/config.py",
+      "E3_model_IA/backend/fastapi_app/config/settings.py",
+      "E3_model_IA/scripts/advanced_agent.py"
+    ],
+    "models": ["gpt-3.5-turbo"],
+    "timeouts": {"provider": null, "http": null}
+  },
+  "gaps": [
+    "Metrics endpoint uses default registry instead of app_registry",
+    "No rate_limit 429 metric increments",
+    "No auth failure metrics (401/403)",
+    "No dependency up/latency metrics",
+    "Streaming lacks abort/cancellation handling",
+    "Callbacks registered only in AIService.chat_stream; other paths miss token/cost metrics",
+    "No explicit OpenAI retry/timeout policy",
+    "Duplicate metric definitions across files increase risk of conflicts"
+  ]
+}
+
+

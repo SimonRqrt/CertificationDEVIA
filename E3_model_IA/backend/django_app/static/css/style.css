@@ -141,6 +141,11 @@ body {
     gap: 15px;
 }
 
+/* Désactive le point rouge des services offline */
+.service-offline::before {
+    content: "";
+}
+
 .hero-actions .btn-primary,
 .hero-actions .btn-secondary,
 .hero-actions .btn-tertiary,

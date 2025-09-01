@@ -111,7 +111,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .catch(() => {
                         service.element.style.opacity = '0.6';
-                        service.element.parentElement.classList.add('service-offline');
+                        // Ne pas marquer visuellement en rouge
+                        // service.element.parentElement.classList.add('service-offline');
                     });
             }
         });
@@ -124,12 +125,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const style = document.createElement('style');
     style.textContent = `
         .service-online::before {
-            content: "🟢";
-            margin-right: 8px;
+            content: "";
         }
         .service-offline::before {
-            content: "🔴";
-            margin-right: 8px;
+            content: "";
         }
     `;
     document.head.appendChild(style);

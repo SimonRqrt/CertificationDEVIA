@@ -3,6 +3,7 @@ from typing import List, Dict, Any
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+import numpy as np
 
 from src.config import DATABASE_URL
 
@@ -158,7 +159,7 @@ def create_tables(engine) -> Dict[str, sa.Table]:
     )
 
     try:
-        metadata.create_all(engine)
+        metadata.create_all(engine, checkfirst=True)
         log.info("Vérification des tables terminée. Les tables sont prêtes.")
     except Exception as e:
         log.error("Erreur lors de la création des tables.", exc_info=True)
@@ -249,7 +250,28 @@ def store_metrics_in_db(engine, tables: Dict, metrics_data: Dict[str, Any]):
         log.warning("Aucune donnée de métrique à stocker.")
         return
 
+    # Convertir proprement les scalaires numpy/pandas vers types Python natifs
+    def _to_native(value):
+        try:
+            # Numpy scalars -> Python
+            if isinstance(value, (np.generic,)):
+                return value.item()
+        except Exception:
+            pass
+        # Pandas Timestamp -> datetime
+        if hasattr(value, "to_pydatetime"):
+            try:
+                return value.to_pydatetime()
+            except Exception:
+                pass
+        if isinstance(value, dict):
+            return {k: _to_native(v) for k, v in value.items()}
+        if isinstance(value, (list, tuple)):
+            return type(value)(_to_native(v) for v in value)
+        return value
+
     metrics_table = tables["metrics"]
+    metrics_data = _to_native(metrics_data)
     user_id = metrics_data["user_id"]
     date_calcul = metrics_data["date_calcul"]
 

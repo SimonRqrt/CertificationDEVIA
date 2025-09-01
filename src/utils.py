@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 import pandas as pd
 from pathlib import Path
-from .config import DATA_DIR, LOG_LEVEL
+from src.config import DATA_DIR, LOG_LEVEL
 
 def setup_logger(name="garmin_data", level=LOG_LEVEL):
     log_levels = {

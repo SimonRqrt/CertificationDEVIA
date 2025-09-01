@@ -5,9 +5,9 @@ Endpoints activités
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
-from utils.models import Activity, ActivityResponse, PaginatedResponse
-from utils.auth import verify_jwt_token
-from utils.database import get_db_connection
+from E1_gestion_donnees.api_rest.utils.models import Activity, ActivityResponse, PaginatedResponse
+from E1_gestion_donnees.api_rest.utils.auth import verify_jwt_token
+from E1_gestion_donnees.api_rest.utils.database import get_db_connection
 
 log = logging.getLogger(__name__)
 

@@ -18,7 +18,18 @@ except ImportError:
 def setup_rate_limiting(app):
     if RATE_LIMITING_AVAILABLE and limiter:
         app.state.limiter = limiter
-        app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+        # Intercepte 429 pour incrémenter la métrique RATE_LIMIT_HITS
+        from E3_model_IA.backend.fastapi_app.src.metrics import RATE_LIMIT_HITS
+
+        def rate_limit_handler(request, exc):
+            try:
+                endpoint = request.url.path
+                RATE_LIMIT_HITS.labels(endpoint).inc()
+            except Exception:
+                pass
+            return _rate_limit_exceeded_handler(request, exc)
+
+        app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
         return limiter
     else:
         app.state.limiter = None

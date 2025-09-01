@@ -5,12 +5,13 @@ Application FastAPI modulaire - Point d'entrée principal
 import os
 import sys
 from contextlib import asynccontextmanager
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
-from prometheus_client import generate_latest, Counter
+from prometheus_client import generate_latest, Counter, REGISTRY
 from rich import print as rprint
 
 # Add project root to Python path
@@ -34,6 +35,12 @@ from E3_model_IA.scripts.advanced_agent import get_coaching_graph
 
 # SOLUTION DÉFINITIVE: Métriques AI intégrées dans FastAPI (registre séparé)
 from prometheus_client import Counter, Histogram, CollectorRegistry
+import time
+from E3_model_IA.backend.fastapi_app.src.metrics import (
+    instrument_app,
+    AGENT_TOKENS, STREAM_CHUNKS, STREAM_ABORTS,
+    RATE_LIMIT_HITS, DEP_UP, DEP_LAT,
+)
 
 # Registre séparé pour éviter les conflits avec l'agent IA
 app_registry = CollectorRegistry()
@@ -75,11 +82,46 @@ async def lifespan(app: FastAPI):
 
     # Connexion à PostgreSQL Django
     app.state.db_connector = db_connector
+    _db_check_start = time.perf_counter()
     connection_test = db_connector.test_connection()
+    _db_check_dur = time.perf_counter() - _db_check_start
+    # Publier métriques dépendance (pour dashboard DB up / latence)
+    try:
+        DEP_LAT.labels("postgres_django").observe(_db_check_dur)
+        if connection_test['status'] == 'connected':
+            DEP_UP.labels("postgres_django").set(1)
+        else:
+            DEP_UP.labels("postgres_django").set(0)
+    except Exception as _e:
+        rprint(f"[yellow]Impossible de publier dependency_*: {_e}[/yellow]")
     if connection_test['status'] == 'connected':
         rprint(f"[green]PostgreSQL Django connectée: {connection_test['total_activities']} activités[/green]")
     else:
         rprint(f"[red]Erreur connexion PostgreSQL: {connection_test['error']}[/red]")
+
+    # Heartbeat DB: sonde toutes les 30s pour alimenter DEP_LAT/DEP_UP
+    async def _db_heartbeat_task():
+        while True:
+            try:
+                start = time.perf_counter()
+                # Exécuter un SELECT 1 léger
+                engine = app.state.db_connector.get_engine()
+                with engine.connect() as conn:
+                    conn.exec_driver_sql("SELECT 1")
+                dur = time.perf_counter() - start
+                try:
+                    DEP_LAT.labels("postgres_django").observe(dur)
+                    DEP_UP.labels("postgres_django").set(1)
+                except Exception:
+                    pass
+            except Exception:
+                try:
+                    DEP_UP.labels("postgres_django").set(0)
+                except Exception:
+                    pass
+            await asyncio.sleep(30)
+
+    app.state.db_heartbeat = asyncio.create_task(_db_heartbeat_task())
 
     # Initialisation de l'agent IA
     coaching_agent = await get_coaching_graph()
@@ -94,6 +136,10 @@ async def lifespan(app: FastAPI):
     yield
 
     rprint("[yellow]Arrêt de l'application modulaire...[/yellow]")
+    # Arrêt heartbeat
+    hb = getattr(app.state, "db_heartbeat", None)
+    if hb:
+        hb.cancel()
 
 def create_app() -> FastAPI:
     """Factory pour créer l'application FastAPI"""
@@ -109,6 +155,9 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json",
         openapi_tags=OPENAPI_TAGS
     )
+
+    # Instrumentation Prometheus (middleware + /health)
+    instrument_app(app)
 
     # Configuration du rate limiting OWASP
     setup_rate_limiting(app)
@@ -143,7 +192,10 @@ def create_app() -> FastAPI:
         """Endpoint Prometheus pour les vraies métriques OpenAI"""
         try:
             # Expose toutes les métriques Prometheus collectées
-            return Response(generate_latest(), media_type="text/plain")
+            return Response(
+                generate_latest(REGISTRY) + generate_latest(app_registry),
+                media_type="text/plain"
+            )
         except Exception as e:
             rprint(f"[red]Erreur exposition métriques: {e}[/red]")
             return Response(
@@ -154,17 +206,20 @@ def create_app() -> FastAPI:
     # Route Swagger UI personnalisée pour accessibilité
     @app.get("/docs", include_in_schema=False)
     def custom_swagger_ui() -> HTMLResponse:
+        # Utilise le CSS officiel Swagger pour le style de base
         html = get_swagger_ui_html(
             openapi_url=app.openapi_url,
             title=f"{app.title} - Documentation",
             swagger_js_url="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js",
-            swagger_css_url="/static/a11y/custom-swagger.css",   # notre CSS fusionne les overrides
+            swagger_css_url="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css",
             oauth2_redirect_url=None
         ).body.decode("utf-8")
 
-        # Injecter le script a11y juste avant </body>
-        inject = '<script src="/static/a11y/a11y.js"></script>\n'
-        html = html.replace("</body>", f"{inject}</body>")
+        # Injecter notre CSS additionnel et le script a11y
+        inject_head = '<link rel="stylesheet" href="/static/a11y/custom-swagger.css" />\n'
+        html = html.replace("</head>", f"{inject_head}</head>")
+        inject_body = '<script src="/static/a11y/a11y.js"></script>\n'
+        html = html.replace("</body>", f"{inject_body}</body>")
         return HTMLResponse(html)
 
     # Route ReDoc personnalisée pour accessibilité

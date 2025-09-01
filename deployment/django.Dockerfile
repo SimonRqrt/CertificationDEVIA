@@ -1,49 +1,62 @@
 FROM python:3.11-slim
 
-# Variables d'environnement
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV DJANGO_SETTINGS_MODULE=coach_ai_web.settings
+# ====== Env de base ======
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    DJANGO_SETTINGS_MODULE=coach_ai_web.settings
 
-# Répertoire de travail
-WORKDIR /app
+ARG APP_HOME=/app
+WORKDIR ${APP_HOME}
 
-# Installer les dépendances système avec PostgreSQL
+# ====== Dépendances système minimales ======
+# libpq-dev: psycopg2/psycopg
+# postgresql-client: outils psql (utile en debug)
+# libmagic1: détection MIME
+# curl: healthcheck
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        build-essential \
-        curl \
-        libpq-dev \
-        postgresql-client \
-        libmagic1 \
-    && rm -rf /var/lib/apt/lists/*
+ && apt-get install -y --no-install-recommends \
+      libpq-dev \
+      postgresql-client \
+      libmagic1 \
+      curl \
+ && rm -rf /var/lib/apt/lists/*
 
-# Copier les requirements Django
-COPY E3_model_IA/backend/django_app/requirements-django.txt /app/requirements.txt
+# ====== Dépendances Python (caching-friendly) ======
+COPY E3_model_IA/backend/django_app/requirements-django.txt ${APP_HOME}/requirements.txt
+RUN python -m pip install --upgrade pip \
+ && pip install -r requirements.txt
 
-# Installer les dépendances Python
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+# ====== Code applicatif ======
+# On copie l'app Django + modules annexes nécessaires
+COPY E3_model_IA/backend/django_app/ ${APP_HOME}/
+COPY E3_model_IA/ ${APP_HOME}/E3_model_IA/
+COPY E1_gestion_donnees/ ${APP_HOME}/E1_gestion_donnees/
+COPY src/ ${APP_HOME}/src/
+# (SUPPRIMÉ) COPY data/ /app/data/ -> on la montera en volume au runtime via docker-compose
 
-# Copier le code Django ET les modules nécessaires
-COPY E3_model_IA/backend/django_app/ /app/
-COPY E3_model_IA/ /app/E3_model_IA/
-COPY E1_gestion_donnees/ /app/E1_gestion_donnees/
-COPY src/ /app/src/
-COPY data/ /app/data/
+# Alias pratique vers knowledge_base (si ton code l'importe à /app/knowledge_base)
+RUN ln -sf ${APP_HOME}/E3_model_IA/knowledge_base ${APP_HOME}/knowledge_base
 
-# Créer le lien symbolique pour knowledge_base
-RUN ln -sf /app/E3_model_IA/knowledge_base /app/knowledge_base
+# ====== Répertoires utiles ======
+RUN mkdir -p ${APP_HOME}/logs ${APP_HOME}/static ${APP_HOME}/media ${APP_HOME}/staticfiles
 
-# Créer les répertoires nécessaires
-RUN mkdir -p /app/logs /app/static /app/media /app/staticfiles
+# ====== Sécurité: exécuter en non-root ======
+RUN useradd -m appuser && chown -R appuser:appuser ${APP_HOME}
+USER appuser
 
-# Collecter les fichiers statiques et créer les migrations
-RUN DJANGO_SETTINGS_MODULE=coach_ai_web.settings python manage.py collectstatic --noinput \
-    && python manage.py makemigrations
+# ====== PYTHONPATH ======
+ENV PYTHONPATH=${APP_HOME}:${APP_HOME}/E1_gestion_donnees:${APP_HOME}/src
 
-# Exposer le port
+# ====== Réseau ======
 EXPOSE 8002
 
-# Commande de démarrage
+# ====== Healthcheck (prévois /health côté Django) ======
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -fsS http://localhost:8002/health || exit 1
+
+# ====== Démarrage ======
+# NB: ton docker-compose override déjà la commande pour:
+#   migrate && collectstatic && runserver
+# Ici on garde une commande par défaut simple.
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8002"]

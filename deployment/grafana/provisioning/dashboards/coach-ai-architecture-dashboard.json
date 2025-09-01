@@ -1,7 +1,6 @@
 {
-  "dashboard": {
-    "id": null,
-    "title": "🏗️ Coach AI - Architecture Unifiée Dashboard",
+  "id": null,
+  "title": "🏗️ Coach AI - Architecture Unifiée Dashboard",
     "tags": ["coach-ai", "architecture", "postgresql", "agent-ia", "rag"],
     "timezone": "browser",
     "refresh": "30s",
@@ -241,5 +240,4 @@
         ]
       }
     ]
-  }
 }

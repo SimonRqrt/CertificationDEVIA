@@ -6,6 +6,9 @@ import json
 import time
 import uuid
 from datetime import datetime
+import anyio
+from E3_model_IA.backend.fastapi_app.src.metrics import STREAM_CHUNKS, STREAM_ABORTS
+import asyncio
 from langchain_core.messages import HumanMessage
 
 from django_auth_service import django_auth_service
@@ -45,23 +48,34 @@ class AIService:
         # Déterminer le mode basé sur le thread_id
         mode = "plan_generator" if "plan-generation" in thread_id else "streamlit"
         
-        async for event in self.coaching_agent.astream({
-            "messages": [HumanMessage(content=full_input)], 
-            "mode": mode
-        }, config=config):
-            for step in event.values():
-                message = step["messages"][-1]
-                if hasattr(message, 'content') and message.content:
-                    ai_response_parts.append(message.content)
-                    yield json.dumps({"type": "content", "data": message.content}) + "\n"
+        try:
+            async for event in self.coaching_agent.astream({
+                "messages": [HumanMessage(content=full_input)], 
+                "mode": mode
+            }, config=config):
+                for step in event.values():
+                    message = step["messages"][-1]
+                    if hasattr(message, 'content') and message.content:
+                        ai_response_parts.append(message.content)
+                        try:
+                            STREAM_CHUNKS.inc()
+                        except Exception:
+                            pass
+                        yield json.dumps({"type": "content", "data": message.content}) + "\n"
+        except (asyncio.CancelledError, Exception):
+            try:
+                STREAM_ABORTS.labels("unknown", mode).inc()
+            except Exception:
+                pass
+            raise
         
         # Finaliser la session
         end_time = time.time()
         session_data['ai_response'] = ''.join(ai_response_parts)
         session_data['response_time'] = end_time - start_time
         
-        # Enregistrer dans Django
-        django_auth_service.create_coaching_session(1, session_data)
+        # Enregistrer dans Django (hors boucle async)
+        await anyio.to_thread.run_sync(django_auth_service.create_coaching_session, user_id, session_data)
         
         yield json.dumps({"type": "end", "data": "Stream finished."}) + "\n"
     
@@ -71,21 +85,36 @@ class AIService:
         full_input = f"Je suis l'utilisateur {user_id}. {chat_request.message}"
         thread_id = chat_request.thread_id or f"user-thread-{user_id}"
         
-        # Configuration standard
-        config = {"configurable": {"thread_id": thread_id}}
+        # Configuration standard + callback Prometheus (tokens, latence, coûts)
+        from prometheus_callback import prometheus_callback
+        config = {
+            "configurable": {"thread_id": thread_id},
+            "callbacks": [prometheus_callback]
+        }
 
         # Déterminer le mode basé sur le thread_id
         mode = "plan_generator" if "plan-generation" in thread_id else "streamlit"
         print(f"DEBUG: thread_id={thread_id}, mode détecté={mode}")
         
-        async for event in self.coaching_agent.astream({
-            "messages": [HumanMessage(content=full_input)], 
-            "mode": mode
-        }, config=config):
-            for step in event.values():
-                message = step["messages"][-1]
-                if hasattr(message, 'content') and message.content:
-                    yield json.dumps({"type": "content", "data": message.content}) + "\n"
+        try:
+            async for event in self.coaching_agent.astream({
+                "messages": [HumanMessage(content=full_input)], 
+                "mode": mode
+            }, config=config):
+                for step in event.values():
+                    message = step["messages"][-1]
+                    if hasattr(message, 'content') and message.content:
+                        try:
+                            STREAM_CHUNKS.inc()
+                        except Exception:
+                            pass
+                        yield json.dumps({"type": "content", "data": message.content}) + "\n"
+        except (asyncio.CancelledError, Exception):
+            try:
+                STREAM_ABORTS.labels("unknown", mode).inc()
+            except Exception:
+                pass
+            raise
         yield json.dumps({"type": "end", "data": "Stream finished."}) + "\n"
     
     async def generate_training_plan(self, plan_request):
@@ -125,8 +154,9 @@ Sois précis, réaliste et justifie tes choix."""
 
         thread_id = f"plan-generation-{plan_request.user_id}"
         
-        # Configuration standard
-        config = {"configurable": {"thread_id": thread_id}}
+        # Configuration standard + callback Prometheus (tokens, latence, coûts)
+        from prometheus_callback import prometheus_callback
+        config = {"configurable": {"thread_id": thread_id}, "callbacks": [prometheus_callback]}
         
         print(f"Génération plan pour user {plan_request.user_id}...")
         start_generation = time.time()

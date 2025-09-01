@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.responses import StreamingResponse
 # SOLUTION DIRECTE: Métriques sans CallbackHandler 
 from prometheus_client import Counter
-from direct_metrics import collect_openai_metrics
+from E3_model_IA.backend.fastapi_app.direct_metrics import collect_openai_metrics
 
 # Métrique pour les plans générés
 training_plans_generated = Counter('training_plans_generated_total', 'Nombre total de plans d entrainement generes')
@@ -19,9 +19,19 @@ from services.ai_service import AIService
 from config.security import get_api_key
 from config.settings import RATE_LIMIT_COACHING, RATE_LIMIT_LEGACY
 from middleware.rate_limit import limiter, RATE_LIMITING_AVAILABLE
+from E3_model_IA.backend.fastapi_app.src.metrics import RATE_LIMIT_HITS
+
+# Helper pour appliquer un rate limit seulement si slowapi est disponible
+def maybe_limit(spec: str):
+    def decorator(func):
+        if RATE_LIMITING_AVAILABLE and limiter:
+            return limiter.limit(spec)(func)
+        return func
+    return decorator
 
 router = APIRouter(prefix="/v1/coaching", tags=["Coaching IA"])
 
+@maybe_limit("10/minute")
 @router.post("/chat")
 async def chat_with_coach(
     chat_request: ChatRequest,
@@ -38,6 +48,7 @@ async def chat_with_coach(
     
     return StreamingResponse(stream_response(), media_type="application/x-ndjson")
 
+@maybe_limit("5/minute")
 @router.post("/chat-legacy")
 async def chat_with_coach_legacy(
     chat_request: ChatRequest,

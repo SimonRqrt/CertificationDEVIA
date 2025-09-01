@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import des modules
-from utils.database import init_database, get_database_status
+from E1_gestion_donnees.api_rest.utils.database import init_database, get_database_status
 from endpoints.auth import router as auth_router
 from endpoints.users import router as users_router  
 from endpoints.activities import router as activities_router

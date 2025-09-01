@@ -13,5 +13,14 @@ passlib[bcrypt]==1.7.4
 # Base de données
 sqlalchemy==2.0.23
 
+# PostgreSQL driver
+psycopg2-binary==2.9.9
+
 # Validation
 pydantic==2.5.0
+ 
+# Pandas (used by src/utils.py in shared code)
+pandas==2.2.2
+
+# Garmin API client (for pipeline)
+garminconnect==0.2.14

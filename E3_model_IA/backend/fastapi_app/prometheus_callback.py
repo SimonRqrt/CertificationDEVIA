@@ -9,29 +9,12 @@ from langchain.schema import LLMResult
 from typing import Dict, Any
 
 # SOLUTION: Créer les métriques ici pour éviter import circulaire
-from prometheus_client import Counter, Histogram
-
-# Métriques OpenAI redéfinies localement
-ai_requests_total = Counter(
-    "ai_requests_total", "Total des requêtes IA",
-    ["endpoint", "model", "status"]
+from E3_model_IA.backend.fastapi_app.direct_metrics import (
+    ai_requests_total,
+    ai_cost_usd_total,
+    ai_request_duration_seconds,
 )
-
-ai_tokens_total = Counter(
-    "ai_tokens_total", "Tokens consommés", 
-    ["endpoint", "model", "type"]
-)
-
-ai_cost_usd_total = Counter(
-    "ai_cost_usd_total", "Coût cumulé (USD)",
-    ["endpoint", "model"]
-)
-
-ai_request_duration_seconds = Histogram(
-    "ai_request_duration_seconds", "Durée des requêtes IA (s)",
-    ["endpoint", "model"],
-    buckets=[0.1, 0.5, 1, 2, 5, 10, 15, 20, 30, 45, 60]
-)
+from E3_model_IA.backend.fastapi_app.src.metrics import AGENT_TOKENS, AGENT_COST_USD
 
 # Prix OpenAI (par 1M tokens)
 OPENAI_PRICING = {
@@ -90,13 +73,13 @@ class FastAPIPrometheusCallback(BaseCallbackHandler):
                     ai_requests_total.labels(endpoint=endpoint, model=model, status="200").inc()
                     ai_request_duration_seconds.labels(endpoint=endpoint, model=model).observe(duration)
                     
-                    ai_tokens_total.labels(endpoint=endpoint, model=model, type="prompt").inc(prompt_tokens)
-                    ai_tokens_total.labels(endpoint=endpoint, model=model, type="completion").inc(completion_tokens)
-                    ai_tokens_total.labels(endpoint=endpoint, model=model, type="total").inc(total_tokens)
+                    AGENT_TOKENS.labels("prompt", model).inc(prompt_tokens)
+                    AGENT_TOKENS.labels("completion", model).inc(completion_tokens)
+                    AGENT_TOKENS.labels("total", model).inc(total_tokens)
                     
                     # Coût réel
                     cost = calculate_cost(model, prompt_tokens, completion_tokens)
-                    ai_cost_usd_total.labels(endpoint=endpoint, model=model).inc(cost)
+                    AGENT_COST_USD.labels(model).inc(cost)
                     
                     print(f"✅ Métriques collectées: {model} - {duration:.2f}s - ${cost:.4f} - {total_tokens} tokens")
                 

@@ -3,8 +3,8 @@ Endpoints d'authentification
 """
 
 from fastapi import APIRouter, HTTPException
-from utils.models import LoginRequest, Token
-from utils.auth import verify_credentials, create_jwt_token
+from E1_gestion_donnees.api_rest.utils.models import LoginRequest, Token
+from E1_gestion_donnees.api_rest.utils.auth import verify_credentials, create_jwt_token
 
 router = APIRouter(prefix="/auth", tags=["Authentification"])
 
