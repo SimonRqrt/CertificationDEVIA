@@ -1,0 +1,809 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load activity_filters %}
+
+{% block title %}Votre Plan d'Entraînement{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
+    }
+    .plan-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    .analysis-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+    }
+    .recommendation-item {
+        background: #f8f9fa;
+        border-left: 4px solid #28a745;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 0 8px 8px 0;
+    }
+    .btn-new-plan {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    .btn-new-plan:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    .goal-badge {
+        background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+    .stat-highlight {
+        color: #3498db;
+        font-weight: bold;
+    }
+    .agent-response {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+    }
+    .agent-content {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+        line-height: 1.6;
+        font-size: 16px;
+        color: #2c3e50;
+        white-space: pre-wrap;
+    }
+    .agent-content h1, .agent-content h2, .agent-content h3, .agent-content h4 {
+        color: #2c3e50;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    .agent-content h2 {
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 0.5rem;
+        font-size: 1.5rem;
+    }
+    .agent-content h3 {
+        border-bottom: 2px solid #16a085;
+        padding-bottom: 0.3rem;
+        font-size: 1.3rem;
+        color: #16a085;
+    }
+    .agent-content h4 {
+        color: #e67e22;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Styles améliorés pour les tableaux d'entraînement */
+    .agent-content table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin: 1.5rem 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+        background: white;
+    }
+    .agent-content table th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+        padding: 1rem 0.75rem;
+        text-align: center;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+        position: relative;
+    }
+    .agent-content table th:first-child {
+        border-top-left-radius: 8px;
+    }
+    .agent-content table th:last-child {
+        border-top-right-radius: 8px;
+    }
+    .agent-content table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #e9ecef;
+        text-align: center;
+        vertical-align: middle;
+        transition: background-color 0.2s ease;
+    }
+    .agent-content table tr:hover td {
+        background-color: #f8f9fa;
+    }
+    .agent-content table tr:nth-child(even) td {
+        background-color: #fbfcfd;
+    }
+    .agent-content table tr:last-child td:first-child {
+        border-bottom-left-radius: 8px;
+    }
+    .agent-content table tr:last-child td:last-child {
+        border-bottom-right-radius: 8px;
+    }
+    
+    /* Styles pour les colonnes spécifiques */
+    .agent-content table td:first-child {
+        font-weight: 600;
+        background-color: #f1f3f4 !important;
+        color: #2c3e50;
+    }
+    .agent-content table td:nth-child(2) {
+        font-weight: 500;
+        color: #27ae60;
+    }
+    .agent-content table td:nth-child(3) {
+        color: #e74c3c;
+        font-weight: 500;
+    }
+    .agent-content table td:nth-child(4) {
+        color: #8e44ad;
+        font-weight: 500;
+    }
+    
+    /* Typographie améliorée */
+    .agent-content strong {
+        color: #2c3e50;
+        font-weight: 700;
+    }
+    .agent-content em {
+        color: #7f8c8d;
+        font-style: italic;
+    }
+    .agent-content p {
+        margin-bottom: 1rem;
+        line-height: 1.7;
+    }
+    .agent-content ul, .agent-content ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .agent-content li {
+        margin-bottom: 0.5rem;
+        line-height: 1.6;
+    }
+    
+    /* Styles spécifiques pour les tableaux d'entraînement */
+    .agent-content .schedule-table {
+        border: 2px solid #16a085;
+    }
+    .agent-content .schedule-table th {
+        background: linear-gradient(135deg, #16a085 0%, #27ae60 100%);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .agent-content .schedule-table td:first-child {
+        background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 100%) !important;
+        font-weight: 700;
+        color: #2c3e50;
+        text-align: center;
+    }
+    .agent-content .schedule-table td:nth-child(2) {
+        color: #16a085;
+        font-weight: 600;
+    }
+    
+    /* Animation hover pour les lignes de planning */
+    .agent-content .schedule-table tr {
+        transition: all 0.3s ease;
+    }
+    .agent-content .schedule-table tr:hover {
+        transform: translateX(5px);
+        box-shadow: -5px 0 15px rgba(22, 160, 133, 0.2);
+    }
+    
+    
+    /* Responsive design pour les tableaux */
+    @media (max-width: 768px) {
+        .agent-content table {
+            font-size: 0.8rem;
+        }
+        .agent-content table th,
+        .agent-content table td {
+            padding: 0.5rem 0.3rem;
+        }
+        .agent-content .schedule-table tr:hover {
+            transform: none;
+            box-shadow: none;
+        }
+    }
+    
+    /* Amélioration de l'affichage des nombres et unités */
+    .agent-content .numeric-value {
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        font-weight: 600;
+        background: rgba(52, 152, 219, 0.1);
+        border-radius: 4px;
+        padding: 2px 6px;
+    }
+    
+    /* Styles pour le contenu markdown converti */
+    .markdown-content {
+        line-height: 1.6;
+    }
+    .markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4 {
+        color: #2c3e50;
+        margin: 1.5rem 0 1rem 0;
+        font-weight: 600;
+    }
+    .markdown-content h1 { font-size: 1.8rem; border-bottom: 2px solid #16a085; padding-bottom: 0.5rem; }
+    .markdown-content h2 { font-size: 1.5rem; color: #16a085; }
+    .markdown-content h3 { font-size: 1.3rem; }
+    .markdown-content h4 { font-size: 1.1rem; }
+    
+    .markdown-content ul, .markdown-content ol {
+        padding-left: 2rem;
+        margin: 1rem 0;
+    }
+    .markdown-content li {
+        margin: 0.5rem 0;
+        line-height: 1.5;
+    }
+    .markdown-content strong {
+        color: #e74c3c;
+        font-weight: 600;
+    }
+    .markdown-content em {
+        color: #8e44ad;
+        font-style: italic;
+    }
+    .markdown-content p {
+        margin: 1rem 0;
+        text-align: justify;
+    }
+    .markdown-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .markdown-content table th, .markdown-content table td {
+        padding: 0.8rem;
+        text-align: left;
+        border-bottom: 1px solid #ecf0f1;
+    }
+    .markdown-content table th {
+        background: #16a085;
+        color: white;
+        font-weight: 600;
+    }
+    .markdown-content table tr:hover {
+        background: rgba(22, 160, 133, 0.05);
+    }
+    
+    /* Styles pour les types d'entraînement */
+    .agent-content .training-endurance {
+        border-left: 4px solid #27ae60 !important;
+        background: rgba(39, 174, 96, 0.1) !important;
+    }
+    .agent-content .training-interval {
+        border-left: 4px solid #e74c3c !important;
+        background: rgba(231, 76, 60, 0.1) !important;
+    }
+    .agent-content .training-recovery {
+        border-left: 4px solid #3498db !important;
+        background: rgba(52, 152, 219, 0.1) !important;
+    }
+    .agent-content .training-rest {
+        border-left: 4px solid #95a5a6 !important;
+        background: rgba(149, 165, 166, 0.1) !important;
+        font-style: italic;
+    }
+    
+    /* Styles pour le tableau structuré */
+    .schedule-table-structured {
+        border: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        overflow: hidden;
+        background: white;
+        margin-bottom: 0;
+    }
+    
+    .schedule-table-structured thead th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+        padding: 1rem 0.75rem;
+        border: none;
+        text-align: center;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .schedule-table-structured tbody td {
+        padding: 0.75rem;
+        border: none;
+        border-bottom: 1px solid #f1f3f4;
+        vertical-align: middle;
+        transition: all 0.2s ease;
+    }
+    
+    .schedule-table-structured tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateX(3px);
+        box-shadow: -3px 0 10px rgba(102, 126, 234, 0.1);
+    }
+    
+    .day-cell {
+        background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 100%) !important;
+        font-weight: 700;
+        color: #2c3e50;
+        text-align: center;
+        min-width: 100px;
+    }
+    
+    .type-cell {
+        text-align: center;
+        min-width: 140px;
+    }
+    
+    .duration-cell {
+        text-align: center;
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        font-weight: 600;
+        min-width: 80px;
+    }
+    
+    .description-cell {
+        max-width: 250px;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+    
+    .intensity-cell {
+        text-align: center;
+        font-size: 0.85rem;
+        min-width: 100px;
+    }
+    
+    /* Badges pour les types d'entraînement */
+    .training-badge-endurance {
+        background: linear-gradient(45deg, #27ae60, #2ecc71);
+        color: white;
+        padding: 0.3rem 0.6rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .training-badge-fractionne,
+    .training-badge-interval {
+        background: linear-gradient(45deg, #e74c3c, #ec7063);
+        color: white;
+        padding: 0.3rem 0.6rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .training-badge-recuperation,
+    .training-badge-recovery {
+        background: linear-gradient(45deg, #3498db, #5dade2);
+        color: white;
+        padding: 0.3rem 0.6rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .training-badge-repos {
+        background: linear-gradient(45deg, #95a5a6, #bdc3c7);
+        color: white;
+        padding: 0.3rem 0.6rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        font-style: italic;
+    }
+    
+    .training-badge-tempo,
+    .training-badge-sortie {
+        background: linear-gradient(45deg, #f39c12, #f5b041);
+        color: white;
+        padding: 0.3rem 0.6rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    /* Résumé du planning */
+    .schedule-summary {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 1.5rem;
+    }
+    
+    .summary-stat {
+        padding: 0.5rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #667eea;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.25rem;
+    }
+    
+    /* Section des conseils détaillés */
+    .agent-content-section {
+        border-top: 2px solid #e9ecef;
+        padding-top: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .agent-content-section .agent-content {
+        max-height: 300px;
+        overflow-y: auto;
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Section Hero -->
+<div class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="display-4 mb-3"><span class="flaticon-target"></span>Votre Plan Personnalisé</h1>
+                <p class="lead">
+                    Plan généré avec succès ! Voici vos recommandations d'entraînement personnalisées.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Plan principal -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="plan-card">
+                <div class="text-center mb-4">
+                    <span class="goal-badge">{{ plan.title|default:"Plan Personnalisé" }}</span>
+                </div>
+                
+                <h3 class="text-center mb-4"><i class="fas fa-list"></i> Votre Programme</h3>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5>Description du plan :</h5>
+                        <!-- Affichage avec formatage Markdown pour Coach Michael -->
+                        <div class="plan-content">
+                            {% if plan.generated_by and "Coach Michael" in plan.generated_by %}
+                                <!-- Réponse de l'agent avancé - formatage spécial -->
+                                <div class="agent-response">
+                                    <div class="alert alert-info mb-3">
+                                        <i class="fas fa-robot me-2"></i>
+                                        <strong>{{ plan.generated_by }}</strong> - Analyse personnalisée avec base de connaissances
+                                    </div>
+                                    
+                                    <!-- Nouveau: Planning structuré -->
+                                    {% if plan.training_schedule.schedule %}
+                                    <div class="structured-schedule mb-4">
+                                        <h4 class="mb-3"><span class="flaticon-calendar"></span>Planning d'Entraînement</h4>
+                                        <div class="table-responsive">
+                                            <table class="table table-hover schedule-table-structured">
+                                                <thead>
+                                                    <tr>
+                                                        <th><i class="fas fa-calendar-day me-1"></i>Jour</th>
+                                                        <th><i class="fas fa-running me-1"></i>Type de Séance</th>
+                                                        <th><i class="fas fa-clock me-1"></i>Durée</th>
+                                                        <th><i class="fas fa-info-circle me-1"></i>Description</th>
+                                                        <th><i class="fas fa-tachometer-alt me-1"></i>Intensité</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for session in plan.training_schedule.schedule %}
+                                                    <tr class="session-row session-{{ session.type|slugify|default:'other' }}">
+                                                        <td class="day-cell">
+                                                            {% if session.week > 1 %}
+                                                                <small class="text-muted">S{{ session.week }}</small><br>
+                                                            {% endif %}
+                                                            <strong>{{ session.day }}</strong>
+                                                        </td>
+                                                        <td class="type-cell">
+                                                            {% if session.type %}
+                                                                <span class="badge training-badge-{{ session.type|slugify }}">
+                                                                    {{ session.type }}
+                                                                </span>
+                                                            {% else %}
+                                                                <span class="text-muted">-</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td class="duration-cell">
+                                                            {% if session.duration %}
+                                                                <span class="duration-value">{{ session.duration }}</span>
+                                                            {% else %}
+                                                                <span class="text-muted">-</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td class="description-cell">
+                                                            {{ session.description|truncatechars:100 }}
+                                                        </td>
+                                                        <td class="intensity-cell">
+                                                            {% if session.intensity %}
+                                                                {{ session.intensity }}
+                                                            {% else %}
+                                                                <span class="text-muted">-</span>
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        
+                                        <div class="schedule-summary mt-3">
+                                            <div class="row text-center">
+                                                <div class="col-md-4">
+                                                    <div class="summary-stat">
+                                                        <div class="stat-number">{{ plan.training_schedule.total_weeks }}</div>
+                                                        <div class="stat-label">Semaine{% if plan.training_schedule.total_weeks|default:0|add:0 > 1 %}s{% endif %}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="summary-stat">
+                                                        <div class="stat-number">{{ plan.training_schedule.total_sessions }}</div>
+                                                        <div class="stat-label">Séance{% if plan.training_schedule.total_sessions|default:0|add:0 > 1 %}s{% endif %} actives</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="summary-stat">
+                                                        <div class="stat-number">{{ plan.training_schedule.sessions_per_week|default:plan.weekly_sessions }}</div>
+                                                        <div class="stat-label">Par semaine</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                </div>
+                            {% else %}
+                                <!-- Réponse standard -->
+                                <div class="markdown-content">
+                                    {{ plan.description|markdown_to_html }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Conseils détaillés du Coach - Section séparée pour une meilleure lisibilité -->
+                        {% if plan.generated_by and "Coach Michael" in plan.generated_by %}
+                        <div class="mt-4">
+                            <h5 class="mb-3">
+                                <i class="fas fa-user-tie text-primary me-2"></i>
+                                Conseils Détaillés du Coach
+                            </h5>
+                            <div class="agent-content-section">
+                                <div class="agent-content markdown-content">
+                                    {{ plan.description|markdown_to_html }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <h5 class="mt-4">Fréquence :</h5>
+                        <p><strong class="stat-highlight">{{ plan.weekly_sessions }} séances par semaine</strong></p>
+                        
+                        {% if form_data.target_date %}
+                        <h5>Objectif cible :</h5>
+                        <p>{{ form_data.target_date|date:"d F Y" }}</p>
+                        {% endif %}
+                        
+                        {% if form_data.additional_notes %}
+                        <h5>Vos notes :</h5>
+                        <p class="text-muted">{{ form_data.additional_notes }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <h5>Récapitulatif :</h5>
+                        <ul class="list-unstyled">
+                            <li><strong>Objectif :</strong> {{ form_data.goal|upper }}</li>
+                            <li><strong>Niveau :</strong> {{ form_data.level|capfirst }}</li>
+                            <li><strong>Fréquence :</strong> {{ form_data.sessions_per_week }}/semaine</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommandations -->
+    {% if plan.recommendations %}
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="plan-card">
+                <h3 class="mb-4"><span class="flaticon-idea"></span>Recommandations Importantes</h3>
+                {% for recommendation in plan.recommendations %}
+                <div class="recommendation-item">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    {{ recommendation }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Analyse des données utilisateur -->
+    {% if user_data.total_activities > 0 %}
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="plan-card">
+                <h3 class="mb-4"><span class="flaticon-analytics"></span>Analyse de Vos Données</h3>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="analysis-card text-center">
+                            <div class="stat-highlight" style="font-size: 1.5rem;">{{ user_data.total_activities }}</div>
+                            <div class="text-muted">Courses analysées</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="analysis-card text-center">
+                            <div class="stat-highlight" style="font-size: 1.5rem;">{{ user_data.avg_distance_km }}km</div>
+                            <div class="text-muted">Distance moyenne</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="analysis-card text-center">
+                            <div class="stat-highlight" style="font-size: 1.5rem;">{{ user_data.avg_duration_min }}min</div>
+                            <div class="text-muted">Durée moyenne</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="analysis-card text-center">
+                            <div class="stat-highlight" style="font-size: 1.5rem;">{{ user_data.max_distance_km }}km</div>
+                            <div class="text-muted">Distance max</div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if user_data.recent_activities %}
+                <h5 class="mt-4">Activités récentes analysées :</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Activité</th>
+                                <th>Distance</th>
+                                <th>Durée</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in user_data.recent_activities|slice:":5" %}
+                            <tr>
+                                <td>{{ activity.date }}</td>
+                                <td>{{ activity.name }}</td>
+                                <td>{{ activity.distance }}km</td>
+                                <td>{{ activity.duration_min }}min</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="row justify-content-center">
+        <div class="col-lg-6 text-center">
+            <div class="plan-card">
+                <h4 class="mb-3"><span class="flaticon-rocket"></span>Et maintenant ?</h4>
+                <p class="mb-4">Votre plan est prêt ! Vous pouvez maintenant commencer votre entraînement ou générer un nouveau plan avec d'autres paramètres.</p>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    {% if saved_plan %}
+                    <div class="alert alert-success text-center mb-3">
+                        <i class="fas fa-save me-2"></i>
+                        <strong>Plan sauvegardé !</strong> 
+                        Plan sauvegardé en lecture seule
+                    </div>
+                    {% endif %}
+                    
+                    <a href="{% url 'coaching:simple_plan_generator' %}" class="btn btn-new-plan">
+                        <i class="fas fa-redo me-2"></i>Nouveau Plan
+                    </a>
+                    <a href="{% url 'coaching:plan_list' %}" class="btn btn-outline-success">
+                        <i class="fas fa-list me-2"></i>Mes Plans
+                    </a>
+                    <a href="{% url 'activities:dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-chart-line me-2"></i>Voir mes Stats
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Animation d'apparition progressive
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.plan-card, .analysis-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+    
+    // Décoration non-destructive du contenu agent
+    document.querySelectorAll('.agent-content').forEach(decorateAgentContent);
+});
+
+function decorateAgentContent(root) {
+  root.querySelectorAll('table').forEach((table) => {
+    table.classList.add('training-table', 'schedule-table');
+
+    table.querySelectorAll('tbody tr').forEach((tr) => {
+      const tds = tr.querySelectorAll('td');
+      if (tds.length >= 1) tds[0].classList.add('day-cell');
+      if (tds.length >= 2) tds[1].classList.add('type-cell');
+      if (tds.length >= 3) tds[2].classList.add('duration-cell');
+      if (tds.length >= 4) tds[3].classList.add('description-cell');
+      if (tds.length >= 5) tds[4].classList.add('intensity-cell');
+
+      tds.forEach((td) => {
+        const txt = td.textContent.trim().toLowerCase();
+        if (/\d+(\.\d+)?\s*(km|min|km\/h|bpm)/i.test(txt)) {
+          td.classList.add('numeric-value');
+        }
+        if (txt.includes('endurance')) td.classList.add('training-endurance');
+        else if (txt.includes('fractionné') || txt.includes('fractionne') || txt.includes('interval'))
+          td.classList.add('training-interval');
+        else if (txt.includes('récupération') || txt.includes('recovery'))
+          td.classList.add('training-recovery');
+        else if (txt.includes('repos'))
+          td.classList.add('training-rest');
+      });
+    });
+  });
+}
+</script>
+{% endblock %}

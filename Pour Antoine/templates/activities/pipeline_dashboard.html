@@ -1,0 +1,442 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Pipeline Garmin{% endblock %}
+
+{% block content %}
+<div class="pipeline-container">
+    <div class="pipeline-header">
+        <h1><i class="fas fa-sync"></i> Pipeline de Synchronisation Garmin</h1>
+        <p>Récupérez et synchronisez vos données d'activités depuis Garmin Connect</p>
+    </div>
+
+    <!-- Statut actuel -->
+    <div class="status-section">
+        <div class="status-card">
+            <div class="status-icon" id="status-icon"><i class="fas fa-clock"></i></div>
+            <div class="status-info">
+                <h3 id="status-text">Prêt pour synchronisation</h3>
+                <p id="status-detail">
+                    {% if last_sync %}
+                        Dernière synchronisation : {{ last_sync|date:"d/m/Y à H:i" }}
+                    {% else %}
+                        Aucune synchronisation effectuée
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="stats-section">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-icon"><span class="flaticon-analytics"></span></div>
+                <div class="stat-content">
+                    <h4>{{ total_activities }}</h4>
+                    <p>Activités totales</p>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon"><span class="flaticon-calendar"></span></div>
+                <div class="stat-content">
+                    <h4>{{ recent_activities }}</h4>
+                    <p>Cette semaine</p>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon"><i class="fas fa-user"></i></div>
+                <div class="stat-content">
+                    <h4>{{ user_email|truncatechars:20 }}</h4>
+                    <p>Utilisateur</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire de synchronisation -->
+    <div class="sync-section">
+        <div class="sync-card">
+            <h2><span class="flaticon-rocket"></span>Lancer la synchronisation</h2>
+            <p>Connectez-vous à votre compte Garmin Connect pour récupérer vos dernières activités.</p>
+            
+            <form id="pipeline-form" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="garmin_email">Email Garmin Connect :</label>
+                    <input type="email" id="garmin_email" name="garmin_email" required 
+                           placeholder="votre.email@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="garmin_password">Mot de passe :</label>
+                    <input type="password" id="garmin_password" name="garmin_password" required 
+                           placeholder="Votre mot de passe Garmin">
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" id="sync-button" class="btn btn-primary">
+                        <span id="sync-text"><i class="fas fa-sync"></i> Synchroniser les données</span>
+                        <span id="sync-spinner" class="spinner" style="display: none;"><i class="fas fa-clock"></i></span>
+                    </button>
+                    <button type="button" id="logs-button" class="btn btn-secondary" onclick="showLogs()">
+                        <i class="fas fa-list"></i> Voir les logs
+                    </button>
+                    <button type="button" id="refresh-logs-button" class="btn btn-info" onclick="refreshLogs()" style="display: none;">
+                        <i class="fas fa-sync"></i> Actualiser
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Zone de résultats -->
+            <div id="result-section" style="display: none;">
+                <div id="result-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section des logs -->
+    <div class="logs-section" id="logs-section" style="display: none;">
+        <div class="logs-card">
+            <div class="logs-header">
+                <h3><i class="fas fa-list"></i> Logs de synchronisation</h3>
+                <button onclick="hideLogs()" class="btn-close">✕</button>
+            </div>
+            <div class="logs-content">
+                <pre id="logs-content">Chargement des logs...</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations de sécurité -->
+    <div class="security-notice">
+        <div class="notice-card">
+            <h3>🔒 Note de sécurité</h3>
+            <ul>
+                <li>Vos identifiants Garmin ne sont pas stockés sur nos serveurs</li>
+                <li>La connexion se fait directement avec l'API Garmin Connect</li>
+                <li>Seules les données d'activités publiques sont récupérées</li>
+                <li>Vous pouvez révoquer l'accès à tout moment depuis votre compte Garmin</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+.pipeline-container { max-width: 800px; margin: 0 auto; padding: 20px; }
+
+.pipeline-header { text-align: center; margin-bottom: 30px; }
+.pipeline-header h1 { color: #2c3e50; margin-bottom: 10px; }
+
+.status-section { margin-bottom: 30px; }
+.status-card { 
+    background: white; 
+    padding: 25px; 
+    border-radius: 10px; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.status-icon { font-size: 3em; }
+.status-info h3 { margin: 0 0 5px 0; color: #2c3e50; }
+.status-info p { margin: 0; color: #7f8c8d; }
+
+.stats-section { margin-bottom: 30px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+.stat-item { 
+    background: white; 
+    padding: 20px; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.stat-icon { font-size: 2em; }
+.stat-content h4 { margin: 0; font-size: 1.5em; color: #2c3e50; }
+.stat-content p { margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.9em; }
+
+.sync-section { margin-bottom: 30px; }
+.sync-card { 
+    background: white; 
+    padding: 30px; 
+    border-radius: 10px; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.sync-card h2 { color: #2c3e50; margin-bottom: 15px; }
+
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: #2c3e50; }
+.form-group input { 
+    width: 100%; 
+    padding: 12px; 
+    border: 1px solid #ddd; 
+    border-radius: 6px; 
+    font-size: 16px;
+}
+.form-group input:focus { border-color: #3498db; outline: none; }
+
+.form-actions { display: flex; gap: 15px; margin-top: 25px; }
+
+.btn { 
+    padding: 12px 24px; 
+    border: none; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    text-decoration: none;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+.btn-primary { background: #3498db; color: white; }
+.btn-primary:hover { background: #2980b9; }
+.btn-primary:disabled { background: #95a5a6; cursor: not-allowed; }
+.btn-secondary { background: #95a5a6; color: white; }
+.btn-secondary:hover { background: #7f8c8d; }
+.btn-info { background: #17a2b8; color: white; }
+.btn-info:hover { background: #138496; }
+
+.spinner { animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+#result-section { 
+    margin-top: 20px; 
+    padding: 15px; 
+    border-radius: 6px; 
+}
+.result-success { background: #d5edda; color: #155724; border: 1px solid #c3e6cb; }
+.result-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+.logs-section { 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    background: rgba(0,0,0,0.8); 
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.logs-card { 
+    background: white; 
+    border-radius: 10px; 
+    max-width: 90%; 
+    max-height: 90%; 
+    display: flex;
+    flex-direction: column;
+}
+.logs-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 20px; 
+    border-bottom: 1px solid #eee;
+}
+.logs-header h3 { margin: 0; color: #2c3e50; }
+.btn-close { 
+    background: none; 
+    border: none; 
+    font-size: 20px; 
+    cursor: pointer; 
+    color: #7f8c8d;
+}
+.logs-content { 
+    padding: 20px; 
+    overflow-y: auto; 
+    flex: 1;
+    max-height: 500px;
+}
+.logs-content pre { 
+    margin: 0; 
+    white-space: pre-wrap; 
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; 
+    font-size: 12px;
+    line-height: 1.4;
+}
+#logs-content {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; 
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.security-notice { margin-top: 30px; }
+.notice-card { 
+    background: #f8f9fa; 
+    padding: 20px; 
+    border-radius: 8px; 
+    border-left: 4px solid #3498db;
+}
+.notice-card h3 { color: #2c3e50; margin-bottom: 15px; }
+.notice-card ul { margin: 0; padding-left: 20px; }
+.notice-card li { margin-bottom: 8px; color: #34495e; }
+</style>
+
+<script>
+// Gestion du formulaire de synchronisation
+document.getElementById('pipeline-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const syncButton = document.getElementById('sync-button');
+    const syncText = document.getElementById('sync-text');
+    const syncSpinner = document.getElementById('sync-spinner');
+    const resultSection = document.getElementById('result-section');
+    const resultContent = document.getElementById('result-content');
+    
+    // Désactiver le bouton et afficher le spinner
+    syncButton.disabled = true;
+    syncText.style.display = 'none';
+    syncSpinner.style.display = 'inline';
+    
+    // Cacher les résultats précédents
+    resultSection.style.display = 'none';
+    
+    try {
+        const formData = new FormData(this);
+        
+        const response = await fetch('{% url "activities:trigger_pipeline" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        });
+        
+        const data = await response.json();
+        
+        // Afficher les résultats
+        resultSection.style.display = 'block';
+        
+        if (data.success) {
+            resultSection.className = 'result-success';
+            resultContent.innerHTML = `
+                <h4><span class="flaticon-success"></span>Synchronisation réussie !</h4>
+                <p>${data.message}</p>
+                <p><strong>${data.activities_processed}</strong> activités ont été traitées.</p>
+            `;
+            
+            // Mettre à jour le statut
+            updateStatus();
+            
+        } else {
+            resultSection.className = 'result-error';
+            resultContent.innerHTML = `
+                <h4><span class="flaticon-error"></span>Erreur de synchronisation</h4>
+                <p>${data.error}</p>
+                <p>Vérifiez vos identifiants Garmin et réessayez.</p>
+            `;
+        }
+        
+    } catch (error) {
+        resultSection.style.display = 'block';
+        resultSection.className = 'result-error';
+        resultContent.innerHTML = `
+            <h4><span class="flaticon-error"></span>Erreur de connexion</h4>
+            <p>Impossible de contacter le serveur. Réessayez plus tard.</p>
+        `;
+    }
+    
+    // Réactiver le bouton
+    syncButton.disabled = false;
+    syncText.style.display = 'inline';
+    syncSpinner.style.display = 'none';
+});
+
+// Afficher les logs
+async function showLogs() {
+    const logsSection = document.getElementById('logs-section');
+    const logsContent = document.getElementById('logs-content');
+    const refreshButton = document.getElementById('refresh-logs-button');
+    
+    logsSection.style.display = 'flex';
+    refreshButton.style.display = 'inline-block';
+    logsContent.textContent = 'Chargement des logs...';
+    
+    await loadLogs();
+}
+
+// Charger les logs
+async function loadLogs() {
+    const logsContent = document.getElementById('logs-content');
+    
+    try {
+        const response = await fetch('{% url "activities:pipeline_logs" %}');
+        const data = await response.json();
+        
+        if (data.logs && data.logs.trim()) {
+            // Formatter les logs avec coloration
+            let formattedLogs = data.logs
+                .replace(/ERROR/g, '<span style="color: #e74c3c; font-weight: bold;">ERROR</span>')
+                .replace(/WARNING/g, '<span style="color: #f39c12; font-weight: bold;">WARNING</span>')
+                .replace(/INFO/g, '<span style="color: #3498db; font-weight: bold;">INFO</span>')
+                .replace(/SUCCESS/g, '<span style="color: #27ae60; font-weight: bold;">SUCCESS</span>')
+                .replace(/Pipeline terminée/g, '<span style="color: #27ae60; font-weight: bold;">Pipeline terminée</span>')
+                .replace(/stockée avec succès/g, '<span style="color: #27ae60;">stockée avec succès</span>')
+                .replace(/déjà existante/g, '<span style="color: #f39c12;">déjà existante</span>');
+            
+            logsContent.innerHTML = formattedLogs;
+        } else {
+            logsContent.innerHTML = '<span style="color: #7f8c8d;">Aucun log de pipeline trouvé.\n\nPour voir les logs :\n1. Lancez une synchronisation\n2. Les logs apparaîtront ici en temps réel</span>';
+        }
+        
+        // Scroll vers le bas pour voir les logs les plus récents
+        logsContent.scrollTop = logsContent.scrollHeight;
+        
+    } catch (error) {
+        logsContent.innerHTML = '<span style="color: #e74c3c;">Erreur lors du chargement des logs: ' + error.message + '</span>';
+    }
+}
+
+// Actualiser les logs
+async function refreshLogs() {
+    const logsContent = document.getElementById('logs-content');
+    logsContent.innerHTML = 'Actualisation des logs...';
+    await loadLogs();
+}
+
+// Cacher les logs
+function hideLogs() {
+    document.getElementById('logs-section').style.display = 'none';
+    document.getElementById('refresh-logs-button').style.display = 'none';
+}
+
+// Mettre à jour le statut
+async function updateStatus() {
+    try {
+        const response = await fetch('{% url "activities:pipeline_status" %}');
+        const data = await response.json();
+        
+        const statusIcon = document.getElementById('status-icon');
+        const statusText = document.getElementById('status-text');
+        const statusDetail = document.getElementById('status-detail');
+        
+        if (data.status === 'ready') {
+            statusIcon.innerHTML = '<span class="flaticon-success"></span>';
+            statusText.textContent = 'Prêt pour synchronisation';
+            if (data.last_sync) {
+                const lastSync = new Date(data.last_sync);
+                statusDetail.textContent = `Dernière synchronisation : ${lastSync.toLocaleString('fr-FR')}`;
+            }
+        }
+        
+        // Recharger la page pour mettre à jour les statistiques
+        setTimeout(() => {
+            window.location.reload();
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour du statut:', error);
+    }
+}
+
+// Fermer les logs avec Echap
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        hideLogs();
+    }
+});
+</script>
+{% endblock %}

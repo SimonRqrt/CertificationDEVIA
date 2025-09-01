@@ -1,0 +1,186 @@
+/* Flaticon Icons for Coach AI - Custom CSS */
+
+/* Base icon class */
+.flaticon {
+    display: inline-block;
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: auto;
+    line-height: 1;
+    font-size: 1.2em;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+/* Alternative method using pseudo-elements for better performance */
+[class^="flaticon-"]:before, 
+[class*=" flaticon-"]:before {
+    display: inline-block;
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: auto;
+    line-height: 1;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+/* Running/Sprint Icons - Using Font Awesome alternatives */
+.flaticon-running:before { content: "\f70c"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-sprint:before { content: "\f1e4"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Sports Icons */
+.flaticon-cycling:before { content: "\f206"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-swimming:before { content: "\f5c4"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Target/Goal Icons */
+.flaticon-target:before { content: "\f140"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-goal:before { content: "\f11e"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Analytics/Data Icons */
+.flaticon-analytics:before { content: "\f080"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-chart:before { content: "\f201"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-growth:before { content: "\f201"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-dashboard:before { content: "\f3fd"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Action Icons */
+.flaticon-rocket:before { content: "\f135"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-flash:before { content: "\f0e7"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-lightning:before { content: "\f0e7"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* UI/UX Icons */
+.flaticon-idea:before { content: "\f0eb"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-lightbulb:before { content: "\f0eb"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-calendar:before { content: "\f133"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-schedule:before { content: "\f073"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Status Icons */
+.flaticon-check:before { content: "\f00c"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-success:before { content: "\f00c"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-cross:before { content: "\f00d"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-error:before { content: "\f00d"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-warning:before { content: "\f071"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Fire/Intensity Icons */
+.flaticon-fire:before { content: "\f06d"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-flame:before { content: "\f06d"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Home Icon */
+.flaticon-home:before { content: "\f015"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Admin/Settings Icons */
+.flaticon-admin:before { content: "\f013"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-settings:before { content: "\f013"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Chat Icon */
+.flaticon-chat:before { content: "\f075"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Robot/AI Icon */
+.flaticon-robot:before { content: "\f544"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Time/Clock Icons */
+.flaticon-time:before { content: "\f017"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-clock:before { content: "\f017"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Eye/View Icon */
+.flaticon-eye:before { content: "\f06e"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Mountain Icon */
+.flaticon-mountain:before { content: "\f6fc"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Pause Icon */
+.flaticon-pause:before { content: "\f04c"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Navigation Icons */
+.flaticon-first:before { content: "\f100"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-last:before { content: "\f101"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Activity Type Specific Icons - Using Unicode symbols for better compatibility */
+.activity-icon {
+    font-size: 1.5em;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+.activity-icon.running:before { content: "\f70c"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.activity-icon.cycling:before { content: "\f206"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.activity-icon.swimming:before { content: "\f5c4"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.activity-icon.strength:before { content: "\f2ce"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.activity-icon.cardio:before { content: "\f004"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.activity-icon.default:before { content: "\f0e7"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+
+/* Navigation Icons */
+.nav-icon {
+    font-size: 1.1em;
+    margin-right: 6px;
+}
+
+/* Card Icons - Larger size for dashboard cards */
+.card-icon {
+    font-size: 2.5em;
+    display: block;
+    text-align: center;
+    margin-bottom: 15px;
+    opacity: 0.8;
+}
+
+/* Stat Icons - Medium size for statistics */
+.stat-icon {
+    font-size: 1.8em;
+    margin-right: 12px;
+    vertical-align: middle;
+}
+
+/* Action Icons - For action buttons */
+.action-icon {
+    font-size: 2em;
+    display: block;
+    text-align: center;
+    margin-bottom: 10px;
+    opacity: 0.9;
+}
+
+/* Plan Status Icons */
+.plan-status-icon {
+    font-size: 1.2em;
+    margin-right: 6px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-icon {
+        font-size: 2em;
+    }
+    
+    .stat-icon {
+        font-size: 1.5em;
+    }
+    
+    .action-icon {
+        font-size: 1.8em;
+    }
+}
+
+/* Color variations for different contexts */
+.icon-primary { color: #007bff; }
+.icon-success { color: #28a745; }
+.icon-warning { color: #ffc107; }
+.icon-danger { color: #dc3545; }
+.icon-info { color: #17a2b8; }
+.icon-secondary { color: #6c757d; }
+
+/* Hover effects for interactive icons */
+.icon-hover:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+/* Animation for status changes */
+.icon-animate {
+    animation: iconPulse 0.6s ease-in-out;
+}
+
+@keyframes iconPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
