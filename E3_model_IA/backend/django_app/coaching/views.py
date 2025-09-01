@@ -149,13 +149,17 @@ def simple_plan_generator(request):
                         'saved_plan': saved_plan  # Passer l'objet sauvegardé pour affichage
                     })
                 else:
-                    messages.error(request, f'Erreur lors de la génération : {plan_response.get("error", "Erreur inconnue")}')
+                    messages.error(request, f"Erreur lors de la génération : {plan_response.get('error', 'Erreur inconnue')}")
                     
             except Exception as e:
-                messages.error(request, f'Erreur technique : {str(e)}')
+                messages.error(request, f"Erreur technique : {str(e)}")
                 
     else:
         form = SimplePlanGenerationForm()
+        # Nettoyer les anciens messages pour éviter qu'ils s'affichent sur le formulaire vide
+        storage = messages.get_messages(request)
+        for message in storage:
+            pass  # Vider les messages
     
     # Récupérer les statistiques utilisateur pour affichage
     user_stats = get_user_quick_stats(request.user)
@@ -229,7 +233,7 @@ def analyze_user_activities(user):
             'max_distance_km': 0,
             'avg_heart_rate': None,
             'recent_activities': [],
-            'error': f'Erreur d\'analyse : {str(e)}'
+            'error': f"Erreur d'analyse : {str(e)}"
         }
 
 
@@ -240,13 +244,15 @@ def generate_simple_plan_with_ai(user, form_data, user_data):
         # URL de l'API FastAPI (localhost en développement)
         fastapi_url = getattr(settings, 'FASTAPI_URL', 'http://localhost:8000')
         
-        # Préparer le payload simplifié compatible avec advanced_agent.py
+        # Préparer le payload simplifié compatible avec advanced_agent.py - approche objectif-centrée
         payload = {
             'user_email': user.email,
             'user_id': user.id,
             'goal': form_data['goal'],
             'level': form_data['level'],
             'sessions_per_week': int(form_data['sessions_per_week']),
+            'target_time': form_data.get('target_time', ''),
+            'duration_weeks': int(form_data.get('duration_weeks', 0)),  # 0 = agent détermine automatiquement
             'target_date': form_data['target_date'].isoformat() if form_data.get('target_date') else None,
             'additional_notes': form_data.get('additional_notes', ''),
             'user_activities_analysis': user_data,
@@ -319,13 +325,15 @@ def generate_plan_with_fastapi(user, form_data, user_data):
     # URL de l'API FastAPI (localhost en développement)
     fastapi_url = getattr(settings, 'FASTAPI_URL', 'http://localhost:8000')
     
-    # Préparer le payload simplifié compatible avec notre endpoint FastAPI
+    # Préparer le payload simplifié compatible avec notre endpoint FastAPI - approche objectif-centrée
     payload = {
         'user_email': user.email,
         'user_id': user.id,
         'goal': form_data['goal'],
         'level': form_data['level'],
         'sessions_per_week': int(form_data['sessions_per_week']),
+        'target_time': form_data.get('target_time', ''),
+        'duration_weeks': int(form_data.get('duration_weeks', 0)),  # 0 = agent détermine automatiquement
         'target_date': form_data['target_date'].isoformat() if form_data.get('target_date') else None,
         'additional_notes': form_data.get('additional_notes', ''),
         'user_activities_analysis': user_data,
@@ -489,7 +497,7 @@ Merci Coach !
             raise Exception(f'Erreur API {response.status_code}: {response.text}')
             
     except Exception as e:
-        raise Exception(f'Erreur lors de l\'appel à l\'agent avancé: {str(e)}')
+        raise Exception(f"Erreur lors de l'appel à l'agent avancé: {str(e)}")
 
 
 def generate_plan_with_simple_logic(user, form_data, user_data):
@@ -520,7 +528,7 @@ def generate_plan_with_simple_logic(user, form_data, user_data):
         return {
             'success': True,
             'plan': {
-                'title': f'Plan {goal} - Niveau {actual_level} (Logique simplifiée)',
+                'title': f"Plan {goal} - Niveau {actual_level} (Logique simplifiée)",
                 'description': plan_content,
                 'weekly_sessions': sessions,
                 'recommendations': recommendations,
@@ -667,7 +675,7 @@ def generate_personalized_recommendations(user_data, goal, level):
         recommendations.extend([
             "Augmentez progressivement votre fréquence d'entraînement",
             "Focalisez-vous sur la durée plutôt que la vitesse",
-            "Alternez les intensités pour éviter la monotonie"
+            "Altez les intensités pour éviter la monotonie"
         ])
     
     # Recommandations basées sur la distance moyenne
@@ -960,7 +968,7 @@ class RunningGoalWizardView(LoginRequiredMixin, TemplateView):
                 
                 messages.success(
                     request, 
-                    f'Plan d\'entraînement "{training_plan.name}" créé avec succès!'
+                    f"Plan d'entraînement \"{training_plan.name}\" créé avec succès!"
                 )
                 
                 # Rediriger vers le template de résultat avec les données du plan
@@ -975,7 +983,7 @@ class RunningGoalWizardView(LoginRequiredMixin, TemplateView):
         except Exception as e:
             messages.error(
                 request, 
-                f'Erreur lors de la génération du plan : {str(e)}'
+                f"Erreur lors de la génération du plan : {str(e)}"
             )
             return render(request, self.template_name, {
                 'current_step': 4,
@@ -1137,9 +1145,9 @@ class RunningGoalWizardView(LoginRequiredMixin, TemplateView):
         frequency = len(recent_30_days)
         
         if frequency >= 12:  # 3+ par semaine
-            notes.append('Entraînement régulier - bon niveau d\'activité')
+            notes.append("Entraînement régulier - bon niveau d'activité")
         elif frequency >= 8:  # 2 par semaine
-            notes.append('Entraînement modéré - peut augmenter progressivement')
+            notes.append("Entraînement modéré - peut augmenter progressivement")
         else:
             notes.append('Entraînement irrégulier - commencer doucement')
         
@@ -1151,7 +1159,7 @@ class RunningGoalWizardView(LoginRequiredMixin, TemplateView):
         elif avg_distance >= 5:
             notes.append('Distances moyennes - progression standard recommandée')
         else:
-            notes.append('Courtes distances - privilégier l\'augmentation progressive')
+            notes.append("Courtes distances - privilégier l'augmentation progressive")
         
         # Blessures récentes (basées sur les notes)
         injury_mentions = [a for a in activities[:5] if a.notes and ('douleur' in a.notes.lower() or 'mal' in a.notes.lower())]
@@ -1180,13 +1188,13 @@ class RunningGoalWizardView(LoginRequiredMixin, TemplateView):
             # Zones de fréquence cardiaque si disponibles
             if all([profile.hr_zone_1, profile.hr_zone_2, profile.hr_zone_3, profile.hr_zone_4, profile.hr_zone_5]):
                 context['hr_zones'] = {
-                    'zone_1': f"{profile.hr_zone_1_min}-{profile.hr_zone_1}" if hasattr(profile, 'hr_zone_1_min') else str(profile.hr_zone_1),
-                    'zone_2': f"{profile.hr_zone_2_min}-{profile.hr_zone_2}" if hasattr(profile, 'hr_zone_2_min') else str(profile.hr_zone_2),
-                    'zone_3': f"{profile.hr_zone_3_min}-{profile.hr_zone_3}" if hasattr(profile, 'hr_zone_3_min') else str(profile.hr_zone_3),
-                    'zone_4': f"{profile.hr_zone_4_min}-{profile.hr_zone_4}" if hasattr(profile, 'hr_zone_4_min') else str(profile.hr_zone_4),
-                    'zone_5': f"{profile.hr_zone_5_min}-{profile.hr_zone_5}" if hasattr(profile, 'hr_zone_5_min') else str(profile.hr_zone_5),
+                    'zone_1': f"{getattr(profile, 'hr_zone_1_min', '')}-{profile.hr_zone_1}" if hasattr(profile, 'hr_zone_1_min') else str(profile.hr_zone_1),
+                    'zone_2': f"{getattr(profile, 'hr_zone_2_min', '')}-{profile.hr_zone_2}" if hasattr(profile, 'hr_zone_2_min') else str(profile.hr_zone_2),
+                    'zone_3': f"{getattr(profile, 'hr_zone_3_min', '')}-{profile.hr_zone_3}" if hasattr(profile, 'hr_zone_3_min') else str(profile.hr_zone_3),
+                    'zone_4': f"{getattr(profile, 'hr_zone_4_min', '')}-{profile.hr_zone_4}" if hasattr(profile, 'hr_zone_4_min') else str(profile.hr_zone_4),
+                    'zone_5': f"{getattr(profile, 'hr_zone_5_min', '')}-{profile.hr_zone_5}" if hasattr(profile, 'hr_zone_5_min') else str(profile.hr_zone_5),
                 }
-            
+        
             # Prédictions de performance si disponibles
             context['predictions'] = {
                 'prediction_5k': profile.prediction_5k.strftime('%M:%S') if profile.prediction_5k else None,
@@ -1358,6 +1366,7 @@ class TrainingPlanDetailView(LoginRequiredMixin, DetailView):
 # ===== VUES RAPIDES =====
 
 @login_required
+
 def quick_goal_view(request):
     """Vue pour création rapide d'objectif"""
     if request.method == 'POST':
@@ -1375,6 +1384,7 @@ def quick_goal_view(request):
 
 
 @login_required
+
 def dashboard_coaching_view(request):
     """Dashboard coaching avec vue d'ensemble"""
     user = request.user

@@ -16,6 +16,7 @@ def health_check(request):
     return HttpResponse("OK", content_type="text/plain")
 
 
+
 def user_dashboard(request):
     """Dashboard principal utilisateur - Vue d'ensemble complète"""
     if not request.user.is_authenticated:
@@ -150,7 +151,7 @@ def user_dashboard(request):
         recommendations.append({
             'type': 'frequency',
             'title': 'Augmentez votre fréquence',
-            'message': f'Vous n\'avez fait que {activity_stats["total_count"]} activités en {period_days} jours.',
+            'message': f"Vous n'avez fait que {activity_stats['total_count']} activités en {period_days} jours.",
             'action': 'Créer un plan',
             'url': '/api/v1/coaching/simple-plan/'
         })
@@ -202,6 +203,7 @@ def user_dashboard(request):
 
 
 @login_required
+
 def dashboard_stats_api(request):
     """API pour récupérer les données de dashboard en JSON"""
     user = request.user

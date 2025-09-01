@@ -14,10 +14,12 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import os
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.static import serve
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from rest_framework import permissions
@@ -25,12 +27,19 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
+
 def test_view(request):
     """Vue de test simple"""
     return render(request, 'test_simple.html')
 
+# Import de la vue custom avec instrumentation complète
+from monitoring_middleware import metrics_view
+
+
 def metrics_views(request):
-    return HttpResponse(generate_latest(), content_type=CONTENT_TYPE_LATEST)
+    """Vue custom avec instrumentation manuelle complète"""
+    return metrics_view(request)
+
 
 def home_view(request):
     """Vue d'accueil avec design Pawatech"""
@@ -40,7 +49,7 @@ def home_view(request):
         'company': {
             'name': 'Coach AI',
             'tagline': 'Plateforme IA pour coaching sportif',
-            'description': 'Solution complète d\'analyse et de coaching sportif personnalisé. Intégration données Garmin, IA conversationnelle et analyses de performances avancées.'
+            'description': 'Une solution complète d\'analyse et de coaching sportif personnalisé pour les coureurs. Avec intégration de données Garmin, une IA conversationnelle capable d\'analyser vos performances.'
         },
         'statistics': [
             {'label': '', 'value': 'Données Garmin analysées'},
@@ -61,8 +70,8 @@ def home_view(request):
             {'name': 'API Activités', 'url': '/api/v1/activities/', 'description': 'Accès aux données d\'activités sportives'},
             {'name': 'API Coaching', 'url': '/api/v1/coaching/', 'description': 'IA conversationnelle et coaching personnalisé'},
             {'name': 'Documentation Swagger', 'url': '/swagger/', 'description': 'Documentation interactive des APIs'},
-            {'name': 'FastAPI (Port 8000)', 'url': 'http://localhost:8000', 'description': 'Service IA et APIs'},
-            {'name': 'Streamlit (Port 8502)', 'url': 'http://localhost:8502', 'description': 'Interface utilisateur'}
+            {'name': 'FastAPI (Port 8000)', 'url': getattr(settings, 'FASTAPI_URL', 'http://localhost:8000'), 'description': 'Service IA et APIs'},
+            {'name': 'Streamlit (Port 8501)', 'url': getattr(settings, 'STREAMLIT_URL', 'http://localhost:8501'), 'description': 'Interface utilisateur'}
         ]
     }
     
@@ -81,9 +90,11 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
+
 def health_check(request):
     """Endpoint de santé simple"""
     return HttpResponse("OK", content_type="text/plain")
+
 
 urlpatterns = [
     # Health check
@@ -103,6 +114,9 @@ urlpatterns = [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('api/schema/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     
+    # Web Views
+    path('coaching/', include('coaching.urls')),
+    
     # API Endpoints
     path('api/v1/auth/', include('accounts.urls')),
     path('api/v1/activities/', include('activities.urls')),
@@ -110,13 +124,11 @@ urlpatterns = [
     path('api/v1/core/', include('core.urls')),
 
     path("metrics/", metrics_views),
-    # path('', include('django_prometheus.urls')),
     
     # Route directe de test pour dashboard
     path('dashboard-test/', lambda r: HttpResponse('<h1>Test Dashboard</h1><a href="/admin/">Admin</a>')),
+    
+    # Servir les fichiers statiques et médias DIRECTEMENT dans la liste
+    path('media/<path:path>', serve, {'document_root': settings.MEDIA_ROOT}),
+    path('static/<path:path>', serve, {'document_root': settings.STATIC_ROOT}),
 ]
-
-# Servir les fichiers statiques et médias en développement
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

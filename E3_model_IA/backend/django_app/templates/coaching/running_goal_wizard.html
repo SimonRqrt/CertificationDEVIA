@@ -6,7 +6,7 @@
 {% block content %}
 <div class="container">
     <div class="wizard-header">
-        <h1>🎯 Assistant Objectifs Running</h1>
+        <h1><i class="fas fa-bullseye me-2"></i>Assistant Objectifs Running</h1>
         <p>Définissez votre objectif et obtenez un plan d'entraînement personnalisé</p>
         
         <!-- Barre de progression -->
@@ -17,7 +17,7 @@
             <div class="step {% if current_step >= 4 %}active{% endif %}">4. Génération</div>
         </div>
     </div>
-
+    
     {% if messages %}
         <div class="messages">
             {% for message in messages %}
@@ -25,12 +25,12 @@
             {% endfor %}
         </div>
     {% endif %}
-
+    
     <div class="wizard-content">
         {% if current_step == 1 %}
             <!-- Étape 1: Informations personnelles -->
             <div class="step-content">
-                <h2>📝 Informations personnelles</h2>
+                <h2><i class="fas fa-edit me-2"></i>Informations personnelles</h2>
                 <p>Renseignez vos informations pour personnaliser votre plan.</p>
                 
                 <form method="post">
@@ -46,11 +46,11 @@
                     </div>
                 </form>
             </div>
-
+            
         {% elif current_step == 2 %}
             <!-- Étape 2: Objectif running -->
             <div class="step-content">
-                <h2>🏃 Objectif running</h2>
+                <h2><i class="fas fa-running me-2"></i>Objectif running</h2>
                 <p>Quel est votre objectif de course ?</p>
                 
                 <form method="post">
@@ -67,11 +67,11 @@
                     </div>
                 </form>
             </div>
-
+            
         {% elif current_step == 3 %}
             <!-- Étape 3: Préférences -->
             <div class="step-content">
-                <h2>⚙️ Préférences d'entraînement</h2>
+                <h2><i class="fas fa-cog me-2"></i>Préférences d'entraînement</h2>
                 <p>Personnalisez votre plan selon vos disponibilités.</p>
                 
                 <form method="post">
@@ -88,11 +88,11 @@
                     </div>
                 </form>
             </div>
-
+            
         {% elif current_step == 4 %}
             <!-- Étape 4: Génération du plan -->
             <div class="step-content">
-                <h2>🤖 Génération de votre plan</h2>
+                <h2><i class="fas fa-robot me-2"></i>Génération de votre plan</h2>
                 <p>Création de votre plan d'entraînement personnalisé avec l'IA.</p>
                 
                 {% if session_data %}
@@ -123,7 +123,7 @@
                     
                     <div class="form-actions">
                         <a href="?step=3" class="btn btn-secondary">← Précédent</a>
-                        <button type="submit" class="btn btn-success">🚀 Générer mon plan</button>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-rocket me-2"></i>Générer mon plan</button>
                     </div>
                 </form>
                 
@@ -135,12 +135,12 @@
             </div>
         {% endif %}
     </div>
-
+    
     <!-- Sidebar avec infos contextuelles -->
     <div class="sidebar">
         {% if recent_activities %}
             <div class="info-panel">
-                <h3>📊 Vos activités récentes</h3>
+                <h3><i class="fas fa-chart-bar me-2"></i>Vos activités récentes</h3>
                 <ul>
                     {% for activity in recent_activities|slice:":5" %}
                         <li>
@@ -151,10 +151,10 @@
                 </ul>
             </div>
         {% endif %}
-
+        
         {% if active_goals %}
             <div class="info-panel">
-                <h3>🎯 Objectifs actuels</h3>
+                <h3><i class="fas fa-bullseye me-2"></i>Objectifs actuels</h3>
                 <ul>
                     {% for goal in active_goals %}
                         <li>{{ goal.name }} ({{ goal.progress_percentage }}%)</li>
@@ -162,10 +162,10 @@
                 </ul>
             </div>
         {% endif %}
-
+        
         {% if active_plans %}
             <div class="info-panel">
-                <h3>📋 Plans actifs</h3>
+                <h3><i class="fas fa-clipboard-list me-2"></i>Plans actifs</h3>
                 <ul>
                     {% for plan in active_plans %}
                         <li>{{ plan.name }}</li>
@@ -175,7 +175,6 @@
         {% endif %}
     </div>
 </div>
-
 <style>
 .container { display: flex; max-width: 1200px; margin: 0 auto; padding: 20px; gap: 30px; }
 .wizard-content { flex: 2; }

@@ -23,23 +23,33 @@ RUN apt-get update \
       gnupg \
  && rm -rf /var/lib/apt/lists/*
 
-# ====== Repo Microsoft + Driver ODBC 18 ======
-RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
-      | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
- && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" \
-      > /etc/apt/sources.list.d/mssql-release.list \
- && apt-get update \
- && ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 \
- && rm -rf /var/lib/apt/lists/*
+# ====== Repo Microsoft + Driver ODBC 18 (amd64 uniquement) ======
+ARG TARGETARCH
+RUN set -eux; \
+    if [ "${TARGETARCH}" = "amd64" ]; then \
+      curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
+        | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg; \
+      echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" \
+        > /etc/apt/sources.list.d/mssql-release.list; \
+      apt-get update; \
+      ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18; \
+      rm -rf /var/lib/apt/lists/*; \
+    else \
+      echo "Skipping msodbcsql18 install on ARCH=${TARGETARCH}"; \
+    fi
 
 # ====== Config odbcinst (driver path dynamique) ======
 # Évite de figer la version exacte du .so ; on détecte la lib installée.
 RUN set -eux; \
-    DRIVER_PATH="$(find /opt/microsoft/msodbcsql18/lib64 -maxdepth 1 -type f -name 'libmsodbcsql-*.so*' | head -n1)"; \
-    echo "[ODBC Driver 18 for SQL Server]"                 > /etc/odbcinst.ini; \
-    echo "Description=Microsoft ODBC Driver 18 for SQL Server" >> /etc/odbcinst.ini; \
-    echo "Driver=${DRIVER_PATH}"                           >> /etc/odbcinst.ini; \
-    echo "Threading=1"                                     >> /etc/odbcinst.ini
+    if [ -d "/opt/microsoft/msodbcsql18/lib64" ]; then \
+      DRIVER_PATH="$(find /opt/microsoft/msodbcsql18/lib64 -maxdepth 1 -type f -name 'libmsodbcsql-*.so*' | head -n1)"; \
+      echo "[ODBC Driver 18 for SQL Server]"                 > /etc/odbcinst.ini; \
+      echo "Description=Microsoft ODBC Driver 18 for SQL Server" >> /etc/odbcinst.ini; \
+      echo "Driver=${DRIVER_PATH}"                           >> /etc/odbcinst.ini; \
+      echo "Threading=1"                                     >> /etc/odbcinst.ini; \
+    else \
+      echo "ODBC driver not installed (non-amd64); skipping odbcinst config"; \
+    fi
 
 # ====== Dépendances Python ======
 COPY E3_model_IA/backend/fastapi_app/requirements-fastapi.txt ${APP_HOME}/requirements.txt

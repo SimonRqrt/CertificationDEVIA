@@ -45,6 +45,9 @@ DEBUG = env('DEBUG', default=True)
 
 # Force all hosts in debug mode
 ALLOWED_HOSTS = ['*']
+# Force l'acceptation des noms de containers Docker pour Prometheus
+import socket
+socket.setdefaulttimeout(None)
 
 
 # Application definition
@@ -63,7 +66,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'django_extensions',
-    # 'django_prometheus',  # désactivé: package non présent dans l'image actuelle
     'drf_yasg',
     
     # Local apps
@@ -74,6 +76,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'django.middleware.gzip.GZipMiddleware',  # Éco-conception: compression 70%
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -82,6 +85,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'monitoring_middleware.PrometheusMiddleware',  # Métriques custom
+    'monitoring_middleware.AuthFailureMiddleware',  # Auth tracking
 ]
 
 ROOT_URLCONF = 'coach_ai_web.urls'
@@ -97,6 +102,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.service_urls',
             ],
         },
     },
@@ -121,7 +127,7 @@ if DB_TYPE == 'postgresql':
             'HOST': env('DB_HOST', default='localhost'),
             'PORT': env('DB_PORT', default='5432'),
             'OPTIONS': {
-                'sslmode': env('DB_SSLMODE', default='prefer'),
+                'sslmode': env('DB_SSLMODE', default='disable'),
             },
             'CONN_MAX_AGE': 600,
             'CONN_HEALTH_CHECKS': True,
@@ -228,17 +234,25 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:8501",
+    env('FRONTEND_URL', default='http://localhost:8501'),  # Streamlit pour Docker
     "http://127.0.0.1:3000",
     "http://127.0.0.1:8501",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
-# Static files
+# URLs des services pour Docker
+FASTAPI_URL = env('FASTAPI_URL', default='http://localhost:8000')
+STREAMLIT_URL = env('STREAMLIT_URL', default='http://localhost:8501')
+
+# Static files (configuration de production)
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+
+# Configuration de debug pour servir les fichiers statiques
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 # Media files
 MEDIA_URL = '/media/'

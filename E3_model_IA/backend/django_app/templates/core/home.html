@@ -4,38 +4,36 @@
 {% block title %}{{ company.name }} - {{ company.tagline }}{% endblock %}
 
 {% block content %}
-<!-- Section Hero -->
 <section class="hero">
     <div class="container">
         <div class="hero-content">
             <div class="hero-text">
                 <h1 class="hero-title">
                     <span class="title-line">Coach AI</span>
-                    <span class="title-line">Plateforme sportive</span>
+                    <span class="title-line">L'intelligence artificielle pour les coureurs</span>
                 </h1>
                 <p class="hero-subtitle">
-                    Intelligence artificielle pour<br>
-                    coaching personnalisé
+                    IA de coaching personnalisé
                 </p>
                 <div class="hero-actions">
-                    <a href="/api/v1/core/dashboard/" class="btn-primary"><span class="flaticon-home"></span> Dashboard Utilisateur</a>
-                    <a href="/api/v1/coaching/simple-plan/" class="btn-secondary"><span class="flaticon-flash"></span> Plan Simplifié</a>
-                    <a href="/admin/" class="btn-tertiary"><span class="flaticon-settings"></span> Administration</a>
-                    <a href="http://localhost:8502" class="btn-quaternary"><span class="flaticon-chat"></span> Chat IA</a>
+                    <a href="/api/v1/core/dashboard/" class="btn-primary"><span class="flaticon-home"></span>Dashboard Utilisateur</a>
+                    <a href="/api/v1/coaching/simple-plan/" class="btn-secondary"><span class="flaticon-flash"></span>Plan Simplifié</a>
+                    <a href="/admin/" class="btn-tertiary"><span class="flaticon-admin"></span>Administration</a>
+                    <a href="{{ STREAMLIT_URL }}" class="btn-quaternary"><span class="flaticon-chat"></span>Chat IA</a>
                 </div>
             </div>
             <div class="hero-image">
                 <div class="hero-visual">
                     <div class="visual-card">
-                        <h3><span class="flaticon-running"></span> Analyses</h3>
+                        <h3><span class="flaticon-running"></span>Analyses</h3>
                         <p>Données Garmin temps réel</p>
                     </div>
                     <div class="visual-card">
-                        <h3><span class="flaticon-robot"></span> IA Coach</h3>
+                        <h3><span class="flaticon-robot"></span>IA Coach</h3>
                         <p>Conseils personnalisés</p>
                     </div>
                     <div class="visual-card">
-                        <h3><span class="flaticon-analytics"></span> Métriques</h3>
+                        <h3><span class="flaticon-analytics"></span>Métriques</h3>
                         <p>Suivi performances</p>
                     </div>
                 </div>
@@ -48,7 +46,7 @@
 <section class="overview">
     <div class="container">
         <div class="section-header">
-            <h2>Overview</h2>
+            <h2>Simplifiez votre entraînement avec Coach AI</h2>
         </div>
         <div class="overview-content">
             <p class="overview-text">
@@ -120,7 +118,7 @@
                 <a href="/simple-plan/" class="footer-link">Plan Simplifié</a>
                 <a href="/admin/" class="footer-link">Administration</a>
                 <a href="/swagger/" class="footer-link">Documentation API</a>
-                <a href="http://localhost:8502" class="footer-link">Interface Coach</a>
+                <a href="{{ STREAMLIT_URL }}" class="footer-link">Interface Coach</a>
             </div>
         </div>
     </div>
