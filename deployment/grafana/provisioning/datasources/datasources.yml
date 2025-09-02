@@ -12,11 +12,12 @@ datasources:
       httpMethod: POST
       timeInterval: "5s"
       
-  - name: Loki
-    type: loki
-    access: proxy  
-    url: http://loki:3100
-    editable: true
-    jsonData:
-      httpMethod: POST
-      maxLines: 1000
+# Loki service not available in this deployment
+#  - name: Loki
+#    type: loki
+#    access: proxy  
+#    url: http://loki:3100
+#    editable: true
+#    jsonData:
+#      httpMethod: POST
+#      maxLines: 1000

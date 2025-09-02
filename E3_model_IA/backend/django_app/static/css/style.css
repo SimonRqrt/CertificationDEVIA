@@ -125,10 +125,12 @@ body {
 
 .title-line {
     display: block;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: inherit;
 }
 
 .hero-subtitle {
-    font-size: 1.25rem;
+    font-size: 1.25rem; /* Retour à la taille normale */
     color: #666;
     font-weight: 400;
     margin-bottom: 30px;
@@ -492,4 +494,142 @@ body {
 
 .service-card:nth-child(4) {
     animation-delay: 0.3s;
+}
+
+/* =========================
+   CORRECTIONS CSS
+   ========================= */
+
+/* Correction des flaticons - tailles cohérentes */
+.flaticon {
+    font-size: 1em;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+[class^="flaticon-"]:before, 
+[class*=" flaticon-"]:before {
+    font-size: 1em;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+/* Flaticons dans les boutons hero */
+.btn-primary .flaticon:before,
+.btn-secondary .flaticon:before,
+.btn-tertiary .flaticon:before,
+.btn-quaternary .flaticon:before {
+    font-size: 1.1em;
+    margin-right: 6px;
+}
+
+/* Flèche de retour - style moderne cohérent avec le site - SEULEMENT pour les vrais liens de retour */
+a.back-arrow, 
+a.btn-back,
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+a.back-arrow:hover, 
+a.btn-back:hover,
+.back-link:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    color: #fff;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.back-arrow:before {
+    content: "←";
+    font-size: 1.2em;
+    margin-right: 6px;
+}
+
+/* Titre hero - force la police Inter avec spécificité maximale */
+.hero .hero-content .hero-text .hero-title,
+.hero .hero-content .hero-text .hero-title .title-line {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    font-weight: 700 !important;
+    font-style: normal !important;
+}
+
+/* Réduire spécifiquement la 2ème ligne du titre de 50% */
+.hero .hero-content .hero-text .hero-title .title-line:nth-child(2) {
+    font-size: 0.5em; /* 50% de la taille du parent */
+}
+
+/* Dashboard flaticons */
+.dashboard-header h1 .flaticon:before {
+    font-size: 1.3em;
+    margin-right: 12px;
+}
+
+.dashboard-card h2 .flaticon:before {
+    font-size: 1.2em;
+    margin-right: 10px;
+}
+
+.action-icon .flaticon:before,
+.action-icon span[class^="flaticon-"]:before,
+.action-icon span[class*=" flaticon-"]:before {
+    font-size: 2em;
+    margin: 0;
+}
+
+/* Force l'affichage de la flèche de retour */
+.back-arrow:before,
+.btn-back:before {
+    content: "←" !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 1.2em !important;
+    margin-right: 6px !important;
+    font-weight: bold !important;
+}
+
+/* Standardiser toutes les tailles de flaticons */
+.flaticon:before,
+[class^="flaticon-"]:before, 
+[class*=" flaticon-"]:before,
+span[class^="flaticon-"]:before,
+span[class*=" flaticon-"]:before {
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900 !important;
+    display: inline-block !important;
+    font-style: normal !important;
+    font-variant: normal !important;
+    text-rendering: auto !important;
+    line-height: 1 !important;
+    margin-right: 8px !important;
+    vertical-align: middle !important;
+}
+
+/* Dashboard - flaticons spécifiques */
+.dashboard-header h1 span[class^="flaticon-"]:before,
+.dashboard-card h2 span[class^="flaticon-"]:before,
+.quick-actions h2 span[class^="flaticon-"]:before {
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900 !important;
+    display: inline-block !important;
+    font-size: 1.2em !important;
+    margin-right: 8px !important;
+    vertical-align: middle !important;
+}
+
+/* Actions cards flaticons */
+.action-card .action-icon span[class^="flaticon-"]:before {
+    font-size: 2em !important;
+    margin: 0 !important;
+    display: block !important;
+    text-align: center !important;
 }

@@ -6,14 +6,14 @@
 {% block content %}
 <div class="dashboard-container">
     <div class="dashboard-header">
-        <h1>🏋️ Dashboard Coaching</h1>
+        <h1><span class="flaticon-dashboard"></span>Dashboard Coaching</h1>
         <p>Vue d'ensemble de votre entraînement et progression</p>
     </div>
 
     <div class="dashboard-grid">
         <!-- Plans d'entraînement -->
         <div class="dashboard-card">
-            <h2>📋 Plans d'entraînement</h2>
+            <h2><span class="flaticon-calendar"></span>Plans d'entraînement</h2>
             {% if active_plans %}
                 <div class="plans-list">
                     {% for plan in active_plans %}
@@ -38,7 +38,7 @@
 
         <!-- Objectifs -->
         <div class="dashboard-card">
-            <h2>🎯 Objectifs</h2>
+            <h2><span class=\"flaticon-target\"></span>Objectifs</h2>
             {% if active_goals %}
                 <div class="goals-list">
                     {% for goal in active_goals %}
@@ -66,7 +66,7 @@
 
         <!-- Sessions à venir -->
         <div class="dashboard-card">
-            <h2>📅 Prochaines séances</h2>
+            <h2><span class=\"flaticon-schedule\"></span>Prochaines séances</h2>
             {% if upcoming_sessions %}
                 <div class="sessions-list">
                     {% for session in upcoming_sessions %}
@@ -94,7 +94,7 @@
 
         <!-- Sessions récentes -->
         <div class="dashboard-card">
-            <h2>📊 Sessions récentes</h2>
+            <h2><span class="flaticon-analytics"></span>Sessions récentes</h2>
             {% if recent_sessions %}
                 <div class="sessions-list">
                     {% for session in recent_sessions %}
@@ -118,7 +118,7 @@
         <!-- Métriques de performance -->
         {% if latest_metrics %}
         <div class="dashboard-card">
-            <h2>📈 Métriques de performance</h2>
+            <h2><span class=\"flaticon-chart\"></span>Métriques de performance</h2>
             <div class="metrics-grid">
                 {% if latest_metrics.vma %}
                     <div class="metric-item">
@@ -146,20 +146,20 @@
 
     <!-- Actions rapides -->
     <div class="quick-actions">
-        <h2>🚀 Actions rapides</h2>
+        <h2><span class=\"flaticon-rocket\"></span>Actions rapides</h2>
         <div class="actions-grid">
             <a href="{% url 'coaching:running_wizard' %}" class="action-card">
-                <div class="action-icon">🎯</div>
+                <div class="action-icon"><span class="flaticon-target"></span></div>
                 <h3>Nouvel objectif</h3>
                 <p>Créer un plan personnalisé</p>
             </a>
             <a href="{% url 'coaching:quick_goal' %}" class="action-card">
-                <div class="action-icon">⚡</div>
+                <div class="action-icon"><span class="flaticon-flash"></span></div>
                 <h3>Objectif rapide</h3>
                 <p>Définir un objectif simple</p>
             </a>
             <a href="{% url 'coaching:plan_list' %}" class="action-card">
-                <div class="action-icon">📋</div>
+                <div class="action-icon"><span class="flaticon-calendar"></span></div>
                 <h3>Mes plans</h3>
                 <p>Voir tous vos plans</p>
             </a>

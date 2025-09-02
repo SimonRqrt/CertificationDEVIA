@@ -7,14 +7,14 @@
 {% block content %}
 <div class="activities-dashboard">
     <div class="dashboard-header">
-        <h1>📊 Dashboard Activités</h1>
+        <h1><span class="flaticon-analytics"></span>Dashboard Activités</h1>
         <p>Vue d'ensemble de vos performances sportives</p>
     </div>
 
     <!-- Statistiques générales -->
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-icon">🏃</div>
+            <div class="stat-icon"><span class="flaticon-running"></span></div>
             <div class="stat-content">
                 <h3>{{ stats.total_count|default:0 }}</h3>
                 <p>Activités</p>
@@ -22,7 +22,7 @@
         </div>
         
         <div class="stat-card">
-            <div class="stat-icon">📏</div>
+            <div class="stat-icon"><span class="flaticon-analytics"></span></div>
             <div class="stat-content">
                 <h3>{{ stats.total_distance_km|default:0 }} km</h3>
                 <p>Distance totale</p>
@@ -30,7 +30,7 @@
         </div>
         
         <div class="stat-card">
-            <div class="stat-icon">⏱️</div>
+            <div class="stat-icon"><span class="flaticon-stopwatch"></span></div>
             <div class="stat-content">
                 <h3>{{ stats.total_duration_formatted|default:"0h 0min" }}</h3>
                 <p>Temps total</p>
@@ -38,7 +38,7 @@
         </div>
         
         <div class="stat-card">
-            <div class="stat-icon">💓</div>
+            <div class="stat-icon"><span class="flaticon-heart"></span></div>
             <div class="stat-content">
                 <h3>{{ stats.avg_hr|default:0|floatformat:0 }}</h3>
                 <p>FC moyenne</p>
@@ -49,16 +49,16 @@
     <div class="dashboard-content">
         <!-- Activités récentes -->
         <div class="dashboard-section">
-            <h2>🕐 Activités récentes</h2>
+            <h2><span class="flaticon-time"></span>Activités récentes</h2>
             {% if recent_activities %}
                 <div class="activities-list">
                     {% for activity in recent_activities %}
                         <div class="activity-item">
                             <div class="activity-icon">
-                                {% if activity.activity_type == 'running' %}🏃
-                                {% elif activity.activity_type == 'cycling' %}🚴
-                                {% elif activity.activity_type == 'swimming' %}🏊
-                                {% else %}🏋️{% endif %}
+                                {% if activity.activity_type == 'running' %}<span class="flaticon-running"></span>
+                                {% elif activity.activity_type == 'cycling' %}<span class="flaticon-cycling"></span>
+                                {% elif activity.activity_type == 'swimming' %}<span class="flaticon-swimming"></span>
+                                {% else %}<span class="flaticon-flash"></span>{% endif %}
                             </div>
                             <div class="activity-details">
                                 <h4>{{ activity.activity_name }}</h4>
@@ -89,7 +89,7 @@
 
         <!-- Répartition par type -->
         <div class="dashboard-section">
-            <h2>📊 Répartition par type</h2>
+            <h2><span class="flaticon-analytics"></span>Répartition par type</h2>
             {% if activity_types %}
                 <div class="type-stats">
                     {% for type_stat in activity_types %}
@@ -112,7 +112,7 @@
         <!-- Records personnels -->
         {% if records %}
         <div class="dashboard-section">
-            <h2>🏆 Records personnels</h2>
+            <h2><span class="flaticon-trophy"></span>Records personnels</h2>
             <div class="records-grid">
                 {% if records.fastest_5k %}
                     <div class="record-item">
@@ -152,14 +152,14 @@
 
     <!-- Actions rapides -->
     <div class="quick-actions">
-        <h2>⚡ Actions rapides</h2>
+        <h2><span class="flaticon-flash"></span>Actions rapides</h2>
         <div class="actions-grid">
             <a href="{% url 'activities:list' %}" class="action-btn">
-                <span>📋</span>
+                <span class="flaticon-clipboard"></span>
                 Voir toutes les activités
             </a>
             <a href="/admin/" class="action-btn">
-                <span>📈</span>
+                <span class="flaticon-chart"></span>
                 Administration
             </a>
         </div>

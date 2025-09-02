@@ -17,7 +17,6 @@ from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langchain_core.messages import HumanMessage, ToolMessage, SystemMessage, AnyMessage
 from langchain_core.messages.ai import AIMessage
 
-# Lazy import to avoid initialization issues in tests
 from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_core.tools import tool
@@ -44,8 +43,7 @@ except ImportError:
 load_dotenv()
 api_key = OPENAI_API_KEY
 
-# Allow running without API key in test environments
-# Check for pytest or CI environment
+
 is_test_env = (
     os.getenv("PYTEST_CURRENT_TEST") or 
     "pytest" in sys.modules or 

@@ -59,6 +59,14 @@
 .flaticon-cross:before { content: "\f00d"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
 .flaticon-error:before { content: "\f00d"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
 .flaticon-warning:before { content: "\f071"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-trophy:before { content: "\f091"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-clipboard:before { content: "\f328"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-user:before { content: "\f007"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-sync:before { content: "\f021"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-hourglass:before { content: "\f254"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-lock:before { content: "\f023"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-stopwatch:before { content: "\f2f2"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+.flaticon-heart:before { content: "\f004"; font-family: "Font Awesome 6 Free"; font-weight: 900; }
 
 /* Fire/Intensity Icons */
 .flaticon-fire:before { content: "\f06d"; font-family: "Font Awesome 6 Free"; font-weight: 900; }

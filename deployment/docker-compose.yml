@@ -171,12 +171,20 @@ services:
       - FASTAPI_URL=http://fastapi:8000
       - DJANGO_URL=http://django:8002
       - API_KEY=coach_ai_secure_key_2025
+      - DATABASE_URL=postgresql://coach_user:coach_password@postgres:5432/coach_ia_db
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=coach_ia_db
+      - DB_USER=coach_user
+      - DB_PASSWORD=coach_password
     volumes:
       - ../data:/app/data
       # - ./streamlit_secrets.toml:/app/.streamlit/secrets.toml:ro  # si tu utilises des secrets
     ports:
       - "8501:8501"
     depends_on:
+      postgres:
+        condition: service_healthy
       fastapi:
         condition: service_started
       django:

@@ -94,44 +94,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Vérification du statut des services
-    function checkServiceStatus() {
-        const services = [
-            { url: '/api/v1/auth/', element: document.querySelector('[href="/api/v1/auth/"]') },
-            { url: 'http://localhost:8000/docs', element: document.querySelector('[href="http://localhost:8000"]') },
-            { url: 'http://localhost:8502/', element: document.querySelector('[href="http://localhost:8502"]') }
-        ];
-
-        services.forEach(service => {
-            if (service.element) {
-                fetch(service.url, { mode: 'no-cors' })
-                    .then(() => {
-                        service.element.style.opacity = '1';
-                        service.element.parentElement.classList.add('service-online');
-                    })
-                    .catch(() => {
-                        service.element.style.opacity = '0.6';
-                        // Ne pas marquer visuellement en rouge
-                        // service.element.parentElement.classList.add('service-offline');
-                    });
-            }
-        });
-    }
-
-    // Vérifier le statut des services au chargement
-    setTimeout(checkServiceStatus, 1000);
-
-    // Ajouter des classes CSS pour les statuts
+    // Service status styles
     const style = document.createElement('style');
     style.textContent = `
-        .service-online::before {
-            content: "";
-        }
-        .service-offline::before {
-            content: "";
+        .service-card {
+            opacity: 1;
         }
     `;
     document.head.appendChild(style);
 
     console.log('Coach AI - Interface chargée avec succès!');
 });
+

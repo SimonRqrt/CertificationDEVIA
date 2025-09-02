@@ -16,10 +16,10 @@
                     </a>
                 </div>
                 <nav class="main-nav">
-                    <a href="/api/v1/activities/" class="nav-link">📊 Activités</a>
-                    <a href="/api/v1/coaching/simple-plan/" class="nav-link">🎯 Coaching</a>
-                    <a href="http://localhost:8502" class="nav-link">💬 Chat IA</a>
-                    <a href="/admin/" class="nav-link">⚙️ Admin</a>
+                    <a href="/api/v1/activities/" class="nav-link"><span class="flaticon-analytics"></span>Activités</a>
+                    <a href="/api/v1/coaching/simple-plan/" class="nav-link"><span class="flaticon-target"></span>Coaching</a>
+                    <a href="http://localhost:8502" class="nav-link"><span class="flaticon-chat"></span>Chat IA</a>
+                    <a href="/admin/" class="nav-link"><span class="flaticon-admin"></span>Admin</a>
                 </nav>
             </div>
         </div>
@@ -34,7 +34,7 @@
                 <div class="summary-cards">
                     <!-- Activités -->
                     <div class="summary-card activities-card">
-                        <div class="card-icon">🏃‍♂️</div>
+                        <div class="card-icon"><span class="flaticon-running"></span></div>
                         <div class="card-content">
                             <h3>{{ activity_stats.total_count|default:0 }}</h3>
                             <p>Activités ({{ period_days }}j)</p>
@@ -48,7 +48,7 @@
 
                     <!-- Plans d'entraînement -->
                     <div class="summary-card plans-card">
-                        <div class="card-icon">📋</div>
+                        <div class="card-icon"><span class="flaticon-calendar"></span></div>
                         <div class="card-content">
                             <h3>{{ active_plans.count }}</h3>
                             <p>Plans actifs</p>
@@ -64,7 +64,7 @@
 
                     <!-- Objectifs -->
                     <div class="summary-card goals-card">
-                        <div class="card-icon">🎯</div>
+                        <div class="card-icon"><span class="flaticon-target"></span></div>
                         <div class="card-content">
                             <h3>{{ active_goals.count }}</h3>
                             <p>Objectifs actifs</p>
@@ -77,9 +77,9 @@
 
                     <!-- Métriques -->
                     <div class="summary-card metrics-card">
-                        <div class="card-icon">📈</div>
+                        <div class="card-icon"><span class="flaticon-chart"></span></div>
                         <div class="card-content">
-                            <h3>{% if latest_metrics %}✓{% else %}—{% endif %}</h3>
+                            <h3>{% if latest_metrics %}<span class="flaticon-check"></span>{% else %}&mdash;{% endif %}</h3>
                             <p>Métriques</p>
                             <div class="card-detail">
                                 {% if latest_metrics %}
@@ -99,7 +99,7 @@
             {% if recommendations %}
             <section class="recommendations">
                 <div class="section-header">
-                    <h2>💡 Recommandations personnalisées</h2>
+                    <h2><span class="flaticon-idea"></span>Recommandations personnalisées</h2>
                 </div>
                 <div class="recommendations-list">
                     {% for rec in recommendations %}
@@ -124,17 +124,17 @@
                     <!-- Activités récentes -->
                     <section class="dashboard-section">
                         <div class="section-header">
-                            <h2>🏃‍♂️ Activités récentes</h2>
+                            <h2><span class="flaticon-running"></span>Activités récentes</h2>
                             <a href="/api/v1/activities/" class="section-action">Voir tout</a>
                         </div>
                         <div class="activities-list">
                             {% for activity in recent_activities %}
                             <div class="activity-item">
                                 <div class="activity-type">
-                                    {% if activity.activity_type == 'running' %}🏃‍♂️
-                                    {% elif activity.activity_type == 'cycling' %}🚴‍♂️
-                                    {% elif activity.activity_type == 'swimming' %}🏊‍♂️
-                                    {% else %}⚡{% endif %}
+                                    {% if activity.activity_type == 'running' %}<span class="flaticon-running"></span>
+                                    {% elif activity.activity_type == 'cycling' %}<span class="flaticon-cycling"></span>
+                                    {% elif activity.activity_type == 'swimming' %}<span class="flaticon-swimming"></span>
+                                    {% else %}<span class="flaticon-flash"></span>{% endif %}
                                 </div>
                                 <div class="activity-details">
                                     <h4>{{ activity.activity_name }}</h4>
@@ -160,7 +160,7 @@
                     <!-- Graphique évolution -->
                     <section class="dashboard-section">
                         <div class="section-header">
-                            <h2>📊 Évolution (14 derniers jours)</h2>
+                            <h2><span class="flaticon-growth"></span>Évolution (14 derniers jours)</h2>
                         </div>
                         <div class="chart-container">
                             <canvas id="dailyChart" width="400" height="200"></canvas>
@@ -174,11 +174,11 @@
             <!-- Actions rapides -->
             <section class="quick-actions">
                 <div class="section-header">
-                    <h2>🚀 Actions rapides</h2>
+                    <h2><span class="flaticon-rocket"></span>Actions rapides</h2>
                 </div>
                 <div class="actions-grid">
                     <a href="http://localhost:8502" class="action-card">
-                        <div class="action-icon">💬</div>
+                        <div class="action-icon"><span class="flaticon-chat"></span></div>
                         <div class="action-content">
                             <h3>Chat avec l'IA</h3>
                             <p>Coaching conversationnel</p>
@@ -186,7 +186,7 @@
                     </a>
                     
                     <a href="/api/v1/activities/dashboard/" class="action-card">
-                        <div class="action-icon">📊</div>
+                        <div class="action-icon"><span class="flaticon-analytics"></span></div>
                         <div class="action-content">
                             <h3>Analyses détaillées</h3>
                             <p>Statistiques et performances</p>

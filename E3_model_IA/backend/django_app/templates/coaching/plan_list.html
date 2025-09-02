@@ -1,7 +1,7 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}📋 Mes Plans d'Entraînement{% endblock %}
+{% block title %}Mes Plans d'Entraînement{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -81,7 +81,7 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 mx-auto text-center">
-                <h1 class="display-4 mb-3">📋 Mes Plans d'Entraînement</h1>
+                <h1 class="display-4 mb-3"><span class="flaticon-calendar"></span>Mes Plans d'Entraînement</h1>
                 <p class="lead">
                     Retrouvez tous vos plans générés par Coach IA et suivez vos progrès.
                 </p>
@@ -107,11 +107,11 @@
                     </div>
                     <div>
                         {% if plan.is_active %}
-                            <span class="plan-status status-active">✅ Actif</span>
+                            <span class="plan-status status-active"><span class="flaticon-check plan-status-icon"></span>Actif</span>
                         {% elif plan.is_completed %}
-                            <span class="plan-status status-completed">🏆 Terminé</span>
+                            <span class="plan-status status-completed"><span class="flaticon-rocket plan-status-icon"></span>Terminé</span>
                         {% else %}
-                            <span class="plan-status status-inactive">⏸️ Inactif</span>
+                            <span class="plan-status status-inactive"><span class="flaticon-pause"></span>Inactif</span>
                         {% endif %}
                     </div>
                 </div>

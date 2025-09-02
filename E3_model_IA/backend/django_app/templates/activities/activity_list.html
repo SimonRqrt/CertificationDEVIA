@@ -6,9 +6,9 @@
 {% block content %}
 <div class="activities-container">
     <div class="page-header">
-        <h1>📋 Mes Activités</h1>
+        <h1><span class="flaticon-clipboard"></span>Mes Activités</h1>
         <div class="header-actions">
-            <a href="{% url 'activities:dashboard' %}" class="btn btn-secondary">📊 Dashboard</a>
+            <a href="{% url 'activities:dashboard' %}" class="btn btn-secondary"><span class="flaticon-analytics"></span>Dashboard</a>
         </div>
     </div>
 
@@ -45,25 +45,25 @@
                 <div class="activity-card">
                     <div class="activity-header">
                         <div class="activity-type-icon">
-                            {% if activity.activity_type == 'running' %}🏃
-                            {% elif activity.activity_type == 'cycling' %}🚴
-                            {% elif activity.activity_type == 'swimming' %}🏊
-                            {% elif activity.activity_type == 'walking' %}🚶
-                            {% else %}🏋️{% endif %}
+                            {% if activity.activity_type == 'running' %}<span class="flaticon-running"></span>
+                            {% elif activity.activity_type == 'cycling' %}<span class="flaticon-cycling"></span>
+                            {% elif activity.activity_type == 'swimming' %}<span class="flaticon-swimming"></span>
+                            {% elif activity.activity_type == 'walking' %}<span class="flaticon-running"></span>
+                            {% else %}<span class="flaticon-flash"></span>{% endif %}
                         </div>
                         <div class="activity-info">
                             <h3>{{ activity.activity_name }}</h3>
                             <p class="activity-date">{{ activity.start_time|date:"d/m/Y à H:i" }}</p>
                         </div>
                         <div class="activity-actions">
-                            <a href="{% url 'activities:detail' activity.pk %}" class="btn btn-sm">👁️ Voir</a>
+                            <a href="{% url 'activities:detail' activity.pk %}" class="btn btn-sm"><span class="flaticon-eye"></span>Voir</a>
                         </div>
                     </div>
                     
                     <div class="activity-stats">
                         {% if activity.distance_km %}
                             <div class="stat">
-                                <span class="stat-icon">📏</span>
+                                <span class="stat-icon"><span class="flaticon-analytics"></span></span>
                                 <span class="stat-label">Distance</span>
                                 <span class="stat-value">{{ activity.distance_km }} km</span>
                             </div>
@@ -71,7 +71,7 @@
                         
                         {% if activity.duration_formatted %}
                             <div class="stat">
-                                <span class="stat-icon">⏱️</span>
+                                <span class="stat-icon"><span class="flaticon-stopwatch"></span></span>
                                 <span class="stat-label">Durée</span>
                                 <span class="stat-value">{{ activity.duration_formatted }}</span>
                             </div>
@@ -79,7 +79,7 @@
                         
                         {% if activity.pace_per_km %}
                             <div class="stat">
-                                <span class="stat-icon">🏃</span>
+                                <span class="stat-icon"><span class="flaticon-running"></span></span>
                                 <span class="stat-label">Allure</span>
                                 <span class="stat-value">{{ activity.pace_per_km }} /km</span>
                             </div>
@@ -87,7 +87,7 @@
                         
                         {% if activity.average_hr %}
                             <div class="stat">
-                                <span class="stat-icon">💓</span>
+                                <span class="stat-icon"><span class="flaticon-heart"></span></span>
                                 <span class="stat-label">FC moy</span>
                                 <span class="stat-value">{{ activity.average_hr }} bpm</span>
                             </div>
@@ -95,7 +95,7 @@
                         
                         {% if activity.calories %}
                             <div class="stat">
-                                <span class="stat-icon">🔥</span>
+                                <span class="stat-icon"><span class="flaticon-fire"></span></span>
                                 <span class="stat-label">Calories</span>
                                 <span class="stat-value">{{ activity.calories }}</span>
                             </div>
@@ -111,7 +111,7 @@
             {% endfor %}
         {% else %}
             <div class="empty-state">
-                <div class="empty-icon">📭</div>
+                <div class="empty-icon"><span class="flaticon-clipboard"></span></div>
                 <h3>Aucune activité trouvée</h3>
                 <p>Vos activités sportives synchronisées apparaîtront ici.</p>
             </div>
@@ -128,15 +128,15 @@
             
             <div class="pagination-links">
                 {% if page_obj.has_previous %}
-                    <a href="?page=1" class="btn btn-sm">⏮️ Première</a>
-                    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-sm">⏪ Précédente</a>
+                    <a href="?page=1" class="btn btn-sm"><span class="flaticon-first"></span>Première</a>
+                    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-sm"><span class="flaticon-first"></span>Précédente</a>
                 {% endif %}
                 
                 <span class="current-page">{{ page_obj.number }}</span>
                 
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-sm">Suivante ⏩</a>
-                    <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-sm">Dernière ⏭️</a>
+                    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-sm">Suivante <span class="flaticon-last"></span></a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-sm">Dernière <span class="flaticon-last"></span></a>
                 {% endif %}
             </div>
         </div>

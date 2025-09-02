@@ -13,18 +13,18 @@
         
         <div class="activity-title">
             <div class="activity-icon">
-                {% if object.activity_type == 'running' %}🏃
-                {% elif object.activity_type == 'cycling' %}🚴
-                {% elif object.activity_type == 'swimming' %}🏊
-                {% elif object.activity_type == 'walking' %}🚶
-                {% else %}🏋️{% endif %}
+                {% if object.activity_type == 'running' %}<span class="flaticon-running"></span>
+                {% elif object.activity_type == 'cycling' %}<span class="flaticon-cycling"></span>
+                {% elif object.activity_type == 'swimming' %}<span class="flaticon-swimming"></span>
+                {% elif object.activity_type == 'walking' %}<span class="flaticon-running"></span>
+                {% else %}<span class="flaticon-flash"></span>{% endif %}
             </div>
             <div class="title-info">
                 <h1>{{ object.activity_name }}</h1>
                 <p>{{ object.start_time|date:"l d F Y à H:i" }}</p>
             </div>
             <div class="activity-actions">
-                <span class="readonly-indicator">🔒 Lecture seule</span>
+                <span class="readonly-indicator"><span class="flaticon-lock"></span>Lecture seule</span>
             </div>
         </div>
     </div>
@@ -33,7 +33,7 @@
     <div class="metrics-grid">
         {% if object.distance_km %}
         <div class="metric-card">
-            <div class="metric-icon">📏</div>
+            <div class="metric-icon"><span class="flaticon-analytics"></span></div>
             <div class="metric-content">
                 <h3>{{ object.distance_km }} km</h3>
                 <p>Distance</p>
@@ -43,7 +43,7 @@
 
         {% if object.duration_formatted %}
         <div class="metric-card">
-            <div class="metric-icon">⏱️</div>
+            <div class="metric-icon"><span class="flaticon-stopwatch"></span></div>
             <div class="metric-content">
                 <h3>{{ object.duration_formatted }}</h3>
                 <p>Durée</p>
@@ -53,7 +53,7 @@
 
         {% if object.pace_per_km %}
         <div class="metric-card">
-            <div class="metric-icon">🏃</div>
+            <div class="metric-icon"><span class="flaticon-running"></span></div>
             <div class="metric-content">
                 <h3>{{ object.pace_per_km }}</h3>
                 <p>Allure moyenne</p>
@@ -63,7 +63,7 @@
 
         {% if object.average_hr %}
         <div class="metric-card">
-            <div class="metric-icon">💓</div>
+            <div class="metric-icon"><span class="flaticon-heart"></span></div>
             <div class="metric-content">
                 <h3>{{ object.average_hr }} bpm</h3>
                 <p>FC moyenne</p>
@@ -73,7 +73,7 @@
 
         {% if object.calories %}
         <div class="metric-card">
-            <div class="metric-icon">🔥</div>
+            <div class="metric-icon"><span class="flaticon-fire"></span></div>
             <div class="metric-content">
                 <h3>{{ object.calories }}</h3>
                 <p>Calories</p>
@@ -83,7 +83,7 @@
 
         {% if object.elevation_gain %}
         <div class="metric-card">
-            <div class="metric-icon">⛰️</div>
+            <div class="metric-icon"><span class="flaticon-mountain"></span></div>
             <div class="metric-content">
                 <h3>{{ object.elevation_gain|floatformat:0 }} m</h3>
                 <p>Dénivelé positif</p>
@@ -95,7 +95,7 @@
     <!-- Détails de l'activité -->
     <div class="details-section">
         <div class="details-card">
-            <h2>📊 Détails de l'activité</h2>
+            <h2><span class="flaticon-analytics"></span>Détails de l'activité</h2>
             
             <div class="details-grid">
                 <div class="detail-item">
@@ -159,7 +159,7 @@
     {% if object.notes %}
     <div class="notes-section">
         <div class="notes-card">
-            <h2>📝 Notes</h2>
+            <h2><span class="flaticon-clipboard"></span>Notes</h2>
             <p>{{ object.notes|linebreaks }}</p>
         </div>
     </div>
@@ -168,7 +168,7 @@
     <!-- Informations techniques -->
     <div class="technical-section">
         <div class="technical-card">
-            <h2>🔧 Informations techniques</h2>
+            <h2><span class="flaticon-settings"></span>Informations techniques</h2>
             
             <div class="technical-grid">
                 {% if object.activity_id %}
@@ -199,9 +199,9 @@
                     <label>Source :</label>
                     <span>
                         {% if object.is_manual %}
-                            📝 Saisie manuelle
+                            <span class="flaticon-clipboard"></span>Saisie manuelle
                         {% else %}
-                            🔄 Synchronisation Garmin
+                            <span class="flaticon-sync"></span>Synchronisation Garmin
                         {% endif %}
                     </span>
                 </div>

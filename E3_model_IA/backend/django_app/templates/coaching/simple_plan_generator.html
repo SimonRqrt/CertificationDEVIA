@@ -1,7 +1,7 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}🏃‍♂️ Générateur de Plan d'Entraînement{% endblock %}
+{% block title %}Générateur de Plan d'Entraînement{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -62,7 +62,7 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 mx-auto text-center">
-                <h1 class="display-4 mb-3">🏃‍♂️ Générateur de Plan IA</h1>
+                <h1 class="display-4 mb-3"><span class="flaticon-rocket"></span>Générateur de Plan IA</h1>
                 <p class="lead">
                     Obtenez un plan d'entraînement personnalisé en quelques clics. 
                     Notre IA analyse automatiquement vos {{ user_stats.total_runs }} activités pour vous proposer le meilleur programme.
@@ -106,7 +106,7 @@
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="form-section">
-                <h2 class="text-center mb-4">✨ Créez votre plan personnalisé</h2>
+                <h2 class="text-center mb-4"><span class="flaticon-lightbulb"></span>Créez votre plan personnalisé</h2>
                 
                 {% if messages %}
                     {% for message in messages %}
@@ -123,7 +123,7 @@
                     <!-- Objectif -->
                     <div class="mb-4">
                         <label for="{{ form.goal.id_for_label }}" class="form-label">
-                            🎯 {{ form.goal.label }}
+                            <span class="flaticon-target"></span>{{ form.goal.label }}
                         </label>
                         {{ form.goal }}
                         {% if form.goal.help_text %}
@@ -134,7 +134,7 @@
                     <!-- Niveau -->
                     <div class="mb-4">
                         <label for="{{ form.level.id_for_label }}" class="form-label">
-                            📊 {{ form.level.label }}
+                            <span class="flaticon-analytics"></span>{{ form.level.label }}
                         </label>
                         {{ form.level }}
                         {% if form.level.help_text %}
@@ -145,7 +145,7 @@
                     <!-- Fréquence -->
                     <div class="mb-4">
                         <label for="{{ form.sessions_per_week.id_for_label }}" class="form-label">
-                            📅 {{ form.sessions_per_week.label }}
+                            <span class="flaticon-calendar"></span>{{ form.sessions_per_week.label }}
                         </label>
                         {{ form.sessions_per_week }}
                         {% if form.sessions_per_week.help_text %}
@@ -156,7 +156,7 @@
                     <!-- Date cible (optionnel) -->
                     <div class="mb-4">
                         <label for="{{ form.target_date.id_for_label }}" class="form-label">
-                            🗓️ {{ form.target_date.label }}
+                            <span class="flaticon-schedule"></span>{{ form.target_date.label }}
                         </label>
                         {{ form.target_date }}
                         {% if form.target_date.help_text %}
@@ -167,7 +167,7 @@
                     <!-- Notes supplémentaires -->
                     <div class="mb-4">
                         <label for="{{ form.additional_notes.id_for_label }}" class="form-label">
-                            📝 {{ form.additional_notes.label }}
+                            <span class="flaticon-settings"></span>{{ form.additional_notes.label }}
                         </label>
                         {{ form.additional_notes }}
                         {% if form.additional_notes.help_text %}
@@ -178,7 +178,7 @@
                     <!-- Bouton de génération -->
                     <div class="text-center mt-5">
                         <button type="submit" class="btn btn-generate btn-lg" id="generateBtn">
-                            <span class="btn-text">🚀 Générer mon plan d'entraînement</span>
+                            <span class="btn-text"><span class="flaticon-rocket"></span>Générer mon plan d'entraînement</span>
                             <span class="btn-loading d-none">
                                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                                 Génération en cours...

@@ -6,14 +6,14 @@
 {% block content %}
 <div class="pipeline-container">
     <div class="pipeline-header">
-        <h1>🔄 Pipeline de Synchronisation Garmin</h1>
+        <h1><span class="flaticon-sync"></span>Pipeline de Synchronisation Garmin</h1>
         <p>Récupérez et synchronisez vos données d'activités depuis Garmin Connect</p>
     </div>
 
     <!-- Statut actuel -->
     <div class="status-section">
         <div class="status-card">
-            <div class="status-icon" id="status-icon">⏳</div>
+            <div class="status-icon" id="status-icon"><span class="flaticon-hourglass"></span></div>
             <div class="status-info">
                 <h3 id="status-text">Prêt pour synchronisation</h3>
                 <p id="status-detail">
@@ -31,21 +31,21 @@
     <div class="stats-section">
         <div class="stats-grid">
             <div class="stat-item">
-                <div class="stat-icon">📊</div>
+                <div class="stat-icon"><span class="flaticon-analytics"></span></div>
                 <div class="stat-content">
                     <h4>{{ total_activities }}</h4>
                     <p>Activités totales</p>
                 </div>
             </div>
             <div class="stat-item">
-                <div class="stat-icon">📅</div>
+                <div class="stat-icon"><span class="flaticon-calendar"></span></div>
                 <div class="stat-content">
                     <h4>{{ recent_activities }}</h4>
                     <p>Cette semaine</p>
                 </div>
             </div>
             <div class="stat-item">
-                <div class="stat-icon">👤</div>
+                <div class="stat-icon"><span class="flaticon-user"></span></div>
                 <div class="stat-content">
                     <h4>{{ user_email|truncatechars:20 }}</h4>
                     <p>Utilisateur</p>
@@ -57,7 +57,7 @@
     <!-- Formulaire de synchronisation -->
     <div class="sync-section">
         <div class="sync-card">
-            <h2>🚀 Lancer la synchronisation</h2>
+            <h2><span class="flaticon-rocket"></span>Lancer la synchronisation</h2>
             <p>Connectez-vous à votre compte Garmin Connect pour récupérer vos dernières activités.</p>
             
             <form id="pipeline-form" method="post">
@@ -76,14 +76,14 @@
                 
                 <div class="form-actions">
                     <button type="submit" id="sync-button" class="btn btn-primary">
-                        <span id="sync-text">🔄 Synchroniser les données</span>
-                        <span id="sync-spinner" class="spinner" style="display: none;">⏳</span>
+                        <span id="sync-text"><span class="flaticon-sync"></span>Synchroniser les données</span>
+                        <span id="sync-spinner" class="spinner" style="display: none;"><span class="flaticon-hourglass"></span></span>
                     </button>
                     <button type="button" id="logs-button" class="btn btn-secondary" onclick="showLogs()">
-                        📋 Voir les logs
+                        <span class="flaticon-clipboard"></span>Voir les logs
                     </button>
                     <button type="button" id="refresh-logs-button" class="btn btn-info" onclick="refreshLogs()" style="display: none;">
-                        🔄 Actualiser
+                        <span class="flaticon-sync"></span>Actualiser
                     </button>
                 </div>
             </form>
@@ -99,8 +99,8 @@
     <div class="logs-section" id="logs-section" style="display: none;">
         <div class="logs-card">
             <div class="logs-header">
-                <h3>📋 Logs de synchronisation</h3>
-                <button onclick="hideLogs()" class="btn-close">✕</button>
+                <h3><span class="flaticon-clipboard"></span>Logs de synchronisation</h3>
+                <button onclick="hideLogs()" class="btn-close">&times;</button>
             </div>
             <div class="logs-content">
                 <pre id="logs-content">Chargement des logs...</pre>
@@ -111,7 +111,7 @@
     <!-- Informations de sécurité -->
     <div class="security-notice">
         <div class="notice-card">
-            <h3>🔒 Note de sécurité</h3>
+            <h3><span class="flaticon-lock"></span>Note de sécurité</h3>
             <ul>
                 <li>Vos identifiants Garmin ne sont pas stockés sur nos serveurs</li>
                 <li>La connexion se fait directement avec l'API Garmin Connect</li>
@@ -313,7 +313,7 @@ document.getElementById('pipeline-form').addEventListener('submit', async functi
         if (data.success) {
             resultSection.className = 'result-success';
             resultContent.innerHTML = `
-                <h4>✅ Synchronisation réussie !</h4>
+                <h4><span class="flaticon-check"></span>Synchronisation réussie !</h4>
                 <p>${data.message}</p>
                 <p><strong>${data.activities_processed}</strong> activités ont été traitées.</p>
             `;
@@ -324,7 +324,7 @@ document.getElementById('pipeline-form').addEventListener('submit', async functi
         } else {
             resultSection.className = 'result-error';
             resultContent.innerHTML = `
-                <h4>❌ Erreur de synchronisation</h4>
+                <h4><span class="flaticon-error"></span>Erreur de synchronisation</h4>
                 <p>${data.error}</p>
                 <p>Vérifiez vos identifiants Garmin et réessayez.</p>
             `;
@@ -334,7 +334,7 @@ document.getElementById('pipeline-form').addEventListener('submit', async functi
         resultSection.style.display = 'block';
         resultSection.className = 'result-error';
         resultContent.innerHTML = `
-            <h4>❌ Erreur de connexion</h4>
+            <h4><span class="flaticon-error"></span>Erreur de connexion</h4>
             <p>Impossible de contacter le serveur. Réessayez plus tard.</p>
         `;
     }
@@ -414,7 +414,7 @@ async function updateStatus() {
         const statusDetail = document.getElementById('status-detail');
         
         if (data.status === 'ready') {
-            statusIcon.textContent = '✅';
+            statusIcon.innerHTML = '<span class="flaticon-check"></span>';
             statusText.textContent = 'Prêt pour synchronisation';
             if (data.last_sync) {
                 const lastSync = new Date(data.last_sync);
