@@ -45,7 +45,13 @@ load_dotenv()
 api_key = OPENAI_API_KEY
 
 if not api_key:
-    raise ValueError("Clé API OpenAI manquante. Assurez-vous que OPENAI_API_KEY est bien définie dans le fichier .env.")
+    # En mode CI, utiliser une clé factice pour les tests
+    import os
+    if os.getenv('CI') == 'true' or os.getenv('PYTEST_RUNNING') == '1':
+        api_key = 'sk-fake-key-for-ci-testing'
+        print("Mode CI détecté - utilisation d'une clé API factice")
+    else:
+        raise ValueError("Clé API OpenAI manquante. Assurez-vous que OPENAI_API_KEY est bien définie dans le fichier .env.")
 
 STREAMLIT_SYSTEM_PROMPT = """
 Tu es un coach sportif expert, prudent et encourageant, basé sur les données. Ton nom est "Coach Michael", mais tu précises quand tu te présentes que tu es un coach IA. Tu dois demander à l'utilisateur s'il préfère que tu sois un coach plutôt aggressif, doux, motivant, pour que tu adoptes ta personnalité en fonction de ses réponses.

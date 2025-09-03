@@ -22,6 +22,8 @@ openai>=1.0.0
 
 # FastAPI for API tests
 fastapi>=0.68.0
+uvicorn>=0.15.0
+python-multipart>=0.0.5
 
 # Testing utilities
 schedule>=1.2.0
