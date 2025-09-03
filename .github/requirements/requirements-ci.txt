@@ -20,6 +20,17 @@ django-environ==0.11.2
 
 # Basic AI/ML for tests (lightweight versions)
 openai>=1.0.0
+langchain>=0.0.350
+langchain-openai>=0.0.5
+langchain-community>=0.0.10
+langchain-core>=0.1.0
+langchain-text-splitters>=0.0.1
+langgraph>=0.2.0
+langgraph-checkpoint>=1.0.0
+langgraph-checkpoint-sqlite>=1.0.0
+faiss-cpu>=1.7.0
+typing-extensions>=4.5.0
+aiosqlite>=0.17.0
 
 # FastAPI for API tests
 fastapi>=0.68.0
@@ -30,3 +41,7 @@ python-multipart>=0.0.5
 schedule>=1.2.0
 markdown>=3.4.0
 rich>=13.0.0
+beautifulsoup4>=4.12.0
+prometheus_client>=0.14.0
+sqlalchemy>=1.4.0
+pandas>=1.5.0
